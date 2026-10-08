@@ -37,7 +37,58 @@ label{display:block;margin:12px 0 4px;font-weight:600}input,textarea,select{widt
 </div></nav>
 <script src="dados.js"></script>
 <script>
-function telaInicio(){return '<h1>Início</h1>'}
+const ICONES={'panfletagem':'📄','adesivaço':'🏷️','roda de conversa':'🗣️','ligatona':'📞','porta a porta':'🚪','bandeiraço':'🚩','outro':'✨'};
+const TIPOS=Object.keys(ICONES);
+const estado={onde:null,quando:'qualquer',tipo:null,aba:'lista',filaAba:'analise'};
+const org=id=>DADOS.organizacoes.find(o=>o.id===id);
+const pessoa=id=>DADOS.pessoas.find(p=>p.id===id);
+const acao=id=>DADOS.acoes.find(a=>a.id===id);
+const turnosDa=id=>DADOS.turnos.filter(t=>t.acao===id).sort((a,b)=>a.inicio.localeCompare(b.inicio));
+function turnosFuturos(id){return turnosDa(id).filter(t=>t.inicio.slice(0,10)>=DADOS.config.hoje)}
+const inscritosNo=tid=>DADOS.inscricoes.filter(i=>i.turno===tid&&!i.canceladaEm);
+function vaoNa(id){return turnosDa(id).reduce((n,t)=>n+inscritosNo(t.id).length,0)}
+function fmtData(iso){const d=new Date(iso);const dias=['dom','seg','ter','qua','qui','sex','sáb'];
+  const dd=String(d.getDate()).padStart(2,'0'),mm=String(d.getMonth()+1).padStart(2,'0');
+  const h=d.getHours()+'h'+(d.getMinutes()?String(d.getMinutes()).padStart(2,'0'):'');
+  return `${dias[d.getDay()]} ${dd}/${mm}, ${h}`}
+function distanciaKm(a,b){const r=6371,x=(b.lat-a.lat)*Math.PI/180,y=(b.lon-a.lon)*Math.PI/180;
+  const s=Math.sin(x/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(y/2)**2;
+  return 2*r*Math.asin(Math.sqrt(s))}
+function nomeOrganizador(a){if(a.organizacao){const o=org(a.organizacao);return o.nome+(o.verificada?' <span class="selo">✓ verificada</span>':'')}return pessoa(a.organizador).nome}
+function somaDias(iso,n){const d=new Date(iso+'T00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+function acoesVisiveis(){
+  const hoje=DADOS.config.hoje;
+  let lista=DADOS.acoes.filter(a=>a.status==='publicada'&&turnosFuturos(a.id).length)
+    .map(a=>({a,t:turnosFuturos(a.id)[0]}));
+  if(estado.tipo)lista=lista.filter(x=>x.a.tipo===estado.tipo);
+  if(estado.quando==='hoje')lista=lista.filter(x=>x.t.inicio.slice(0,10)===hoje);
+  if(estado.quando==='amanha')lista=lista.filter(x=>x.t.inicio.slice(0,10)===somaDias(hoje,1));
+  if(estado.quando==='fds')lista=lista.filter(x=>{const d=x.t.inicio.slice(0,10);const w=new Date(d+'T00:00').getDay();return d<=somaDias(hoje,7)&&(w===0||w===6)});
+  lista.forEach(x=>x.km=estado.onde?distanciaKm(estado.onde,x.a.lugar):null);
+  return lista.sort((p,q)=>p.t.inicio.localeCompare(q.t.inicio)||((p.km??0)-(q.km??0)));
+}
+function cardAcao(x){const a=x.a;return `<a class="card" href="#/acao/${a.id}">
+  <div>${ICONES[a.tipo]} <strong>${a.titulo}</strong></div>
+  <div class="muted">${nomeOrganizador(a)}</div>
+  <div>${fmtData(x.t.inicio)} · ${a.lugar.bairro}, ${a.lugar.cidade}${x.km!=null?` · ${x.km.toFixed(1)} km`:''}</div>
+  <div class="muted">${vaoNa(a.id)} vão${a.prioritaria?' · <span class="prior">Área prioritária</span>':''}</div></a>`}
+const LOCAIS=[{rotulo:'Sé',lat:-23.5505,lon:-46.6333},{rotulo:'Grajaú',lat:-23.7746,lon:-46.6978},{rotulo:'Diadema',lat:-23.6861,lon:-46.6228}];
+function setOnde(i){estado.onde=LOCAIS[i];render()}
+function telaInicio(){
+  const lista=acoesVisiveis();
+  return `<h1>Ações do 2º turno</h1><p class="muted">${DADOS.config.frase}</p>
+  <div><span class="muted">Onde você está:</span> ${LOCAIS.map((l,i)=>`<span class="chip ${estado.onde&&estado.onde.rotulo===l.rotulo?'ativo':''}" onclick="setOnde(${i})">${l.rotulo}</span>`).join('')}
+    <span class="chip" onclick="usarLocalizacao()">📍 usar minha localização</span></div>
+  <div style="margin-top:8px">${[['qualquer','Qualquer dia'],['hoje','Hoje'],['amanha','Amanhã'],['fds','Fim de semana']].map(([k,v])=>`<span class="chip ${estado.quando===k?'ativo':''}" data-quando="${k}" onclick="estado.quando='${k}';render()">${v}</span>`).join('')}</div>
+  <div style="margin-top:8px">${TIPOS.map(t=>`<span class="chip ${estado.tipo===t?'ativo':''}" onclick="estado.tipo=estado.tipo==='${t}'?null:'${t}';render()">${ICONES[t]} ${t}</span>`).join('')}</div>
+  <div style="margin-top:12px"><span class="chip ${estado.aba==='lista'?'ativo':''}" data-aba="lista" onclick="estado.aba='lista';render()">Lista</span><span class="chip ${estado.aba==='mapa'?'ativo':''}" data-aba="mapa" onclick="estado.aba='mapa';render()">Mapa</span></div>
+  ${estado.aba==='mapa'?'<div id="mapa" style="height:420px;border-radius:12px;margin-top:8px"></div>':
+    lista.length?lista.map(cardAcao).join(''):`<p>Ainda não tem ação perto de você. Crie a primeira.</p><a class="btn" href="#/criar">Criar ação</a>`}`}
+function usarLocalizacao(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{estado.onde={rotulo:'aqui',lat:p.coords.latitude,lon:p.coords.longitude};render()},()=>{})}
+function montarMapa(){const el=document.getElementById('mapa');if(!el||!window.L)return;
+  const m=L.map(el).setView([-23.6,-46.6],10);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(m);
+  acoesVisiveis().forEach(x=>L.marker([x.a.lugar.lat,x.a.lugar.lon]).addTo(m).bindPopup(`${ICONES[x.a.tipo]} <a href="#/acao/${x.a.id}">${x.a.titulo}</a><br>${fmtData(x.t.inicio)}`))}
 function telaAcao(id){return '<h1>Ação '+id+'</h1>'}
 function telaCriar(){return '<h1>Criar ação</h1>'}
 function telaMinhas(){return '<h1>Minhas ações</h1>'}
@@ -49,6 +100,7 @@ function render(){
   app.innerHTML = rota==='acao'?telaAcao(Number(arg)) : rota==='criar'?telaCriar() : rota==='minhas'?telaMinhas() : rota==='fila'?telaFila() : telaInicio();
   document.querySelectorAll('nav a[data-rota]').forEach(a=>a.classList.toggle('ativo',a.dataset.rota===(rota||'inicio')));
   document.getElementById('doar').href=(window.DADOS&&DADOS.config.vaquinha)||'#';
+  if((rota||'inicio')==='inicio'&&estado.aba==='mapa')montarMapa();
   window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',render);

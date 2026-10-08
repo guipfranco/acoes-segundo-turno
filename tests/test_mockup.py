@@ -51,3 +51,19 @@ def test_dados_tem_verificada_e_nao_verificada_e_eu_sou_organizador():
     assert {o["verificada"] for o in d["organizacoes"]} == {True, False}
     eu = next(p for p in d["pessoas"] if p["id"] == d["config"]["eu"])
     assert eu["papel"] == "organizador"
+
+
+def test_inicio_tem_filtros_abas_e_helpers():
+    for s in ["function fmtData", "function turnosFuturos", "function vaoNa", "function distanciaKm",
+              "data-quando=\"hoje\"", "data-quando=\"fds\"", "data-aba=\"mapa\"",
+              "Ainda não tem ação perto de você", "Área prioritária", "leaflet"]:
+        assert s in HTML, s
+
+
+def test_acao_com_turno_passado_fica_fora_da_lista():
+    d = carregar_dados()
+    hoje = d["config"]["hoje"]
+    futuros = {t["acao"] for t in d["turnos"] if t["inicio"][:10] >= hoje}
+    a10 = next(a for a in d["acoes"] if a["id"] == 10)
+    assert a10["status"] == "publicada" and 10 not in futuros
+    assert "turnosFuturos(a.id).length" in HTML  # filtro da lista exige turno futuro
