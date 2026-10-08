@@ -2,791 +2,243 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ações do 2º turno</title>
-<style>/* Leaflet 1.9.4 CSS, inline porque o artifact bloqueia stylesheet externo */
-/* required styles */
-
-.leaflet-pane,
-.leaflet-tile,
-.leaflet-marker-icon,
-.leaflet-marker-shadow,
-.leaflet-tile-container,
-.leaflet-pane > svg,
-.leaflet-pane > canvas,
-.leaflet-zoom-box,
-.leaflet-image-layer,
-.leaflet-layer {
-	position: absolute;
-	left: 0;
-	top: 0;
-	}
-.leaflet-container {
-	overflow: hidden;
-	}
-.leaflet-tile,
-.leaflet-marker-icon,
-.leaflet-marker-shadow {
-	-webkit-user-select: none;
-	   -moz-user-select: none;
-	        user-select: none;
-	  -webkit-user-drag: none;
-	}
-/* Prevents IE11 from highlighting tiles in blue */
-.leaflet-tile::selection {
-	background: transparent;
-}
-/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
-.leaflet-safari .leaflet-tile {
-	image-rendering: -webkit-optimize-contrast;
-	}
-/* hack that prevents hw layers "stretching" when loading new tiles */
-.leaflet-safari .leaflet-tile-container {
-	width: 1600px;
-	height: 1600px;
-	-webkit-transform-origin: 0 0;
-	}
-.leaflet-marker-icon,
-.leaflet-marker-shadow {
-	display: block;
-	}
-/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
-/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
-.leaflet-container .leaflet-overlay-pane svg {
-	max-width: none !important;
-	max-height: none !important;
-	}
-.leaflet-container .leaflet-marker-pane img,
-.leaflet-container .leaflet-shadow-pane img,
-.leaflet-container .leaflet-tile-pane img,
-.leaflet-container img.leaflet-image-layer,
-.leaflet-container .leaflet-tile {
-	max-width: none !important;
-	max-height: none !important;
-	width: auto;
-	padding: 0;
-	}
-
-.leaflet-container img.leaflet-tile {
-	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
-	mix-blend-mode: plus-lighter;
-}
-
-.leaflet-container.leaflet-touch-zoom {
-	-ms-touch-action: pan-x pan-y;
-	touch-action: pan-x pan-y;
-	}
-.leaflet-container.leaflet-touch-drag {
-	-ms-touch-action: pinch-zoom;
-	/* Fallback for FF which doesn't support pinch-zoom */
-	touch-action: none;
-	touch-action: pinch-zoom;
-}
-.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
-	-ms-touch-action: none;
-	touch-action: none;
-}
-.leaflet-container {
-	-webkit-tap-highlight-color: transparent;
-}
-.leaflet-container a {
-	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
-}
-.leaflet-tile {
-	filter: inherit;
-	visibility: hidden;
-	}
-.leaflet-tile-loaded {
-	visibility: inherit;
-	}
-.leaflet-zoom-box {
-	width: 0;
-	height: 0;
-	-moz-box-sizing: border-box;
-	     box-sizing: border-box;
-	z-index: 800;
-	}
-/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
-.leaflet-overlay-pane svg {
-	-moz-user-select: none;
-	}
-
-.leaflet-pane         { z-index: 400; }
-
-.leaflet-tile-pane    { z-index: 200; }
-.leaflet-overlay-pane { z-index: 400; }
-.leaflet-shadow-pane  { z-index: 500; }
-.leaflet-marker-pane  { z-index: 600; }
-.leaflet-tooltip-pane   { z-index: 650; }
-.leaflet-popup-pane   { z-index: 700; }
-
-.leaflet-map-pane canvas { z-index: 100; }
-.leaflet-map-pane svg    { z-index: 200; }
-
-.leaflet-vml-shape {
-	width: 1px;
-	height: 1px;
-	}
-.lvml {
-	behavior: url(#default#VML);
-	display: inline-block;
-	position: absolute;
-	}
-
-
-/* control positioning */
-
-.leaflet-control {
-	position: relative;
-	z-index: 800;
-	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
-	pointer-events: auto;
-	}
-.leaflet-top,
-.leaflet-bottom {
-	position: absolute;
-	z-index: 1000;
-	pointer-events: none;
-	}
-.leaflet-top {
-	top: 0;
-	}
-.leaflet-right {
-	right: 0;
-	}
-.leaflet-bottom {
-	bottom: 0;
-	}
-.leaflet-left {
-	left: 0;
-	}
-.leaflet-control {
-	float: left;
-	clear: both;
-	}
-.leaflet-right .leaflet-control {
-	float: right;
-	}
-.leaflet-top .leaflet-control {
-	margin-top: 10px;
-	}
-.leaflet-bottom .leaflet-control {
-	margin-bottom: 10px;
-	}
-.leaflet-left .leaflet-control {
-	margin-left: 10px;
-	}
-.leaflet-right .leaflet-control {
-	margin-right: 10px;
-	}
-
-
-/* zoom and fade animations */
-
-.leaflet-fade-anim .leaflet-popup {
-	opacity: 0;
-	-webkit-transition: opacity 0.2s linear;
-	   -moz-transition: opacity 0.2s linear;
-	        transition: opacity 0.2s linear;
-	}
-.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
-	opacity: 1;
-	}
-.leaflet-zoom-animated {
-	-webkit-transform-origin: 0 0;
-	    -ms-transform-origin: 0 0;
-	        transform-origin: 0 0;
-	}
-svg.leaflet-zoom-animated {
-	will-change: transform;
-}
-
-.leaflet-zoom-anim .leaflet-zoom-animated {
-	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
-	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
-	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
-	}
-.leaflet-zoom-anim .leaflet-tile,
-.leaflet-pan-anim .leaflet-tile {
-	-webkit-transition: none;
-	   -moz-transition: none;
-	        transition: none;
-	}
-
-.leaflet-zoom-anim .leaflet-zoom-hide {
-	visibility: hidden;
-	}
-
-
-/* cursors */
-
-.leaflet-interactive {
-	cursor: pointer;
-	}
-.leaflet-grab {
-	cursor: -webkit-grab;
-	cursor:    -moz-grab;
-	cursor:         grab;
-	}
-.leaflet-crosshair,
-.leaflet-crosshair .leaflet-interactive {
-	cursor: crosshair;
-	}
-.leaflet-popup-pane,
-.leaflet-control {
-	cursor: auto;
-	}
-.leaflet-dragging .leaflet-grab,
-.leaflet-dragging .leaflet-grab .leaflet-interactive,
-.leaflet-dragging .leaflet-marker-draggable {
-	cursor: move;
-	cursor: -webkit-grabbing;
-	cursor:    -moz-grabbing;
-	cursor:         grabbing;
-	}
-
-/* marker & overlays interactivity */
-.leaflet-marker-icon,
-.leaflet-marker-shadow,
-.leaflet-image-layer,
-.leaflet-pane > svg path,
-.leaflet-tile-container {
-	pointer-events: none;
-	}
-
-.leaflet-marker-icon.leaflet-interactive,
-.leaflet-image-layer.leaflet-interactive,
-.leaflet-pane > svg path.leaflet-interactive,
-svg.leaflet-image-layer.leaflet-interactive path {
-	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
-	pointer-events: auto;
-	}
-
-/* visual tweaks */
-
-.leaflet-container {
-	background: #ddd;
-	outline-offset: 1px;
-	}
-.leaflet-container a {
-	color: #0078A8;
-	}
-.leaflet-zoom-box {
-	border: 2px dotted #38f;
-	background: rgba(255,255,255,0.5);
-	}
-
-
-/* general typography */
-.leaflet-container {
-	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-	font-size: 12px;
-	font-size: 0.75rem;
-	line-height: 1.5;
-	}
-
-
-/* general toolbar styles */
-
-.leaflet-bar {
-	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
-	border-radius: 4px;
-	}
-.leaflet-bar a {
-	background-color: #fff;
-	border-bottom: 1px solid #ccc;
-	width: 26px;
-	height: 26px;
-	line-height: 26px;
-	display: block;
-	text-align: center;
-	text-decoration: none;
-	color: black;
-	}
-.leaflet-bar a,
-.leaflet-control-layers-toggle {
-	background-position: 50% 50%;
-	background-repeat: no-repeat;
-	display: block;
-	}
-.leaflet-bar a:hover,
-.leaflet-bar a:focus {
-	background-color: #f4f4f4;
-	}
-.leaflet-bar a:first-child {
-	border-top-left-radius: 4px;
-	border-top-right-radius: 4px;
-	}
-.leaflet-bar a:last-child {
-	border-bottom-left-radius: 4px;
-	border-bottom-right-radius: 4px;
-	border-bottom: none;
-	}
-.leaflet-bar a.leaflet-disabled {
-	cursor: default;
-	background-color: #f4f4f4;
-	color: #bbb;
-	}
-
-.leaflet-touch .leaflet-bar a {
-	width: 30px;
-	height: 30px;
-	line-height: 30px;
-	}
-.leaflet-touch .leaflet-bar a:first-child {
-	border-top-left-radius: 2px;
-	border-top-right-radius: 2px;
-	}
-.leaflet-touch .leaflet-bar a:last-child {
-	border-bottom-left-radius: 2px;
-	border-bottom-right-radius: 2px;
-	}
-
-/* zoom control */
-
-.leaflet-control-zoom-in,
-.leaflet-control-zoom-out {
-	font: bold 18px 'Lucida Console', Monaco, monospace;
-	text-indent: 1px;
-	}
-
-.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
-	font-size: 22px;
-	}
-
-
-/* layers control */
-
-.leaflet-control-layers {
-	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-	background: #fff;
-	border-radius: 5px;
-	}
-.leaflet-control-layers-toggle {
-	background-image: url(images/layers.png);
-	width: 36px;
-	height: 36px;
-	}
-.leaflet-retina .leaflet-control-layers-toggle {
-	background-image: url(images/layers-2x.png);
-	background-size: 26px 26px;
-	}
-.leaflet-touch .leaflet-control-layers-toggle {
-	width: 44px;
-	height: 44px;
-	}
-.leaflet-control-layers .leaflet-control-layers-list,
-.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
-	display: none;
-	}
-.leaflet-control-layers-expanded .leaflet-control-layers-list {
-	display: block;
-	position: relative;
-	}
-.leaflet-control-layers-expanded {
-	padding: 6px 10px 6px 6px;
-	color: #333;
-	background: #fff;
-	}
-.leaflet-control-layers-scrollbar {
-	overflow-y: scroll;
-	overflow-x: hidden;
-	padding-right: 5px;
-	}
-.leaflet-control-layers-selector {
-	margin-top: 2px;
-	position: relative;
-	top: 1px;
-	}
-.leaflet-control-layers label {
-	display: block;
-	font-size: 13px;
-	font-size: 1.08333em;
-	}
-.leaflet-control-layers-separator {
-	height: 0;
-	border-top: 1px solid #ddd;
-	margin: 5px -10px 5px -6px;
-	}
-
-/* Default icon URLs */
-.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
-	background-image: url(images/marker-icon.png);
-	}
-
-
-/* attribution and scale controls */
-
-.leaflet-container .leaflet-control-attribution {
-	background: #fff;
-	background: rgba(255, 255, 255, 0.8);
-	margin: 0;
-	}
-.leaflet-control-attribution,
-.leaflet-control-scale-line {
-	padding: 0 5px;
-	color: #333;
-	line-height: 1.4;
-	}
-.leaflet-control-attribution a {
-	text-decoration: none;
-	}
-.leaflet-control-attribution a:hover,
-.leaflet-control-attribution a:focus {
-	text-decoration: underline;
-	}
-.leaflet-attribution-flag {
-	display: inline !important;
-	vertical-align: baseline !important;
-	width: 1em;
-	height: 0.6669em;
-	}
-.leaflet-left .leaflet-control-scale {
-	margin-left: 5px;
-	}
-.leaflet-bottom .leaflet-control-scale {
-	margin-bottom: 5px;
-	}
-.leaflet-control-scale-line {
-	border: 2px solid #777;
-	border-top: none;
-	line-height: 1.1;
-	padding: 2px 5px 1px;
-	white-space: nowrap;
-	-moz-box-sizing: border-box;
-	     box-sizing: border-box;
-	background: rgba(255, 255, 255, 0.8);
-	text-shadow: 1px 1px #fff;
-	}
-.leaflet-control-scale-line:not(:first-child) {
-	border-top: 2px solid #777;
-	border-bottom: none;
-	margin-top: -2px;
-	}
-.leaflet-control-scale-line:not(:first-child):not(:last-child) {
-	border-bottom: 2px solid #777;
-	}
-
-.leaflet-touch .leaflet-control-attribution,
-.leaflet-touch .leaflet-control-layers,
-.leaflet-touch .leaflet-bar {
-	box-shadow: none;
-	}
-.leaflet-touch .leaflet-control-layers,
-.leaflet-touch .leaflet-bar {
-	border: 2px solid rgba(0,0,0,0.2);
-	background-clip: padding-box;
-	}
-
-
-/* popup */
-
-.leaflet-popup {
-	position: absolute;
-	text-align: center;
-	margin-bottom: 20px;
-	}
-.leaflet-popup-content-wrapper {
-	padding: 1px;
-	text-align: left;
-	border-radius: 12px;
-	}
-.leaflet-popup-content {
-	margin: 13px 24px 13px 20px;
-	line-height: 1.3;
-	font-size: 13px;
-	font-size: 1.08333em;
-	min-height: 1px;
-	}
-.leaflet-popup-content p {
-	margin: 17px 0;
-	margin: 1.3em 0;
-	}
-.leaflet-popup-tip-container {
-	width: 40px;
-	height: 20px;
-	position: absolute;
-	left: 50%;
-	margin-top: -1px;
-	margin-left: -20px;
-	overflow: hidden;
-	pointer-events: none;
-	}
-.leaflet-popup-tip {
-	width: 17px;
-	height: 17px;
-	padding: 1px;
-
-	margin: -10px auto 0;
-	pointer-events: auto;
-
-	-webkit-transform: rotate(45deg);
-	   -moz-transform: rotate(45deg);
-	    -ms-transform: rotate(45deg);
-	        transform: rotate(45deg);
-	}
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
-	background: white;
-	color: #333;
-	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
-	}
-.leaflet-container a.leaflet-popup-close-button {
-	position: absolute;
-	top: 0;
-	right: 0;
-	border: none;
-	text-align: center;
-	width: 24px;
-	height: 24px;
-	font: 16px/24px Tahoma, Verdana, sans-serif;
-	color: #757575;
-	text-decoration: none;
-	background: transparent;
-	}
-.leaflet-container a.leaflet-popup-close-button:hover,
-.leaflet-container a.leaflet-popup-close-button:focus {
-	color: #585858;
-	}
-.leaflet-popup-scrolled {
-	overflow: auto;
-	}
-
-.leaflet-oldie .leaflet-popup-content-wrapper {
-	-ms-zoom: 1;
-	}
-.leaflet-oldie .leaflet-popup-tip {
-	width: 24px;
-	margin: 0 auto;
-
-	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
-	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
-	}
-
-.leaflet-oldie .leaflet-control-zoom,
-.leaflet-oldie .leaflet-control-layers,
-.leaflet-oldie .leaflet-popup-content-wrapper,
-.leaflet-oldie .leaflet-popup-tip {
-	border: 1px solid #999;
-	}
-
-
-/* div icon */
-
-.leaflet-div-icon {
-	background: #fff;
-	border: 1px solid #666;
-	}
-
-
-/* Tooltip */
-/* Base styles for the element that has a tooltip */
-.leaflet-tooltip {
-	position: absolute;
-	padding: 6px;
-	background-color: #fff;
-	border: 1px solid #fff;
-	border-radius: 3px;
-	color: #222;
-	white-space: nowrap;
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-	pointer-events: none;
-	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-	}
-.leaflet-tooltip.leaflet-interactive {
-	cursor: pointer;
-	pointer-events: auto;
-	}
-.leaflet-tooltip-top:before,
-.leaflet-tooltip-bottom:before,
-.leaflet-tooltip-left:before,
-.leaflet-tooltip-right:before {
-	position: absolute;
-	pointer-events: none;
-	border: 6px solid transparent;
-	background: transparent;
-	content: "";
-	}
-
-/* Directions */
-
-.leaflet-tooltip-bottom {
-	margin-top: 6px;
-}
-.leaflet-tooltip-top {
-	margin-top: -6px;
-}
-.leaflet-tooltip-bottom:before,
-.leaflet-tooltip-top:before {
-	left: 50%;
-	margin-left: -6px;
-	}
-.leaflet-tooltip-top:before {
-	bottom: 0;
-	margin-bottom: -12px;
-	border-top-color: #fff;
-	}
-.leaflet-tooltip-bottom:before {
-	top: 0;
-	margin-top: -12px;
-	margin-left: -6px;
-	border-bottom-color: #fff;
-	}
-.leaflet-tooltip-left {
-	margin-left: -6px;
-}
-.leaflet-tooltip-right {
-	margin-left: 6px;
-}
-.leaflet-tooltip-left:before,
-.leaflet-tooltip-right:before {
-	top: 50%;
-	margin-top: -6px;
-	}
-.leaflet-tooltip-left:before {
-	right: 0;
-	margin-right: -12px;
-	border-left-color: #fff;
-	}
-.leaflet-tooltip-right:before {
-	left: 0;
-	margin-left: -12px;
-	border-right-color: #fff;
-	}
-
-/* Printing */
-
-@media print {
-	/* Prevent printers from removing background-images of controls. */
-	.leaflet-control {
-		-webkit-print-color-adjust: exact;
-		print-color-adjust: exact;
-		}
-	}
-
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="leaflet.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pmtiles@4.5.0/dist/pmtiles.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/protomaps-leaflet@5.1.0/dist/protomaps-leaflet.js"></script>
 <style>
-:root{--vermelho:#c8102e;--fundo:#fff;--texto:#1a1a1a;--cinza:#666;--borda:#e3e3e3;--ok:#1b7f3b;--aviso:#b36b00}
-*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#f3f3f3;color:var(--texto)}
-#app{max-width:480px;margin:0 auto;background:var(--fundo);min-height:100vh;padding:16px 16px 96px}
-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--borda)}
-nav .barra{max-width:480px;margin:0 auto;display:flex}
-nav a{flex:1;text-align:center;padding:10px 4px;font-size:12px;color:var(--cinza);text-decoration:none}
-nav a.ativo{color:var(--vermelho);font-weight:600}
-nav a.doar{background:var(--vermelho);color:#fff;font-weight:700}
-h1{font-size:22px;margin:0 0 4px}h2{font-size:18px;margin:16px 0 8px}
-.card{border:1px solid var(--borda);border-radius:12px;padding:12px;margin:8px 0;display:block;color:inherit;text-decoration:none}
-.btn{display:inline-block;background:var(--vermelho);color:#fff;border:0;border-radius:8px;padding:12px 16px;font-size:16px;font-weight:600;cursor:pointer;text-decoration:none}
-.btn[disabled]{background:#bbb;cursor:default}.btn.sec{background:#fff;color:var(--vermelho);border:1px solid var(--vermelho)}
-.chip{display:inline-block;border:1px solid var(--borda);border-radius:999px;padding:4px 10px;font-size:13px;margin:2px 4px 2px 0;cursor:pointer}
-.chip.ativo{background:var(--vermelho);color:#fff;border-color:var(--vermelho)}
-.selo{font-size:12px;color:var(--ok)}.prior{font-size:12px;color:var(--aviso);font-weight:600}
-.muted{color:var(--cinza);font-size:14px}.erro{color:var(--vermelho);font-size:13px}
-label{display:block;margin:12px 0 4px;font-weight:600}input,textarea,select{width:100%;padding:10px;border:1px solid var(--borda);border-radius:8px;font-size:16px}
+:root{--papel:#fff;--tinta:#17171a;--vermelho:#d6232e;--vinho:#8c1420;--nevoa:#eef0f3;--cinza:#6e6e76;--selo:#1f7a3e;--sombra:0 -6px 24px rgba(23,23,26,.14);--nav:60px}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;font-family:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--tinta);background:var(--papel);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+h1{font-size:26px;line-height:1.1;letter-spacing:-.02em;font-weight:800;margin:0 0 8px}
+h2{font-size:17px;font-weight:800;letter-spacing:-.01em;margin:22px 0 8px}
+p{margin:0 0 10px}a{color:inherit}
+.sec{color:var(--cinza);font-size:13px}.erro{color:var(--vermelho);font-size:13px;margin-top:4px}
+.selo{color:var(--selo);font-size:13px;font-weight:600}.prior{color:var(--vinho);font-size:13px;font-weight:600}
+button{font:inherit}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--vermelho);color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:16px;font-weight:600;cursor:pointer;text-decoration:none}
+.btn:hover{background:var(--vinho)}.btn[disabled]{background:var(--nevoa);color:var(--cinza);cursor:default}
+.btn.sec{background:var(--papel);color:var(--tinta);border:1.5px solid var(--tinta)}.btn.sec:hover{background:var(--nevoa)}
+.btn.mini{padding:8px 12px;font-size:14px}
+.btn:focus-visible,input:focus-visible,.chip:focus-visible,.pill:focus-visible{outline:3px solid var(--vinho);outline-offset:2px}
+label{display:block;margin:14px 0 4px;font-weight:600;font-size:14px}
+input,textarea,select{width:100%;padding:11px 12px;border:1.5px solid #d4d6db;border-radius:10px;font:inherit;font-size:16px;background:#fff;color:var(--tinta)}
+input:focus,textarea:focus,select:focus{border-color:var(--tinta);outline:none}
+/* paginas comuns (Ação, Criar, Minhas, Fila) */
+.pagina{max-width:560px;margin:0 auto;padding:18px 16px calc(var(--nav) + 24px)}
+.linha{border-top:1px solid var(--nevoa);padding:12px 0}
+.voltar{display:inline-block;color:var(--cinza);text-decoration:none;font-size:14px;margin-bottom:10px}
+.aviso{background:#e8f4ec;border-left:4px solid var(--selo);padding:10px 12px;border-radius:8px;margin:0 0 14px;font-size:15px}
+/* barra de navegacao */
+nav{position:fixed;left:0;right:0;bottom:0;height:var(--nav);background:var(--papel);border-top:1px solid var(--nevoa);z-index:1000}
+nav .barra{max-width:560px;margin:0 auto;height:100%;display:flex;align-items:stretch}
+nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:var(--cinza);font-size:11px;font-weight:600}
+nav a span:first-child{font-size:20px;line-height:1}
+nav a.ativo{color:var(--tinta)}
+nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
+/* inicio: mapa + busca + gaveta */
+#inicio{position:fixed;inset:0 0 var(--nav) 0;overflow:hidden}
+#mapa{position:absolute;inset:0;background:#e9ebee}#mapa .leaflet-tile-pane{filter:saturate(.75) contrast(.95)}
+#topo{position:absolute;top:12px;left:12px;right:12px;z-index:700}
+.busca{display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;box-shadow:0 2px 12px rgba(23,23,26,.18);padding:6px 6px 6px 16px}
+.busca input{border:0;padding:8px 0;font-size:16px;flex:1;min-width:0;background:transparent}.busca input:focus{outline:none}
+.busca .ico{width:38px;height:38px;border:0;border-radius:50%;background:var(--nevoa);cursor:pointer;font-size:18px;display:grid;place-items:center}
+.busca .ico:hover{background:#dfe2e7}
+#sugestoes{position:absolute;left:0;right:0;top:54px;background:#fff;border-radius:16px;box-shadow:0 8px 28px rgba(23,23,26,.2);overflow:hidden;display:none}
+#sugestoes div,#sug-criar div{padding:12px 16px;cursor:pointer;border-top:1px solid var(--nevoa)}#sugestoes div:first-child,#sug-criar div:first-child{border:0}
+#sugestoes div:hover,#sugestoes div.foco,#sug-criar div:hover{background:var(--nevoa)}#sugestoes small,#sug-criar small{color:var(--cinza);display:block}
+.tipos{display:flex;gap:6px;overflow-x:auto;padding:10px 2px 4px;scrollbar-width:none;-ms-overflow-style:none}.tipos::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:1.5px solid transparent;border-radius:14px;padding:8px 10px 6px;min-width:72px;font-size:11px;font-weight:600;color:var(--cinza);cursor:pointer;box-shadow:0 1px 6px rgba(23,23,26,.12)}
+.chip b{font-size:22px;line-height:1;font-weight:400}.chip.ativo{border-color:var(--tinta);color:var(--tinta)}
+#gaveta{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;box-shadow:var(--sombra);transition:transform .28s ease;z-index:800;display:flex;flex-direction:column;height:calc(100% - 150px);transform:translateY(calc(100% - 132px))}
+#gaveta.meio{transform:translateY(42%)}#gaveta.cheia{transform:translateY(0)}
+@media (prefers-reduced-motion:reduce){#gaveta{transition:none}}
+.alca{width:44px;height:5px;border-radius:3px;background:#cfd2d8;margin:10px auto 6px;cursor:grab}
+.cabeca{padding:0 16px 10px;display:flex;flex-direction:column;gap:8px}.quando{align-self:flex-start}
+.cabeca strong{font-size:17px;letter-spacing:-.01em}
+.quando{display:flex;background:var(--nevoa);border-radius:999px;padding:3px}
+.pill{border:0;background:transparent;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--cinza);cursor:pointer;white-space:nowrap}
+.pill.ativo{background:#fff;color:var(--tinta);box-shadow:0 1px 4px rgba(23,23,26,.15)}
+#lista{overflow-y:auto;flex:1;padding:0 16px 24px}
+.card{display:grid;grid-template-columns:60px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--nevoa);text-decoration:none;color:inherit;align-items:start}
+.card:first-child{border-top:0}.card.foco{background:#fbf3f4;margin:0 -16px;padding:14px 16px}
+.cubo{width:60px;height:60px;border-radius:14px;display:grid;place-items:center;font-size:28px}
+.card .tit{font-weight:600;font-size:16px;line-height:1.25;margin-bottom:2px}
+.card .meta{font-size:14px;color:var(--cinza)}.card .meta b{color:var(--tinta);font-weight:600}
+.vazio{padding:28px 8px;text-align:center}.vazio p{font-size:17px;font-weight:600;margin-bottom:12px}
+.etiqueta{background:#fff;border-radius:999px;padding:4px 9px;font:600 12px/1 'Public Sans',sans-serif;color:var(--tinta);box-shadow:0 1px 5px rgba(23,23,26,.3);white-space:nowrap;display:inline-block;transform:translate(-50%,-50%)}
+.etiqueta.foco{background:var(--vinho);color:#fff}
+.t-panfletagem{background:#fde7e9}.t-adesivaco{background:#fff1d6}.t-roda{background:#e6f0ff}.t-ligatona{background:#e8f4ec}.t-porta{background:#f1e8ff}.t-bandeiraco{background:#fde7e9}.t-outro{background:var(--nevoa)}
+.leaflet-container{font-family:inherit}#inicio .leaflet-top,#inicio .leaflet-bottom{z-index:650}.leaflet-bottom.leaflet-right{margin-bottom:126px}
+.leaflet-control-attribution{font-size:10px}
+/* desktop: coluna a esquerda, mapa a direita */
+@media (min-width:900px){
+  #topo{left:16px;right:auto;width:440px}
+  #gaveta{left:16px;right:auto;width:440px;top:132px;height:auto;border-radius:22px;transform:none!important;box-shadow:0 8px 28px rgba(23,23,26,.18);bottom:16px}
+  .alca{display:none}
+  .leaflet-bottom.leaflet-right{margin-bottom:0}
+  nav .barra{max-width:none;justify-content:flex-end}nav a{flex:0 0 120px}
+}
 </style>
 </head>
 <body>
 <main id="app"></main>
 <nav><div class="barra">
-  <a href="#/inicio" data-rota="inicio">Início</a>
-  <a href="#/criar" data-rota="criar" onclick="novaCriacao()">Criar ação</a>
-  <a href="#/minhas" data-rota="minhas">Minhas ações</a>
-  <a href="#/fila" data-rota="fila">Fila</a>
+  <a href="#/inicio" data-rota="inicio"><span>🗺️</span><span>Ações</span></a>
+  <a href="#/criar" data-rota="criar" onclick="novaCriacao()"><span>＋</span><span>Criar ação</span></a>
+  <a href="#/minhas" data-rota="minhas"><span>👤</span><span>Minhas</span></a>
+  <a href="#/fila" data-rota="fila"><span>✅</span><span>Fila</span></a>
   <a class="doar" id="doar" href="#" target="_blank">Doar</a>
 </div></nav>
 <script src="dados.js"></script>
+<script src="lugares.js"></script>
+<script src="fundo.js"></script>
 <script>
+// ---------- dados e helpers ----------
 const ICONES={'panfletagem':'📄','adesivaço':'🏷️','roda de conversa':'🗣️','ligatona':'📞','porta a porta':'🚪','bandeiraço':'🚩','outro':'✨'};
+const CLASSE={'panfletagem':'t-panfletagem','adesivaço':'t-adesivaco','roda de conversa':'t-roda','ligatona':'t-ligatona','porta a porta':'t-porta','bandeiraço':'t-bandeiraco','outro':'t-outro'};
 const TIPOS=Object.keys(ICONES);
-const estado={onde:null,quando:'qualquer',tipo:null,aba:'lista',filaAba:'analise'};
+const estado={onde:null,quando:'qualquer',tipo:null,gaveta:'baixa',vista:{lat:-23.62,lon:-46.62,zoom:10},foco:null,filaAba:'analise',inscrevendo:null,minhasAberta:null,avisoTexto:null,recusando:null,erroRecusa:null,aviso:null};
 const org=id=>DADOS.organizacoes.find(o=>o.id===id);
 const pessoa=id=>DADOS.pessoas.find(p=>p.id===id);
 const acao=id=>DADOS.acoes.find(a=>a.id===id);
+const eu=()=>DADOS.config.eu;
 const turnosDa=id=>DADOS.turnos.filter(t=>t.acao===id).sort((a,b)=>a.inicio.localeCompare(b.inicio));
 function turnosFuturos(id){return turnosDa(id).filter(t=>t.inicio.slice(0,10)>=DADOS.config.hoje)}
 const inscritosNo=tid=>DADOS.inscricoes.filter(i=>i.turno===tid&&!i.canceladaEm);
+const estouInscrito=tid=>inscritosNo(tid).some(i=>i.pessoa===eu());
 function vaoNa(id){return turnosDa(id).reduce((n,t)=>n+inscritosNo(t.id).length,0)}
-function fmtData(iso){const d=new Date(iso);const dias=['dom','seg','ter','qua','qui','sex','sáb'];
-  const dd=String(d.getDate()).padStart(2,'0'),mm=String(d.getMonth()+1).padStart(2,'0');
-  const h=d.getHours()+'h'+(d.getMinutes()?String(d.getMinutes()).padStart(2,'0'):'');
-  return `${dias[d.getDay()]} ${dd}/${mm}, ${h}`}
-function distanciaKm(a,b){const r=6371,x=(b.lat-a.lat)*Math.PI/180,y=(b.lon-a.lon)*Math.PI/180;
-  const s=Math.sin(x/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(y/2)**2;
-  return 2*r*Math.asin(Math.sqrt(s))}
+const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
+function hora(d){return d.getHours()+'h'+(d.getMinutes()?String(d.getMinutes()).padStart(2,'0'):'')}
+function fmtData(iso){const d=new Date(iso);return `${DIAS[d.getDay()]} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}, ${hora(d)}`}
+function fmtCurta(iso){const d=new Date(iso);return `${DIAS[d.getDay()]} ${hora(d)}`}
+function distanciaKm(a,b){const r=6371,x=(b.lat-a.lat)*Math.PI/180,y=(b.lon-a.lon)*Math.PI/180;const s=Math.sin(x/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(y/2)**2;return 2*r*Math.asin(Math.sqrt(s))}
 function quantosInscritos(n){return n===1?'1 inscrito':n+' inscritos'}
 function quantosVao(n){return n===1?'1 vai':n+' vão'}
 function lugarCurto(l){return l.bairro===l.cidade?l.cidade:`${l.bairro}, ${l.cidade}`}
-function nomeOrganizador(a){if(a.organizacao){const o=org(a.organizacao);return o.nome+(o.verificada?' <span class="selo">✓ verificada</span>':'')}return pessoa(a.organizador).nome}
+function nomeOrganizador(a){if(a.organizacao){const o=org(a.organizacao);return esc(o.nome)+(o.verificada?' <span class="selo">✓ verificada</span>':'')}return esc(pessoa(a.organizador).nome)}
 function somaDias(iso,n){const d=new Date(iso+'T00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
-function acoesVisiveis(){
-  const hoje=DADOS.config.hoje;
-  let lista=DADOS.acoes.filter(a=>a.status==='publicada'&&turnosFuturos(a.id).length)
-    .map(a=>({a,t:turnosFuturos(a.id)[0]}));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// ---------- busca por lugar (municipios do IBGE + distritos da capital) ----------
+const semAcento=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+function buscarLugares(q,n=7){q=semAcento(q.trim());if(q.length<2)return[];const r=[];
+  for(const l of LUGARES_BR){const nome=semAcento(l[0]);const i=nome.indexOf(q);if(i<0)continue;
+    const peso=(i===0?0:nome[i-1]===' '?1:3)+(l[4]==='d'?0:l[4]==='c'?.5:1);r.push([peso,l])}
+  return r.sort((a,b)=>a[0]-b[0]||a[1][0].localeCompare(b[1][0])).slice(0,n).map(x=>x[1])}
+const rotuloLugar=l=>l[4]==='d'?`<strong>${esc(l[0])}</strong><small>bairro de São Paulo</small>`:`<strong>${esc(l[0])}</strong><small>${esc(l[1])}${l[4]==='c'?', capital':''}</small>`;
+// ---------- mapa base: Protomaps da RMSP nos assets do artifact, senao tiles do OpenStreetMap ----------
+const FUNDO_ARQ={};let fundoDisponivel=null;
+async function fundoBase(mapa){
+  const tiles=()=>L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapa);
+  if(!window.FUNDO||typeof protomapsL==='undefined'||typeof pmtiles==='undefined')return tiles();
+  if(fundoDisponivel===null){try{fundoDisponivel=(await fetch('/_blob/'+FUNDO.baixo.ids[0],{method:'HEAD'})).ok}catch(e){fundoDisponivel=false}}
+  if(!fundoDisponivel)return tiles();
+  const abrir=nome=>FUNDO_ARQ[nome]||(FUNDO_ARQ[nome]=Promise.all(FUNDO[nome].ids.map(id=>fetch('/_blob/'+id).then(r=>r.text()))).then(partes=>{
+    const s=atob(partes.join('')),bin=new Uint8Array(s.length);for(let i=0;i<s.length;i++)bin[i]=s.charCodeAt(i);
+    setTimeout(()=>{if(camada._map)camada.redraw()},0);
+    return new pmtiles.PMTiles({getKey:()=>nome,getBytes:async(o,n)=>({data:bin.buffer.slice(o,o+n)})})}));
+  const roteador={async getZxy(z,x,y){
+    let nomes=z<=12?['baixo']:z===13?['z13']:null;
+    if(!nomes){const lon=(x+.5)/(1<<z)*360-180;nomes=lon<-46.6?['oeste','leste']:['leste','oeste'];if(Math.abs(lon+46.6)>.25)nomes=nomes.slice(0,1)}
+    for(const n of nomes){let r;try{r=await(await abrir(n)).getZxy(z,x,y)}catch(e){delete FUNDO_ARQ[n]}if(r)return r}
+    return undefined}};
+  const camada=protomapsL.leafletLayer({url:roteador,flavor:'light',lang:'pt',maxDataZoom:14,attribution:'© OpenStreetMap, Protomaps'});
+  camada._clampZoom=z=>L.GridLayer.prototype._clampZoom.call(camada,Math.round(z));
+  camada.addTo(mapa);return camada}
+// ---------- inicio ----------
+let mapa=null,marcadores=[];
+function acoesVisiveis(){const hoje=DADOS.config.hoje;
+  let lista=DADOS.acoes.filter(a=>a.status==='publicada'&&turnosFuturos(a.id).length).map(a=>({a,t:turnosFuturos(a.id)[0]}));
   if(estado.tipo)lista=lista.filter(x=>x.a.tipo===estado.tipo);
   if(estado.quando==='hoje')lista=lista.filter(x=>x.t.inicio.slice(0,10)===hoje);
-  if(estado.quando==='amanha')lista=lista.filter(x=>x.t.inicio.slice(0,10)===somaDias(hoje,1));
-  if(estado.quando==='fds')lista=lista.filter(x=>{const d=x.t.inicio.slice(0,10);const w=new Date(d+'T00:00').getDay();return d<=somaDias(hoje,7)&&(w===0||w===6)});
+  if(estado.quando==='fds')lista=lista.filter(x=>turnosFuturos(x.a.id).some(t=>{const d=t.inicio.slice(0,10),w=new Date(d+'T00:00').getDay();return d<=somaDias(hoje,7)&&(w===0||w===6)}));
   lista.forEach(x=>x.km=estado.onde?distanciaKm(estado.onde,x.a.lugar):null);
-  return lista.sort((p,q)=>p.t.inicio.localeCompare(q.t.inicio)||((p.km??0)-(q.km??0)));
-}
-function cardAcao(x){const a=x.a;return `<a class="card" href="#/acao/${a.id}">
-  <div>${ICONES[a.tipo]} <strong>${a.titulo}</strong></div>
-  <div class="muted">${nomeOrganizador(a)}</div>
-  <div>${fmtData(x.t.inicio)} · ${lugarCurto(a.lugar)}${x.km!=null?` · ${x.km.toFixed(1)} km`:''}</div>
-  <div class="muted">${quantosVao(vaoNa(a.id))}${a.prioritaria?' · <span class="prior">Área prioritária</span>':''}</div></a>`}
-const LOCAIS=[{rotulo:'Sé',lat:-23.5505,lon:-46.6333},{rotulo:'Grajaú',lat:-23.7746,lon:-46.6978},{rotulo:'Diadema',lat:-23.6861,lon:-46.6228}];
-function setOnde(i){estado.onde=LOCAIS[i];render()}
+  return lista.sort((p,q)=>p.t.inicio.localeCompare(q.t.inicio)||((p.km??0)-(q.km??0)))}
+function acoesNaArea(){const todas=acoesVisiveis();if(!mapa)return todas;const b=mapa.getBounds();return todas.filter(x=>b.contains([x.a.lugar.lat,x.a.lugar.lon]))}
+function fmtKm(km){return km<10?km.toFixed(1).replace('.',','):String(Math.round(km))}
+function cardAcao(x){const a=x.a;return `<a class="card ${estado.foco===a.id?'foco':''}" id="card-${a.id}" href="#/acao/${a.id}" onmouseenter="focar(${a.id})" onmouseleave="focar(null)">
+  <div class="cubo ${CLASSE[a.tipo]}">${ICONES[a.tipo]}</div>
+  <div><div class="tit">${esc(a.titulo)}</div>
+  <div class="meta">${nomeOrganizador(a)}</div>
+  <div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
+  <div class="meta">${esc(lugarCurto(a.lugar))}${x.km!=null?`, a ${fmtKm(x.km)} km`:''}</div>
+  <div class="meta">${quantosVao(vaoNa(a.id))}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div></div></a>`}
 function telaInicio(){
-  const lista=acoesVisiveis();
-  return `<h1>Ações do 2º turno</h1><p class="muted">${DADOS.config.frase}</p>
-  <div><span class="muted">Onde você está:</span> ${LOCAIS.map((l,i)=>`<span class="chip ${estado.onde&&estado.onde.rotulo===l.rotulo?'ativo':''}" onclick="setOnde(${i})">${l.rotulo}</span>`).join('')}
-    <span class="chip" onclick="usarLocalizacao()">📍 usar minha localização</span></div>
-  <div style="margin-top:8px">${[['qualquer','Qualquer dia'],['hoje','Hoje'],['amanha','Amanhã'],['fds','Fim de semana']].map(([k,v])=>`<span class="chip ${estado.quando===k?'ativo':''}" data-quando="${k}" onclick="estado.quando='${k}';render()">${v}</span>`).join('')}</div>
-  <div style="margin-top:8px">${TIPOS.map(t=>`<span class="chip ${estado.tipo===t?'ativo':''}" onclick="estado.tipo=estado.tipo==='${t}'?null:'${t}';render()">${ICONES[t]} ${t}</span>`).join('')}</div>
-  <div style="margin-top:12px"><span class="chip ${estado.aba==='lista'?'ativo':''}" data-aba="lista" onclick="estado.aba='lista';render()">Lista</span><span class="chip ${estado.aba==='mapa'?'ativo':''}" data-aba="mapa" onclick="estado.aba='mapa';render()">Mapa</span></div>
-  ${estado.aba==='mapa'?'<div id="mapa" style="height:420px;border-radius:12px;margin-top:8px"></div>':
-    lista.length?lista.map(cardAcao).join(''):`<p>Ainda não tem ação perto de você. Crie a primeira.</p><a class="btn" href="#/criar">Criar ação</a>`}`}
-function usarLocalizacao(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{estado.onde={rotulo:'aqui',lat:p.coords.latitude,lon:p.coords.longitude};render()},()=>{})}
-const PINO=t=>L.divIcon({html:`<div style="font-size:22px;line-height:1;text-shadow:0 0 3px #fff">${ICONES[t]||'📍'}</div>`,className:'',iconSize:[24,24],iconAnchor:[12,12]});
-function montarMapa(){const el=document.getElementById('mapa');if(!el||!window.L)return;
-  const m=L.map(el).setView([-23.6,-46.6],10);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(m);
-  acoesVisiveis().forEach(x=>L.marker([x.a.lugar.lat,x.a.lugar.lon],{icon:PINO(x.a.tipo)}).addTo(m).bindPopup(`${ICONES[x.a.tipo]} <a href="#/acao/${x.a.id}">${x.a.titulo}</a><br>${fmtData(x.t.inicio)}`))}
-estado.inscrevendo=null;
-const eu=()=>DADOS.config.eu;
-const estouInscrito=tid=>inscritosNo(tid).some(i=>i.pessoa===eu());
+  return `<div id="inicio"><div id="mapa" aria-label="Mapa das ações"></div>
+  <div id="topo"><div class="busca"><span>🔍</span><input id="busca-lugar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(estado.onde?estado.onde.rotulo:'')}" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
+    <button class="ico" title="Usar minha localização" onclick="usarLocalizacao()">📍</button></div><div id="sugestoes"></div>
+   <div class="tipos">${TIPOS.map(t=>`<button class="chip ${estado.tipo===t?'ativo':''}" onclick="estado.tipo=estado.tipo==='${t}'?null:'${t}';render()"><b>${ICONES[t]}</b>${t}</button>`).join('')}</div></div>
+  <div id="gaveta" class="${estado.gaveta==='meio'?'meio':estado.gaveta==='cheia'?'cheia':''}"><div class="alca" onclick="alternarGaveta()" ontouchstart="arrastar(event)"></div>
+   <div class="cabeca"><strong id="contagem"></strong><div class="quando">${[['hoje','Hoje'],['fds','Fim de semana'],['qualquer','Qualquer dia']].map(([k,v])=>`<button class="pill ${estado.quando===k?'ativo':''}" data-quando="${k}" onclick="estado.quando='${k}';render()">${v}</button>`).join('')}</div></div>
+   <div id="lista"></div></div></div>`}
+function montarInicio(){
+  const el=document.getElementById('mapa');if(!el)return;
+  mapa=L.map(el,{zoomControl:false}).setView([estado.vista.lat,estado.vista.lon],estado.vista.zoom);
+  L.control.zoom({position:'bottomright'}).addTo(mapa);
+  fundoBase(mapa);
+  mapa.on('moveend',()=>{const c=mapa.getCenter();estado.vista={lat:c.lat,lon:c.lng,zoom:mapa.getZoom()};atualizarLista()});
+  atualizarLista();
+}
+function etiquetaPino(x){return L.divIcon({html:`<span class="etiqueta ${estado.foco===x.a.id?'foco':''}">${ICONES[x.a.tipo]} ${fmtCurta(x.t.inicio)}</span>`,className:'',iconSize:[0,0]})}
+function abrirGaveta(nivel){estado.gaveta=nivel;const g=document.getElementById('gaveta');if(g)g.className=nivel==='baixa'?'':nivel}
+function atualizarLista(){
+  if(!mapa)return;
+  const todas=acoesVisiveis(),aqui=acoesNaArea();
+  marcadores.forEach(m=>m.remove());marcadores=[];
+  todas.forEach(x=>{const m=L.marker([x.a.lugar.lat,x.a.lugar.lon],{icon:etiquetaPino(x),riseOnHover:true});m._acao=x.a.id;m.addTo(mapa);
+    m.on('click',()=>{focar(x.a.id);if(estado.gaveta==='baixa')abrirGaveta('meio');const c=document.getElementById('card-'+x.a.id);if(c)c.scrollIntoView({block:'nearest'})});marcadores.push(m)});
+  document.getElementById('contagem').textContent=aqui.length?`${aqui.length===1?'1 ação':aqui.length+' ações'} nesta área`:'Nenhuma ação nesta área';
+  document.getElementById('lista').innerHTML=aqui.length?aqui.map(cardAcao).join(''):
+    `<div class="vazio"><p>Ainda não tem ação por aqui.</p><p class="sec" style="font-weight:400">Afaste o mapa para ver outras, ou crie a primeira ação do seu bairro.</p><a class="btn" href="#/criar" onclick="novaCriacao()">Criar ação</a></div>`;
+}
+function focar(id){estado.foco=id;document.querySelectorAll('.card').forEach(c=>c.classList.toggle('foco',c.id==='card-'+id));
+  marcadores.forEach(m=>{const el=m.getElement();const e=el&&el.querySelector('.etiqueta');if(e)e.classList.toggle('foco',m._acao===id)})}
+function alternarGaveta(){abrirGaveta(estado.gaveta==='baixa'?'meio':estado.gaveta==='meio'?'cheia':'baixa')}
+function arrastar(ev){const y0=ev.touches[0].clientY;const fim=e=>{document.removeEventListener('touchend',fim);const dy=e.changedTouches[0].clientY-y0;if(Math.abs(dy)<30)return;
+  const ordem=['baixa','meio','cheia'];let i=ordem.indexOf(estado.gaveta)+(dy<0?1:-1);abrirGaveta(ordem[Math.max(0,Math.min(2,i))])};document.addEventListener('touchend',fim)}
+let sugFoco=-1,sugAtual=[];
+function sugerir(q){const box=document.getElementById('sugestoes');sugAtual=buscarLugares(q);sugFoco=-1;
+  box.innerHTML=sugAtual.map((l,i)=>`<div onclick="escolherSugestao(${i})">${rotuloLugar(l)}</div>`).join('');box.style.display=sugAtual.length?'block':'none'}
+function teclaBusca(e){if(!sugAtual.length)return;if(e.key==='ArrowDown'){sugFoco=Math.min(sugAtual.length-1,sugFoco+1)}else if(e.key==='ArrowUp'){sugFoco=Math.max(0,sugFoco-1)}else if(e.key==='Enter'){escolherSugestao(sugFoco<0?0:sugFoco);return}else if(e.key==='Escape'){document.getElementById('sugestoes').style.display='none';return}else return;
+  document.querySelectorAll('#sugestoes div').forEach((d,i)=>d.classList.toggle('foco',i===sugFoco))}
+const nomeLugar=l=>l[4]==='d'?`${l[0]}, São Paulo`:`${l[0]}, ${l[1]}`;
+function escolherSugestao(i){const l=sugAtual[i];if(!l)return;document.getElementById('busca-lugar').value=nomeLugar(l);document.getElementById('sugestoes').style.display='none';irParaLugar(l)}
+function irParaLugar(l){estado.onde={rotulo:nomeLugar(l),lat:l[2],lon:l[3]};const zoom=l[4]==='d'?13:l[4]==='c'?11:12;if(mapa)mapa.setView([l[2],l[3]],zoom);else estado.vista={lat:l[2],lon:l[3],zoom};if(estado.gaveta==='baixa')abrirGaveta('meio')}
+function usarLocalizacao(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{irParaLugar(['Minha localização','',p.coords.latitude,p.coords.longitude,'g'])},()=>{})}
+// ---------- acao ----------
 function inscrever(tid){if(estouInscrito(tid))return;DADOS.inscricoes.push({id:Date.now(),pessoa:eu(),turno:tid,criadaEm:DADOS.config.hoje,canceladaEm:null,presenca:null});estado.inscrevendo=null;render()}
 function desistir(tid){const i=DADOS.inscricoes.find(i=>i.turno===tid&&i.pessoa===eu()&&!i.canceladaEm);if(i)i.canceladaEm=DADOS.config.hoje;render()}
 function iniciarVou(tid){estado.inscrevendo={turno:tid,passo:'dados'};render()}
 function pedirCodigo(){estado.inscrevendo.passo='codigo';render()}
 function compartilhar(){const u=location.href;if(navigator.share)navigator.share({url:u});else{navigator.clipboard&&navigator.clipboard.writeText(u);alert('Link copiado')}}
-function botaoTurno(t){
-  const n=inscritosNo(t.id).length;
+function botaoTurno(t){const n=inscritosNo(t.id).length;
   if(t.inicio.slice(0,10)<DADOS.config.hoje)return `<button class="btn" disabled>turno encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
-  if(estouInscrito(t.id))return `<span class="selo">Você vai ✓</span> <button class="btn sec" onclick="desistir(${t.id})">desistir</button>`;
+  if(estouInscrito(t.id))return `<span class="selo">Você vai ✓</span> <button class="btn sec mini" onclick="desistir(${t.id})">desistir</button>`;
   if(t.lotacao&&n>=t.lotacao)return `<button class="btn" disabled>lotado</button>`;
   return `<button class="btn" onclick="iniciarVou(${t.id})">Vou</button>`}
-function telaAcao(id){const a=acao(id);if(!a)return '<p>Ação não encontrada.</p>';const fechada=a.status!=='publicada';
-  const ts=turnosDa(id),futuros=turnosFuturos(id);const ins=estado.inscrevendo;
-  const inscritoEmAlgum=ts.some(t=>estouInscrito(t.id));
-  return `<a href="#/inicio" class="muted">← voltar</a>
-  <h1>${ICONES[a.tipo]} ${a.titulo}</h1>
-  <div class="muted">${nomeOrganizador(a)}${a.prioritaria?' · <span class="prior">Área prioritária</span>':''}</div>
+function telaAcao(id){const a=acao(id);if(!a)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const fechada=a.status!=='publicada';
+  const ts=turnosDa(id),futuros=turnosFuturos(id),ins=estado.inscrevendo;const inscritoEmAlgum=ts.some(t=>estouInscrito(t.id));
+  return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a>
+  <div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>
+  <h1>${esc(a.titulo)}</h1>
+  <div class="sec" style="font-size:15px">${nomeOrganizador(a)}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div>
   ${fechada?`<p class="erro">Esta ação não está aberta a inscrições (${a.status}).</p>`:futuros.length?'':'<p class="erro">Esta ação já aconteceu.</p>'}
-  <p>${a.descricao}</p>
-  <h2>Onde</h2><div>${a.lugar.nome}</div><div class="muted">${lugarCurto(a.lugar)}</div>
-  <div id="minimapa" style="height:180px;border-radius:12px;margin:8px 0"></div>
+  <p style="margin-top:12px">${esc(a.descricao)}</p>
+  <h2>Onde</h2><div><strong>${esc(a.lugar.nome)}</strong></div><div class="sec" style="font-size:15px">${esc(lugarCurto(a.lugar))}</div>
+  <div id="minimapa" style="height:180px;border-radius:14px;margin:10px 0"></div>
   <h2>Quando</h2>
-  ${ts.map(t=>`<div class="card"><div>${fmtData(t.inicio)} até ${fmtData(t.fim).split(', ')[1]} · ${quantosVao(inscritosNo(t.id).length)}${t.lotacao?` de ${t.lotacao}`:''}</div><div style="margin-top:8px">${fechada?'':botaoTurno(t)}</div>
-    ${ins&&ins.turno===t.id&&ins.passo==='dados'?`<label>Seu nome</label><input id="vnome"><label>Seu WhatsApp</label><input id="vtel" placeholder="(11) 9xxxx-xxxx"><p class="muted">Seu nome e telefone vão para quem organiza esta ação.</p><button class="btn" onclick="pedirCodigo()">Receber código</button>`:''}
-    ${ins&&ins.turno===t.id&&ins.passo==='codigo'?`<label>Código que chegou no WhatsApp</label><input id="vcod" maxlength="4" placeholder="0000"><button class="btn" onclick="inscrever(${t.id})">Confirmar</button>`:''}</div>`).join('')}
-  ${inscritoEmAlgum?`<h2>Combinado</h2><div class="card"><p>${a.detalhe}</p><a class="btn" href="${a.grupo}" target="_blank">Entrar no grupo do WhatsApp</a> <button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`:''}
-  <h2>Quem organiza</h2><div class="muted">${nomeOrganizador(a)}</div>`}
-function montarMiniMapa(a){const el=document.getElementById('minimapa');if(!el||!window.L)return;const m=L.map(el,{zoomControl:false}).setView([a.lugar.lat,a.lugar.lon],15);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);L.marker([a.lugar.lat,a.lugar.lon],{icon:PINO(a.tipo)}).addTo(m)}
+  ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${quantosVao(inscritosNo(t.id).length)}${t.lotacao?` de ${t.lotacao} vagas`:''}</div><div style="margin-top:8px">${fechada?'':botaoTurno(t)}</div>
+    ${ins&&ins.turno===t.id&&ins.passo==='dados'?`<label>Seu nome</label><input id="vnome"><label>Seu WhatsApp</label><input id="vtel" placeholder="(11) 9xxxx-xxxx"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p><button class="btn" onclick="pedirCodigo()">Receber código</button>`:''}
+    ${ins&&ins.turno===t.id&&ins.passo==='codigo'?`<label>Código que chegou no WhatsApp</label><input id="vcod" maxlength="4" placeholder="0000"><div style="margin-top:8px"><button class="btn" onclick="inscrever(${t.id})">Confirmar</button></div>`:''}</div>`).join('')}
+  ${inscritoEmAlgum?`<h2>Combinado</h2><div class="aviso"><p>${esc(a.detalhe)}</p><a class="btn" href="${esc(a.grupo)}" target="_blank" rel="noopener">Entrar no grupo do WhatsApp</a> <button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`:''}
+  <h2>Quem organiza</h2><div class="sec" style="font-size:15px">${nomeOrganizador(a)}</div></div>`}
+function montarMiniMapa(l,arrastavel){const el=document.getElementById('minimapa');if(!el)return null;const m=L.map(el,{zoomControl:false,attributionControl:false}).setView([l.lat,l.lon],arrastavel?14:15);fundoBase(m);
+  const mk=L.marker([l.lat,l.lon],{icon:L.divIcon({html:'<span class="etiqueta">📍 aqui</span>',className:'',iconSize:[0,0]}),draggable:!!arrastavel}).addTo(m);return {m,mk}}
+// ---------- criar ----------
 const MODELOS={
  'panfletagem':{titulo:'Panfletagem na estação',descricao:'Vamos distribuir material do Lula na saída da estação. Traga disposição; o material a gente leva.',dica:'Leve 2 pessoas por saída e combine um ponto de encontro fácil de achar.'},
  'adesivaço':{titulo:'Adesivaço no semáforo',descricao:'Adesivos do Lula para carros, motos e quem passar. Material garantido.',dica:'Escolha um cruzamento com semáforo longo e calçada larga.'},
@@ -795,19 +247,19 @@ const MODELOS={
  'porta a porta':{titulo:'Porta a porta na vila',descricao:'Em duplas, conversa na porta com quem mora na região. Roteiro e material no ponto de encontro.',dica:'Sempre em dupla. Combine horário de voltar ao ponto.'},
  'bandeiraço':{titulo:'Bandeiraço na avenida',descricao:'Bandeiras e faixas do Lula na hora do rush. Traga bandeira se tiver.',dica:'Hora do rush, calçada larga, longe da faixa de pedestres.'},
  'outro':{titulo:'',descricao:'',dica:'Descreva o que vai acontecer e o que a pessoa precisa levar.'}};
-const LUGARES=[{nome:'Estação Grajaú',bairro:'Grajaú',cidade:'São Paulo',lat:-23.7746,lon:-46.6978},{nome:'Terminal Parelheiros',bairro:'Parelheiros',cidade:'São Paulo',lat:-23.8273,lon:-46.7271},{nome:'Praça da Sé',bairro:'Sé',cidade:'São Paulo',lat:-23.5505,lon:-46.6333},{nome:'Estação Jardim Ângela',bairro:'Jardim Ângela',cidade:'São Paulo',lat:-23.7138,lon:-46.7609},{nome:'Largo 13 de Maio',bairro:'Santo Amaro',cidade:'São Paulo',lat:-23.6510,lon:-46.7087},{nome:'Terminal Diadema',bairro:'Centro',cidade:'Diadema',lat:-23.6861,lon:-46.6228},{nome:'Praça da Matriz',bairro:'Centro',cidade:'São Bernardo do Campo',lat:-23.6944,lon:-46.5654},{nome:'Estação Brasilândia',bairro:'Brasilândia',cidade:'São Paulo',lat:-23.4616,lon:-46.6895},{nome:'Estação Guaianases',bairro:'Guaianases',cidade:'São Paulo',lat:-23.5410,lon:-46.4103},{nome:'Feira de Cidade Tiradentes',bairro:'Cidade Tiradentes',cidade:'São Paulo',lat:-23.5853,lon:-46.4035},{nome:'Largo da Batata',bairro:'Pinheiros',cidade:'São Paulo',lat:-23.5668,lon:-46.6931},{nome:'Terminal Capão Redondo',bairro:'Capão Redondo',cidade:'São Paulo',lat:-23.6666,lon:-46.7680}];
-function novoCriar(){return {passo:1,editando:null,tipo:null,titulo:'',descricao:'',lugar:null,buscaLugar:'',turnos:[{inicio:'',fim:'',lotacao:''}],detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
-estado.criar=novoCriar();estado.aviso=null;
+function novoCriar(){return {passo:1,editando:null,tipo:null,titulo:'',descricao:'',lugar:{nome:'',bairro:'',cidade:'',lat:null,lon:null},buscaLugar:'',turnos:[{inicio:'',fim:'',lotacao:''}],detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
+estado.criar=novoCriar();
 function cv(campo,valor){estado.criar[campo]=valor}
-function buscarLugar(el){estado.criar.buscaLugar=el.value;render();const n=document.getElementById('buscaLugar');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}}
 function escolherTipo(t){const c=estado.criar;c.tipo=t;if(!c.editando){c.titulo=MODELOS[t].titulo;c.descricao=MODELOS[t].descricao}c.erros={};c.passo=2;render()}
 function novaCriacao(){estado.criar=novoCriar()}
 function cancelarEdicao(){estado.criar=novoCriar();location.hash='#/minhas'}
-function escolherLugar(i){estado.criar.lugar=LUGARES[i];render()}
-function trocarLugar(){estado.criar.lugar=null;render()}
+let sugLugarCriar=[];
+function sugerirCriar(q){const box=document.getElementById('sug-criar');sugLugarCriar=buscarLugares(q,5);estado.criar.buscaLugar=q;
+  box.innerHTML=sugLugarCriar.map((l,i)=>`<div onclick="escolherLugarCriar(${i})">${rotuloLugar(l)}</div>`).join('');box.style.display=sugLugarCriar.length?'block':'none'}
+function escolherLugarCriar(i){const l=sugLugarCriar[i];if(!l)return;const c=estado.criar;Object.assign(c.lugar,{bairro:l[0],cidade:l[4]==='d'?'São Paulo':l[0],lat:l[2],lon:l[3]});c.buscaLugar=nomeLugar(l);render()}
 function addTurno(){estado.criar.turnos.push({inicio:'',fim:'',lotacao:''});render()}
 function telValido(t){return /^\(\d{2}\) 9[\dx]{4}-[\dx]{4}$/.test(t)||/^\d{11}$/.test(t.replace(/\D/g,''))}
-function validarPasso2(){const c=estado.criar,e={};if(!c.titulo.trim())e.titulo='Dê um título.';if(!c.lugar)e.lugar='Escolha um lugar público.';
+function validarPasso2(){const c=estado.criar,e={};if(!c.titulo.trim())e.titulo='Dê um título.';if(!c.lugar.nome.trim())e.lugarNome='Diga o nome do ponto de encontro.';if(c.lugar.lat==null)e.lugar='Marque o lugar no mapa.';
   const ts=c.turnos.filter(t=>t.inicio||t.fim);if(!ts.length)e.turnos='Informe pelo menos um turno.';else if(ts.some(t=>!t.inicio||!t.fim||t.fim<=t.inicio))e.turnos='Cada turno precisa de início e fim, e o fim depois do início.';else if(ts.some(t=>t.inicio.slice(0,10)<DADOS.config.hoje))e.turnos='Turno no passado.';
   c.erros=e;if(!Object.keys(e).length)c.passo=3;render()}
 function atualizarTurnos(c,acaoId){const atuais=turnosDa(acaoId);const form=c.turnos.filter(t=>t.inicio&&t.fim);
@@ -815,50 +267,51 @@ function atualizarTurnos(c,acaoId){const atuais=turnosDa(acaoId);const form=c.tu
   const sobra=atuais.slice(form.length).map(t=>t.id);DADOS.turnos=DADOS.turnos.filter(t=>!sobra.includes(t.id))}
 function turnosDoFormulario(c,acaoId){return c.turnos.filter(t=>t.inicio&&t.fim).map((t,i)=>({id:Date.now()+i,acao:acaoId,inicio:t.inicio,fim:t.fim,lotacao:t.lotacao?Number(t.lotacao):null}))}
 function publicarAcao(){const c=estado.criar,e={};if(!c.nome.trim())e.nome='Seu nome.';if(!telValido(c.telefone))e.telefone='Telefone no formato (11) 9xxxx-xxxx.';c.erros=e;if(Object.keys(e).length){render();return}
-  if(c.editando){const a=acao(c.editando);Object.assign(a,{titulo:c.titulo,descricao:c.descricao,lugar:c.lugar,detalhe:c.detalhe,grupo:c.grupo,organizacao:c.organizacao,prioritaria:DADOS.areasPrioritarias.includes(c.lugar.bairro)});
+  const lugar=Object.assign({},c.lugar);
+  if(c.editando){const a=acao(c.editando);Object.assign(a,{titulo:c.titulo,descricao:c.descricao,lugar,detalhe:c.detalhe,grupo:c.grupo,organizacao:c.organizacao,prioritaria:DADOS.areasPrioritarias.includes(lugar.bairro)});
     atualizarTurnos(c,a.id);estado.aviso='Ação atualizada.';estado.criar=novoCriar();location.hash='#/minhas';return}
   const o=c.organizacao?org(c.organizacao):null;const status=o&&o.verificada?'publicada':'em análise';
   const id=Math.max(...DADOS.acoes.map(a=>a.id))+1;
-  DADOS.acoes.push({id,titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,organizador:eu(),organizacao:c.organizacao,lugar:c.lugar,detalhe:c.detalhe,grupo:c.grupo,status,motivoRecusa:null,prioritaria:DADOS.areasPrioritarias.includes(c.lugar.bairro),criadaEm:DADOS.config.hoje});
+  DADOS.acoes.push({id,titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,organizador:eu(),organizacao:c.organizacao,lugar,detalhe:c.detalhe,grupo:c.grupo,status,motivoRecusa:null,prioritaria:DADOS.areasPrioritarias.includes(lugar.bairro),criadaEm:DADOS.config.hoje});
   DADOS.turnos.push(...turnosDoFormulario(c,id));
-  estado.aviso=status==='publicada'?'Ação publicada! Já aparece no Início.':'Recebemos: sua ação está em análise, avisamos pelo WhatsApp.';
+  estado.aviso=status==='publicada'?'Publicada! Sua ação já aparece no mapa.':'Recebemos: sua ação está em análise, avisamos pelo WhatsApp.';
   estado.criar=novoCriar();location.hash='#/minhas'}
-function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c.erros[k]}</div>`:'';
-  if(c.passo===1)return `<h1>Criar ação</h1><p class="muted">Passo 1 de 3: que tipo de ação?</p>${TIPOS.map(t=>`<a class="card" href="#" onclick="escolherTipo('${t}');return false"><strong>${ICONES[t]} ${t}</strong><div class="muted">${MODELOS[t].dica}</div></a>`).join('')}`;
-  if(c.passo===2)return `<h1>${c.editando?'Editar ação':'Criar ação'}</h1><p class="muted">Passo 2 de 3: onde e quando · ${ICONES[c.tipo]} ${c.tipo}</p>
-   <label>Título</label><input value="${c.titulo}" oninput="cv('titulo',this.value)">${E('titulo')}
-   <label>Descrição</label><textarea rows="3" oninput="cv('descricao',this.value)">${c.descricao}</textarea>
-   <label>Lugar público do encontro</label>
-   ${c.lugar?`<div class="card"><strong>${c.lugar.nome}</strong><div class="muted">${c.lugar.bairro}, ${c.lugar.cidade}</div><div id="minimapa" style="height:160px;margin-top:8px"></div><button class="btn sec" style="margin-top:8px" onclick="trocarLugar()">trocar lugar</button></div>`:
-     `<input id="buscaLugar" placeholder="estação, praça, terminal, feira..." value="${c.buscaLugar}" oninput="buscarLugar(this)">`+
-     LUGARES.map((l,i)=>({l,i})).filter(x=>x.l.nome.toLowerCase().includes(c.buscaLugar.toLowerCase())).slice(0,5).map(x=>`<a class="card" href="#" onclick="escolherLugar(${x.i});return false">${x.l.nome} <span class="muted">· ${x.l.bairro}, ${x.l.cidade}</span></a>`).join('')}${E('lugar')}
-   <label>Turnos</label>${c.turnos.map((t,i)=>`<div class="card"><input type="datetime-local" value="${t.inicio}" onchange="estado.criar.turnos[${i}].inicio=this.value"> até <input type="datetime-local" value="${t.fim}" onchange="estado.criar.turnos[${i}].fim=this.value"><input type="number" placeholder="lotação (opcional)" value="${t.lotacao}" oninput="estado.criar.turnos[${i}].lotacao=this.value"></div>`).join('')}
-   <button class="btn sec" onclick="addTurno()">+ outro turno</button>${E('turnos')}
-   <label>Detalhe do encontro, só para inscritos</label><input placeholder="ex.: saída 2, camisa vermelha" value="${c.detalhe}" oninput="cv('detalhe',this.value)">
-   <label>Link do grupo de WhatsApp</label><input placeholder="https://chat.whatsapp.com/..." value="${c.grupo}" oninput="cv('grupo',this.value)">
-   <p>${c.editando?'<button class="btn sec" onclick="cancelarEdicao()">Cancelar</button>':'<button class="btn sec" onclick="estado.criar.passo=1;render()">Voltar</button>'} <button class="btn" onclick="validarPasso2()">Continuar</button></p>`;
+function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c.erros[k]}</div>`:'';const titulo=c.editando?'Editar ação':'Criar ação';
+  if(c.passo===1)return `<div class="pagina"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 1 de 3. Que tipo de ação?</p>${TIPOS.map(t=>`<a class="card" href="#" onclick="escolherTipo('${t}');return false"><div class="cubo ${CLASSE[t]}">${ICONES[t]}</div><div><div class="tit">${t}</div><div class="meta">${MODELOS[t].dica}</div></div></a>`).join('')}</div>`;
+  if(c.passo===2)return `<div class="pagina"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 2 de 3. Onde e quando. ${ICONES[c.tipo]} ${c.tipo}</p>
+   <label>Título</label><input value="${esc(c.titulo)}" oninput="cv('titulo',this.value)">${E('titulo')}
+   <label>Descrição</label><textarea rows="3" oninput="cv('descricao',this.value)">${esc(c.descricao)}</textarea>
+   <label>Nome do ponto de encontro</label><input placeholder="ex.: Estação Grajaú, saída 2" value="${esc(c.lugar.nome)}" oninput="estado.criar.lugar.nome=this.value">${E('lugarNome')}
+   <label>Cidade ou bairro</label><div style="position:relative"><input id="busca-criar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(c.buscaLugar)}" oninput="sugerirCriar(this.value)"><div id="sug-criar" style="position:absolute;left:0;right:0;top:48px;background:#fff;border-radius:12px;box-shadow:0 8px 28px rgba(23,23,26,.2);z-index:5;display:none"></div></div>
+   ${c.lugar.lat!=null?`<p class="sec" style="margin:8px 0 4px">Arraste o pino até o ponto exato do encontro.</p><div id="minimapa" style="height:220px;border-radius:14px"></div>`:''}${E('lugar')}
+   <label>Turnos</label>${c.turnos.map((t,i)=>`<div class="linha" style="display:grid;gap:6px"><input type="datetime-local" value="${t.inicio}" onchange="estado.criar.turnos[${i}].inicio=this.value"><input type="datetime-local" value="${t.fim}" onchange="estado.criar.turnos[${i}].fim=this.value"><input type="number" placeholder="Vagas (opcional)" value="${t.lotacao}" oninput="estado.criar.turnos[${i}].lotacao=this.value"></div>`).join('')}
+   <button class="btn sec mini" onclick="addTurno()">Adicionar outro turno</button>${E('turnos')}
+   <label>Detalhe do encontro, só para inscritos</label><input placeholder="ex.: perto do ponto de ônibus, camisa vermelha" value="${esc(c.detalhe)}" oninput="cv('detalhe',this.value)">
+   <label>Link do grupo de WhatsApp</label><input placeholder="https://chat.whatsapp.com/..." value="${esc(c.grupo)}" oninput="cv('grupo',this.value)">
+   <p style="margin-top:18px">${c.editando?'<button class="btn sec" onclick="cancelarEdicao()">Cancelar</button>':'<button class="btn sec" onclick="estado.criar.passo=1;render()">Voltar</button>'} <button class="btn" onclick="validarPasso2()">Continuar</button></p></div>`;
   const o=c.organizacao?org(c.organizacao):null;
-  return `<h1>${c.editando?'Editar ação':'Criar ação'}</h1><p class="muted">Passo 3 de 3: quem organiza</p>
-   <label>Seu nome</label><input value="${c.nome}" oninput="cv('nome',this.value)">${E('nome')}
-   <label>Seu WhatsApp</label><input placeholder="(11) 9xxxx-xxxx" value="${c.telefone}" oninput="cv('telefone',this.value)">${E('telefone')}
-   <label>Em nome de uma organização?</label><select onchange="estado.criar.organizacao=this.value?Number(this.value):null;render()"><option value="">Sou eu mesmo(a)</option>${DADOS.organizacoes.map(x=>`<option value="${x.id}" ${c.organizacao===x.id?'selected':''}>${x.nome}</option>`).join('')}</select>
-   <div class="muted">${o&&o.verificada?'✓ verificada: publica na hora':'sem selo: passa pela fila (sua ação está em análise até um moderador aprovar)'}</div>
-   <p><button class="btn sec" onclick="estado.criar.passo=2;render()">Voltar</button> <button class="btn" onclick="publicarAcao()">${c.editando?'Salvar':'Publicar'}</button></p>`}
-estado.minhasAberta=null;estado.avisoTexto=null;estado.recusando=null;estado.erroRecusa=null;
+  return `<div class="pagina"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 3 de 3. Quem organiza.</p>
+   <label>Seu nome</label><input value="${esc(c.nome)}" oninput="cv('nome',this.value)">${E('nome')}
+   <label>Seu WhatsApp</label><input placeholder="(11) 9xxxx-xxxx" value="${esc(c.telefone)}" oninput="cv('telefone',this.value)">${E('telefone')}
+   <label>Em nome de uma organização?</label><select onchange="estado.criar.organizacao=this.value?Number(this.value):null;render()"><option value="">Sou eu mesmo(a)</option>${DADOS.organizacoes.map(x=>`<option value="${x.id}" ${c.organizacao===x.id?'selected':''}>${esc(x.nome)}</option>`).join('')}</select>
+   <p class="sec" style="margin-top:6px">${o&&o.verificada?'✓ verificada: publica na hora':'sem selo: passa pela fila (sua ação está em análise até um moderador aprovar)'}</p>
+   <p style="margin-top:18px"><button class="btn sec" onclick="estado.criar.passo=2;render()">Voltar</button> <button class="btn" onclick="publicarAcao()">${c.editando?'Salvar':'Publicar'}</button></p></div>`}
+// ---------- minhas ----------
 const ORDEM={'em análise':0,'publicada':1,'encerrada':2,'recusada':3,'rascunho':4};
 function textoAviso(a,t){return `Oi! ${fmtData(t.inicio)} tem ${a.titulo} em ${a.lugar.nome}, ${a.lugar.bairro}. ${a.detalhe} Até lá!`}
 function copiar(txt){navigator.clipboard&&navigator.clipboard.writeText(txt);alert('Copiado')}
 function marcarPresenca(insId,v){const i=DADOS.inscricoes.find(i=>i.id===insId);if(i)i.presenca=v}
 function encerrar(id){acao(id).status='encerrada';render()}
-function editar(id){const a=acao(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,titulo:a.titulo,descricao:a.descricao,lugar:a.lugar,detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,nome:pessoa(a.organizador).nome,telefone:pessoa(a.organizador).telefone,turnos:turnosDa(id).map(t=>({inicio:t.inicio,fim:t.fim,lotacao:t.lotacao||''}))});estado.criar=c;location.hash='#/criar'}
+function editar(id){const a=acao(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,titulo:a.titulo,descricao:a.descricao,lugar:Object.assign({},a.lugar),buscaLugar:lugarCurto(a.lugar),detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,nome:pessoa(a.organizador).nome,telefone:pessoa(a.organizador).telefone,turnos:turnosDa(id).map(t=>({inicio:t.inicio,fim:t.fim,lotacao:t.lotacao||''}))});estado.criar=c;location.hash='#/criar'}
 function telaMinhas(){const minhas=DADOS.acoes.filter(a=>a.organizador===eu()).sort((p,q)=>ORDEM[p.status]-ORDEM[q.status]);
-  const aviso=estado.aviso?`<div class="card" style="background:#eaf7ee">${estado.aviso}</div>`:'';estado.aviso=null;
-  return `<h1>Minhas ações</h1>${aviso}${minhas.length?'':'<p class="muted">Você ainda não criou nenhuma ação.</p>'}
-  ${minhas.map(a=>`<div class="card"><div onclick="estado.minhasAberta=estado.minhasAberta===${a.id}?null:${a.id};render()" style="cursor:pointer"><strong>${ICONES[a.tipo]} ${a.titulo}</strong> <span class="muted">· ${a.status}</span>${a.motivoRecusa?`<div class="erro">Motivo: ${a.motivoRecusa}</div>`:''}<div class="muted">${quantosInscritos(vaoNa(a.id))}</div></div>
-   ${estado.minhasAberta===a.id?turnosDa(a.id).map(t=>{const ins=inscritosNo(t.id);const passado=t.inicio.slice(0,10)<DADOS.config.hoje;return `<div style="margin-top:8px;border-top:1px solid var(--borda);padding-top:8px"><strong>${fmtData(t.inicio)}</strong> · ${quantosInscritos(ins.length)}
-     ${ins.map(i=>`<div>${pessoa(i.pessoa).nome} <span class="muted">${pessoa(i.pessoa).telefone}</span>${passado?` <label style="display:inline;font-weight:400"><input type="checkbox" style="width:auto" ${i.presenca?'checked':''} onchange="marcarPresenca(${i.id},this.checked)"> presente</label>`:''}</div>`).join('')}
-     <div style="margin-top:6px"><button class="btn sec" onclick="copiar('${ins.map(i=>pessoa(i.pessoa).telefone).join(', ')}')">Copiar números</button> <button class="btn sec" onclick="estado.avisoTexto=${t.id};render()">Mandar aviso</button>${passado?' <span class="muted">Marcar presença: marque quem foi</span>':''}</div>
-     ${estado.avisoTexto===t.id?`<textarea rows="3" id="aviso${t.id}">${textoAviso(a,t)}</textarea><button class="btn sec" onclick="copiar(document.getElementById('aviso${t.id}').value)">copiar</button>`:''}</div>`}).join('')+`<div style="margin-top:8px"><button class="btn sec" onclick="editar(${a.id})">Editar</button> ${a.status!=='encerrada'?`<button class="btn sec" onclick="encerrar(${a.id})">Encerrar</button>`:''}</div>`:''}</div>`).join('')}`}
+  const aviso=estado.aviso?`<div class="aviso">${estado.aviso}</div>`:'';estado.aviso=null;
+  return `<div class="pagina"><h1>Minhas ações</h1>${aviso}${minhas.length?'':'<div class="vazio"><p>Você ainda não criou nenhuma ação.</p><a class="btn" href="#/criar" onclick="novaCriacao()">Criar ação</a></div>'}
+  ${minhas.map(a=>`<div class="linha"><div onclick="estado.minhasAberta=estado.minhasAberta===${a.id}?null:${a.id};render()" style="cursor:pointer;display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center"><div class="cubo ${CLASSE[a.tipo]}" style="width:44px;height:44px;font-size:22px">${ICONES[a.tipo]}</div><div><div class="tit" style="font-weight:600">${esc(a.titulo)}</div><div class="sec">${a.status}${a.motivoRecusa?`. Motivo: ${esc(a.motivoRecusa)}`:''}. ${quantosInscritos(vaoNa(a.id))}</div></div></div>
+   ${estado.minhasAberta===a.id?turnosDa(a.id).map(t=>{const ins=inscritosNo(t.id);const passado=t.inicio.slice(0,10)<DADOS.config.hoje;return `<div style="margin-top:10px;padding-left:54px"><strong>${fmtData(t.inicio)}</strong> <span class="sec">${quantosInscritos(ins.length)}</span>
+     ${ins.map(i=>`<div>${esc(pessoa(i.pessoa).nome)} <span class="sec">${pessoa(i.pessoa).telefone}</span>${passado?` <label style="display:inline;font-weight:400;font-size:14px"><input type="checkbox" style="width:auto" ${i.presenca?'checked':''} onchange="marcarPresenca(${i.id},this.checked)"> presente</label>`:''}</div>`).join('')}
+     <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec mini" onclick="copiar('${ins.map(i=>pessoa(i.pessoa).telefone).join(', ')}')">Copiar números</button> <button class="btn sec mini" onclick="estado.avisoTexto=${t.id};render()">Mandar aviso</button>${passado?' <span class="sec" style="align-self:center">Marcar presença: marque quem foi</span>':''}</div>
+     ${estado.avisoTexto===t.id?`<textarea rows="3" id="aviso${t.id}" style="margin-top:8px">${esc(textoAviso(a,t))}</textarea><button class="btn sec mini" style="margin-top:6px" onclick="copiar(document.getElementById('aviso${t.id}').value)">Copiar texto</button>`:''}</div>`}).join('')+`<div style="margin-top:12px;padding-left:54px;display:flex;gap:6px"><button class="btn sec mini" onclick="editar(${a.id})">Editar</button> ${a.status!=='encerrada'?`<button class="btn sec mini" onclick="encerrar(${a.id})">Encerrar</button>`:''}</div>`:''}</div>`).join('')}</div>`}
+// ---------- fila ----------
 function historicoOrganizador(pid){const as=DADOS.acoes.filter(a=>a.organizador===pid);return `já criou ${as.length} ações (${as.filter(a=>a.status==='publicada'||a.status==='encerrada').length} aprovadas, ${as.filter(a=>a.status==='recusada').length} recusadas)`}
 function aprovar(id){acao(id).status='publicada';render()}
 function recusar(id){const m=(document.getElementById('motivo'+id)||{}).value||'';if(!m.trim()){estado.recusando=id;estado.erroRecusa='Escreva o motivo.';render();return}const a=acao(id);a.status='recusada';a.motivoRecusa=m;estado.recusando=null;estado.erroRecusa=null;render()}
@@ -867,28 +320,30 @@ function despublicar(id){acao(id).status='rascunho';render()}
 function bloquear(pid){pessoa(pid).bloqueada=true;DADOS.acoes.filter(a=>a.organizador===pid&&a.status==='publicada').forEach(a=>a.status='rascunho');render()}
 function telaFila(){const aba=estado.filaAba;
   const lista=aba==='analise'?DADOS.acoes.filter(a=>a.status==='em análise').sort((p,q)=>q.criadaEm.localeCompare(p.criadaEm)):DADOS.acoes.filter(a=>a.status==='publicada');
-  return `<h1>Fila de moderação</h1>
-  <span class="chip ${aba==='analise'?'ativo':''}" onclick="estado.filaAba='analise';render()">Em análise (${DADOS.acoes.filter(a=>a.status==='em análise').length})</span><span class="chip ${aba==='publicadas'?'ativo':''}" onclick="estado.filaAba='publicadas';render()">Publicadas</span>
-  <p class="muted">Recuse se: não é ação de campanha; o lugar não é público; convoca para confronto; pede dinheiro; tem dado pessoal no texto.</p>
-  ${lista.length?'':'<p class="muted">Nada por aqui.</p>'}
-  ${lista.map(a=>{const t=turnosDa(a.id)[0]||{inicio:a.criadaEm+'T00:00'};const p=pessoa(a.organizador);const o=a.organizacao?org(a.organizacao):null;return `<div class="card">${cardAcao({a,t,km:null})}
-   <div class="muted">Organizador: ${p.nome} · ${p.telefone} · ${historicoOrganizador(p.id)}</div>
-   <div style="margin-top:8px">${aba==='analise'?`<button class="btn" onclick="aprovar(${a.id})">Aprovar</button> <button class="btn sec" onclick="estado.recusando=${a.id};render()">Recusar</button>${o&&!o.verificada?` <button class="btn sec" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}`:
-     `<button class="btn sec" onclick="despublicar(${a.id})">Despublicar</button> <button class="btn sec" onclick="bloquear(${p.id})">Bloquear organizador</button>`}</div>
-   ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: pede dinheiro para o material">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<button class="btn" onclick="recusar(${a.id})">Confirmar recusa</button>`:''}</div>`}).join('')}`}
+  return `<div class="pagina"><h1>Fila de moderação</h1>
+  <div class="quando" style="display:inline-flex;margin-bottom:12px"><button class="pill ${aba==='analise'?'ativo':''}" onclick="estado.filaAba='analise';render()">Em análise (${DADOS.acoes.filter(a=>a.status==='em análise').length})</button><button class="pill ${aba==='publicadas'?'ativo':''}" onclick="estado.filaAba='publicadas';render()">Publicadas</button></div>
+  <p class="sec">Recuse se: não é ação de campanha; o lugar não é público; convoca para confronto; pede dinheiro; tem dado pessoal no texto.</p>
+  ${lista.length?'':'<div class="vazio"><p>Nada por aqui.</p></div>'}
+  ${lista.map(a=>{const t=turnosDa(a.id)[0]||{inicio:a.criadaEm+'T00:00'};const p=pessoa(a.organizador);const o=a.organizacao?org(a.organizacao):null;return `<div class="linha">${cardAcao({a,t,km:null})}
+   <div class="sec">Organizador: ${esc(p.nome)}, ${p.telefone}. ${historicoOrganizador(p.id)}.</div>
+   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${aba==='analise'?`<button class="btn mini" onclick="aprovar(${a.id})">Aprovar</button> <button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Recusar</button>${o&&!o.verificada?` <button class="btn sec mini" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}`:
+     `<button class="btn sec mini" onclick="despublicar(${a.id})">Despublicar</button> <button class="btn sec mini" onclick="bloquear(${p.id})">Bloquear organizador</button>`}</div>
+   ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: pede dinheiro para o material">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="recusar(${a.id})">Confirmar recusa</button></div>`:''}</div>`}).join('')}</div>`}
+// ---------- roteamento ----------
 function render(){
-  const h=location.hash||'#/inicio';
-  const [,rota,arg]=h.split('/');
+  const h=location.hash||'#/inicio';const [,rota,arg]=h.split('/');
   if(rota!=='acao')estado.inscrevendo=null;if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}
+  if(mapa){mapa.remove();mapa=null;marcadores=[]}
   const app=document.getElementById('app');
-  app.innerHTML = rota==='acao'?telaAcao(Number(arg)) : rota==='criar'?telaCriar() : rota==='minhas'?telaMinhas() : rota==='fila'?telaFila() : telaInicio();
+  app.innerHTML=rota==='acao'?telaAcao(Number(arg)):rota==='criar'?telaCriar():rota==='minhas'?telaMinhas():rota==='fila'?telaFila():telaInicio();
   document.querySelectorAll('nav a[data-rota]').forEach(a=>a.classList.toggle('ativo',a.dataset.rota===(rota||'inicio')));
   document.getElementById('doar').href=(window.DADOS&&DADOS.config.vaquinha)||'#';
-  if((rota||'inicio')==='inicio'&&estado.aba==='mapa')montarMapa();
-  if(rota==='acao'&&acao(Number(arg)))montarMiniMapa(acao(Number(arg)));
-  if(rota==='criar'&&estado.criar.passo===2&&estado.criar.lugar)montarMiniMapa({lugar:estado.criar.lugar});
-  window.scrollTo(0,0);
+  if((rota||'inicio')==='inicio')montarInicio();
+  if(rota==='acao'&&acao(Number(arg)))montarMiniMapa(acao(Number(arg)).lugar,false);
+  if(rota==='criar'&&estado.criar.passo===2&&estado.criar.lugar.lat!=null){const r=montarMiniMapa(estado.criar.lugar,true);if(r)r.mk.on('dragend',()=>{const p=r.mk.getLatLng();estado.criar.lugar.lat=p.lat;estado.criar.lugar.lon=p.lng})}
+  if(rota!=='inicio')window.scrollTo(0,0);
 }
+document.addEventListener('click',e=>{if(!e.target.closest('#topo')){const s=document.getElementById('sugestoes');if(s)s.style.display='none'}});
 window.addEventListener('hashchange',render);
 window.addEventListener('DOMContentLoaded',render);
 </script>

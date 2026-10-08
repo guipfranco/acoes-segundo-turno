@@ -55,8 +55,8 @@ def test_dados_tem_verificada_e_nao_verificada_e_eu_sou_organizador():
 
 def test_inicio_tem_filtros_abas_e_helpers():
     for s in ["function fmtData", "function turnosFuturos", "function vaoNa", "function distanciaKm",
-              "data-quando=\"${k}\"", "'fds'", "data-aba=\"mapa\"",
-              "Ainda não tem ação perto de você", "Área prioritária", "leaflet"]:
+              "data-quando=\"${k}\"", "'fds'", "id=\"gaveta\"",
+              "Ainda não tem ação", "Área prioritária", "leaflet"]:
         assert s in HTML, s
 
 
@@ -93,7 +93,7 @@ def test_turno_lotado_e_inscricao_duplicada_nos_dados_e_no_codigo():
 
 
 def test_criar_tem_tres_passos_modelos_e_validacao():
-    for s in ["function telaCriar", "function publicarAcao", "const MODELOS", "const LUGARES",
+    for s in ["function telaCriar", "function publicarAcao", "const MODELOS", "function buscarLugares",
               "Continuar", "Publicar", "sua ação está em análise", "publica na hora", "passa pela fila",
               "Detalhe do encontro, só para inscritos", "Link do grupo de WhatsApp"]:
         assert s in HTML, s
@@ -104,7 +104,7 @@ def test_status_nasce_publicada_so_com_organizacao_verificada():
 
 
 def test_validacao_dos_campos_obrigatorios():
-    for s in ["Dê um título.", "Escolha um lugar público.", "Informe pelo menos um turno.",
+    for s in ["Dê um título.", "Diga o nome do ponto de encontro.", "Marque o lugar no mapa.", "Informe pelo menos um turno.",
               "Telefone no formato", "t.fim<=t.inicio"]:
         assert s in HTML, s
 
@@ -174,3 +174,37 @@ def test_turno_encerrado_vence_inscrito():
 
 def test_marcadores_sem_imagem_externa():
     assert "L.divIcon" in HTML
+
+
+# Redesenho (Airbnb/Meetup): busca por lugar, lista acompanha o mapa, fundo da RMSP no artifact
+LUGARES_JS = (RAIZ / "mockup" / "lugares.js").read_text(encoding="utf-8")
+
+
+def test_lugares_tem_municipios_do_brasil_e_distritos_da_capital():
+    corpo = LUGARES_JS.split("LUGARES_BR =", 1)[1].strip().rstrip(";")
+    lugares = json.loads(corpo)
+    assert len(lugares) >= 5570 + 96
+    ufs = {l[1] for l in lugares}
+    assert {"SP", "RS", "AM", "BA", "DF"} <= ufs
+    assert any(l[0] == "Grajaú" and l[4] == "d" for l in lugares)
+    assert any(l[0] == "Porto Alegre" and l[4] == "c" for l in lugares)
+
+
+def test_busca_por_lugar_e_lista_pela_area_do_mapa():
+    for s in ["function buscarLugares", "function irParaLugar", "getBounds()", "function acoesNaArea",
+              "nesta área", "moveend", 'id="busca-lugar"', "lugares.js"]:
+        assert s in HTML, s
+
+
+def test_fundo_da_rmsp_com_fallback_para_tiles():
+    for s in ["function fundoBase", "/_blob/", "pmtiles", "protomaps-leaflet", "tile.openstreetmap.org"]:
+        assert s in HTML, s
+
+
+def test_pino_mostra_dia_e_hora():
+    assert "function etiquetaPino" in HTML
+
+
+def test_criar_marca_o_lugar_no_mapa():
+    for s in ["draggable:!!arrastavel", "Nome do ponto de encontro", "Cidade ou bairro"]:
+        assert s in HTML, s
