@@ -90,3 +90,20 @@ def test_turno_lotado_e_inscricao_duplicada_nos_dados_e_no_codigo():
     assert any(i["turno"] == 7 and i["pessoa"] == d["config"]["eu"] for i in d["inscricoes"])
     assert "if(estouInscrito(tid))return" in HTML  # não duplica
     assert "n>=t.lotacao" in HTML
+
+
+def test_criar_tem_tres_passos_modelos_e_validacao():
+    for s in ["function telaCriar", "function publicarAcao", "const MODELOS", "const LUGARES",
+              "Continuar", "Publicar", "sua ação está em análise", "publica na hora", "passa pela fila",
+              "Detalhe do encontro, só para inscritos", "Link do grupo de WhatsApp"]:
+        assert s in HTML, s
+
+
+def test_status_nasce_publicada_so_com_organizacao_verificada():
+    assert "o&&o.verificada?'publicada':'em análise'" in HTML
+
+
+def test_validacao_dos_campos_obrigatorios():
+    for s in ["Dê um título.", "Escolha um lugar público.", "Informe pelo menos um turno.",
+              "Telefone no formato", "t.fim<=t.inicio"]:
+        assert s in HTML, s

@@ -120,7 +120,58 @@ function telaAcao(id){const a=acao(id);if(!a)return '<p>Ação não encontrada.<
   ${inscritoEmAlgum?`<h2>Combinado</h2><div class="card"><p>${a.detalhe}</p><a class="btn" href="${a.grupo}" target="_blank">Entrar no grupo do WhatsApp</a> <button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`:''}
   <h2>Quem organiza</h2><div class="muted">${nomeOrganizador(a)}</div>`}
 function montarMiniMapa(a){const el=document.getElementById('minimapa');if(!el||!window.L)return;const m=L.map(el,{zoomControl:false}).setView([a.lugar.lat,a.lugar.lon],15);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);L.marker([a.lugar.lat,a.lugar.lon]).addTo(m)}
-function telaCriar(){return '<h1>Criar ação</h1>'}
+const MODELOS={
+ 'panfletagem':{titulo:'Panfletagem na estação',descricao:'Vamos distribuir material do Lula na saída da estação. Traga disposição; o material a gente leva.',dica:'Leve 2 pessoas por saída e combine um ponto de encontro fácil de achar.'},
+ 'adesivaço':{titulo:'Adesivaço no semáforo',descricao:'Adesivos do Lula para carros, motos e quem passar. Material garantido.',dica:'Escolha um cruzamento com semáforo longo e calçada larga.'},
+ 'roda de conversa':{titulo:'Roda de conversa no bairro',descricao:'Conversa aberta sobre por que votar no Lula e como responder às dúvidas de vizinhos e família.',dica:'Lugar com sombra e lugar para sentar. Uma hora basta.'},
+ 'ligatona':{titulo:'Ligatona para indecisos',descricao:'Cada pessoa liga para os próprios contatos com um roteiro simples. Pode ser de casa.',dica:'Cada pessoa traz a lista dos próprios contatos; a gente passa o roteiro.'},
+ 'porta a porta':{titulo:'Porta a porta na vila',descricao:'Em duplas, conversa na porta com quem mora na região. Roteiro e material no ponto de encontro.',dica:'Sempre em dupla. Combine horário de voltar ao ponto.'},
+ 'bandeiraço':{titulo:'Bandeiraço na avenida',descricao:'Bandeiras e faixas do Lula na hora do rush. Traga bandeira se tiver.',dica:'Hora do rush, calçada larga, longe da faixa de pedestres.'},
+ 'outro':{titulo:'',descricao:'',dica:'Descreva o que vai acontecer e o que a pessoa precisa levar.'}};
+const LUGARES=[{nome:'Estação Grajaú',bairro:'Grajaú',cidade:'São Paulo',lat:-23.7746,lon:-46.6978},{nome:'Terminal Parelheiros',bairro:'Parelheiros',cidade:'São Paulo',lat:-23.8273,lon:-46.7271},{nome:'Praça da Sé',bairro:'Sé',cidade:'São Paulo',lat:-23.5505,lon:-46.6333},{nome:'Estação Jardim Ângela',bairro:'Jardim Ângela',cidade:'São Paulo',lat:-23.7138,lon:-46.7609},{nome:'Largo 13 de Maio',bairro:'Santo Amaro',cidade:'São Paulo',lat:-23.6510,lon:-46.7087},{nome:'Terminal Diadema',bairro:'Centro',cidade:'Diadema',lat:-23.6861,lon:-46.6228},{nome:'Praça da Matriz',bairro:'Centro',cidade:'São Bernardo do Campo',lat:-23.6944,lon:-46.5654},{nome:'Estação Brasilândia',bairro:'Brasilândia',cidade:'São Paulo',lat:-23.4616,lon:-46.6895},{nome:'Estação Guaianases',bairro:'Guaianases',cidade:'São Paulo',lat:-23.5410,lon:-46.4103},{nome:'Feira de Cidade Tiradentes',bairro:'Cidade Tiradentes',cidade:'São Paulo',lat:-23.5853,lon:-46.4035},{nome:'Largo da Batata',bairro:'Pinheiros',cidade:'São Paulo',lat:-23.5668,lon:-46.6931},{nome:'Terminal Capão Redondo',bairro:'Capão Redondo',cidade:'São Paulo',lat:-23.6666,lon:-46.7680}];
+function novoCriar(){return {passo:1,editando:null,tipo:null,titulo:'',descricao:'',lugar:null,buscaLugar:'',turnos:[{inicio:'',fim:'',lotacao:''}],detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
+estado.criar=novoCriar();estado.aviso=null;
+function cv(campo,valor){estado.criar[campo]=valor}
+function buscarLugar(el){estado.criar.buscaLugar=el.value;render();const n=document.getElementById('buscaLugar');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}}
+function escolherTipo(t){const c=estado.criar;c.tipo=t;c.titulo=MODELOS[t].titulo;c.descricao=MODELOS[t].descricao;c.erros={};c.passo=2;render()}
+function escolherLugar(i){estado.criar.lugar=LUGARES[i];render()}
+function trocarLugar(){estado.criar.lugar=null;render()}
+function addTurno(){estado.criar.turnos.push({inicio:'',fim:'',lotacao:''});render()}
+function telValido(t){return /^\(\d{2}\) 9[\dx]{4}-[\dx]{4}$/.test(t)||/^\d{11}$/.test(t.replace(/\D/g,''))}
+function validarPasso2(){const c=estado.criar,e={};if(!c.titulo.trim())e.titulo='Dê um título.';if(!c.lugar)e.lugar='Escolha um lugar público.';
+  const ts=c.turnos.filter(t=>t.inicio||t.fim);if(!ts.length)e.turnos='Informe pelo menos um turno.';else if(ts.some(t=>!t.inicio||!t.fim||t.fim<=t.inicio))e.turnos='Cada turno precisa de início e fim, e o fim depois do início.';
+  c.erros=e;if(!Object.keys(e).length)c.passo=3;render()}
+function turnosDoFormulario(c,acaoId){return c.turnos.filter(t=>t.inicio&&t.fim).map((t,i)=>({id:Date.now()+i,acao:acaoId,inicio:t.inicio,fim:t.fim,lotacao:t.lotacao?Number(t.lotacao):null}))}
+function publicarAcao(){const c=estado.criar,e={};if(!c.nome.trim())e.nome='Seu nome.';if(!telValido(c.telefone))e.telefone='Telefone no formato (11) 9xxxx-xxxx.';c.erros=e;if(Object.keys(e).length){render();return}
+  if(c.editando){const a=acao(c.editando);Object.assign(a,{titulo:c.titulo,descricao:c.descricao,lugar:c.lugar,detalhe:c.detalhe,grupo:c.grupo,organizacao:c.organizacao,prioritaria:DADOS.areasPrioritarias.includes(c.lugar.bairro)});
+    DADOS.turnos=DADOS.turnos.filter(t=>t.acao!==a.id).concat(turnosDoFormulario(c,a.id));estado.aviso='Ação atualizada.';estado.criar=novoCriar();location.hash='#/minhas';return}
+  const o=c.organizacao?org(c.organizacao):null;const status=o&&o.verificada?'publicada':'em análise';
+  const id=Math.max(...DADOS.acoes.map(a=>a.id))+1;
+  DADOS.acoes.push({id,titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,organizador:eu(),organizacao:c.organizacao,lugar:c.lugar,detalhe:c.detalhe,grupo:c.grupo,status,motivoRecusa:null,prioritaria:DADOS.areasPrioritarias.includes(c.lugar.bairro),criadaEm:DADOS.config.hoje});
+  DADOS.turnos.push(...turnosDoFormulario(c,id));
+  estado.aviso=status==='publicada'?'Ação publicada! Já aparece no Início.':'Recebemos: sua ação está em análise, avisamos pelo WhatsApp.';
+  estado.criar=novoCriar();location.hash='#/minhas'}
+function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c.erros[k]}</div>`:'';
+  if(c.passo===1)return `<h1>Criar ação</h1><p class="muted">Passo 1 de 3: que tipo de ação?</p>${TIPOS.map(t=>`<a class="card" href="#" onclick="escolherTipo('${t}');return false"><strong>${ICONES[t]} ${t}</strong><div class="muted">${MODELOS[t].dica}</div></a>`).join('')}`;
+  if(c.passo===2)return `<h1>${c.editando?'Editar ação':'Criar ação'}</h1><p class="muted">Passo 2 de 3: onde e quando · ${ICONES[c.tipo]} ${c.tipo}</p>
+   <label>Título</label><input value="${c.titulo}" oninput="cv('titulo',this.value)">${E('titulo')}
+   <label>Descrição</label><textarea rows="3" oninput="cv('descricao',this.value)">${c.descricao}</textarea>
+   <label>Lugar público do encontro</label>
+   ${c.lugar?`<div class="card"><strong>${c.lugar.nome}</strong><div class="muted">${c.lugar.bairro}, ${c.lugar.cidade}</div><div id="minimapa" style="height:160px;margin-top:8px"></div><button class="btn sec" style="margin-top:8px" onclick="trocarLugar()">trocar lugar</button></div>`:
+     `<input id="buscaLugar" placeholder="estação, praça, terminal, feira..." value="${c.buscaLugar}" oninput="buscarLugar(this)">`+
+     LUGARES.map((l,i)=>({l,i})).filter(x=>x.l.nome.toLowerCase().includes(c.buscaLugar.toLowerCase())).slice(0,5).map(x=>`<a class="card" href="#" onclick="escolherLugar(${x.i});return false">${x.l.nome} <span class="muted">· ${x.l.bairro}, ${x.l.cidade}</span></a>`).join('')}${E('lugar')}
+   <label>Turnos</label>${c.turnos.map((t,i)=>`<div class="card"><input type="datetime-local" value="${t.inicio}" onchange="estado.criar.turnos[${i}].inicio=this.value"> até <input type="datetime-local" value="${t.fim}" onchange="estado.criar.turnos[${i}].fim=this.value"><input type="number" placeholder="lotação (opcional)" value="${t.lotacao}" oninput="estado.criar.turnos[${i}].lotacao=this.value"></div>`).join('')}
+   <button class="btn sec" onclick="addTurno()">+ outro turno</button>${E('turnos')}
+   <label>Detalhe do encontro, só para inscritos</label><input placeholder="ex.: saída 2, camisa vermelha" value="${c.detalhe}" oninput="cv('detalhe',this.value)">
+   <label>Link do grupo de WhatsApp</label><input placeholder="https://chat.whatsapp.com/..." value="${c.grupo}" oninput="cv('grupo',this.value)">
+   <p><button class="btn sec" onclick="estado.criar.passo=1;render()">Voltar</button> <button class="btn" onclick="validarPasso2()">Continuar</button></p>`;
+  const o=c.organizacao?org(c.organizacao):null;
+  return `<h1>${c.editando?'Editar ação':'Criar ação'}</h1><p class="muted">Passo 3 de 3: quem organiza</p>
+   <label>Seu nome</label><input value="${c.nome}" oninput="cv('nome',this.value)">${E('nome')}
+   <label>Seu WhatsApp</label><input placeholder="(11) 9xxxx-xxxx" value="${c.telefone}" oninput="cv('telefone',this.value)">${E('telefone')}
+   <label>Em nome de uma organização?</label><select onchange="estado.criar.organizacao=this.value?Number(this.value):null;render()"><option value="">Sou eu mesmo(a)</option>${DADOS.organizacoes.map(x=>`<option value="${x.id}" ${c.organizacao===x.id?'selected':''}>${x.nome}</option>`).join('')}</select>
+   <div class="muted">${o&&o.verificada?'✓ verificada: publica na hora':'sem selo: passa pela fila (sua ação está em análise até um moderador aprovar)'}</div>
+   <p><button class="btn sec" onclick="estado.criar.passo=2;render()">Voltar</button> <button class="btn" onclick="publicarAcao()">${c.editando?'Salvar':'Publicar'}</button></p>`}
 function telaMinhas(){return '<h1>Minhas ações</h1>'}
 function telaFila(){return '<h1>Fila</h1>'}
 function render(){
@@ -132,6 +183,7 @@ function render(){
   document.getElementById('doar').href=(window.DADOS&&DADOS.config.vaquinha)||'#';
   if((rota||'inicio')==='inicio'&&estado.aba==='mapa')montarMapa();
   if(rota==='acao'&&acao(Number(arg)))montarMiniMapa(acao(Number(arg)));
+  if(rota==='criar'&&estado.criar.passo===2&&estado.criar.lugar)montarMiniMapa({lugar:estado.criar.lugar});
   window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',render);
