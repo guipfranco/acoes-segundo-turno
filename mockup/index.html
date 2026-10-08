@@ -693,7 +693,7 @@ label{display:block;margin:12px 0 4px;font-weight:600}input,textarea,select{widt
 <main id="app"></main>
 <nav><div class="barra">
   <a href="#/inicio" data-rota="inicio">Início</a>
-  <a href="#/criar" data-rota="criar">Criar ação</a>
+  <a href="#/criar" data-rota="criar" onclick="novaCriacao()">Criar ação</a>
   <a href="#/minhas" data-rota="minhas">Minhas ações</a>
   <a href="#/fila" data-rota="fila">Fila</a>
   <a class="doar" id="doar" href="#" target="_blank">Doar</a>
@@ -751,10 +751,11 @@ function telaInicio(){
   ${estado.aba==='mapa'?'<div id="mapa" style="height:420px;border-radius:12px;margin-top:8px"></div>':
     lista.length?lista.map(cardAcao).join(''):`<p>Ainda não tem ação perto de você. Crie a primeira.</p><a class="btn" href="#/criar">Criar ação</a>`}`}
 function usarLocalizacao(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{estado.onde={rotulo:'aqui',lat:p.coords.latitude,lon:p.coords.longitude};render()},()=>{})}
+const PINO=t=>L.divIcon({html:`<div style="font-size:22px;line-height:1;text-shadow:0 0 3px #fff">${ICONES[t]||'📍'}</div>`,className:'',iconSize:[24,24],iconAnchor:[12,12]});
 function montarMapa(){const el=document.getElementById('mapa');if(!el||!window.L)return;
   const m=L.map(el).setView([-23.6,-46.6],10);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(m);
-  acoesVisiveis().forEach(x=>L.marker([x.a.lugar.lat,x.a.lugar.lon]).addTo(m).bindPopup(`${ICONES[x.a.tipo]} <a href="#/acao/${x.a.id}">${x.a.titulo}</a><br>${fmtData(x.t.inicio)}`))}
+  acoesVisiveis().forEach(x=>L.marker([x.a.lugar.lat,x.a.lugar.lon],{icon:PINO(x.a.tipo)}).addTo(m).bindPopup(`${ICONES[x.a.tipo]} <a href="#/acao/${x.a.id}">${x.a.titulo}</a><br>${fmtData(x.t.inicio)}`))}
 estado.inscrevendo=null;
 const eu=()=>DADOS.config.eu;
 const estouInscrito=tid=>inscritosNo(tid).some(i=>i.pessoa===eu());
@@ -765,27 +766,27 @@ function pedirCodigo(){estado.inscrevendo.passo='codigo';render()}
 function compartilhar(){const u=location.href;if(navigator.share)navigator.share({url:u});else{navigator.clipboard&&navigator.clipboard.writeText(u);alert('Link copiado')}}
 function botaoTurno(t){
   const n=inscritosNo(t.id).length;
+  if(t.inicio.slice(0,10)<DADOS.config.hoje)return `<button class="btn" disabled>turno encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
   if(estouInscrito(t.id))return `<span class="selo">Você vai ✓</span> <button class="btn sec" onclick="desistir(${t.id})">desistir</button>`;
-  if(t.inicio.slice(0,10)<DADOS.config.hoje)return `<button class="btn" disabled>turno encerrado</button>`;
   if(t.lotacao&&n>=t.lotacao)return `<button class="btn" disabled>lotado</button>`;
   return `<button class="btn" onclick="iniciarVou(${t.id})">Vou</button>`}
-function telaAcao(id){const a=acao(id);if(!a)return '<p>Ação não encontrada.</p>';
+function telaAcao(id){const a=acao(id);if(!a)return '<p>Ação não encontrada.</p>';const fechada=a.status!=='publicada';
   const ts=turnosDa(id),futuros=turnosFuturos(id);const ins=estado.inscrevendo;
   const inscritoEmAlgum=ts.some(t=>estouInscrito(t.id));
   return `<a href="#/inicio" class="muted">← voltar</a>
   <h1>${ICONES[a.tipo]} ${a.titulo}</h1>
   <div class="muted">${nomeOrganizador(a)}${a.prioritaria?' · <span class="prior">Área prioritária</span>':''}</div>
-  ${futuros.length?'':'<p class="erro">Esta ação já aconteceu.</p>'}
+  ${fechada?`<p class="erro">Esta ação não está aberta a inscrições (${a.status}).</p>`:futuros.length?'':'<p class="erro">Esta ação já aconteceu.</p>'}
   <p>${a.descricao}</p>
   <h2>Onde</h2><div>${a.lugar.nome}</div><div class="muted">${lugarCurto(a.lugar)}</div>
   <div id="minimapa" style="height:180px;border-radius:12px;margin:8px 0"></div>
   <h2>Quando</h2>
-  ${ts.map(t=>`<div class="card"><div>${fmtData(t.inicio)} até ${fmtData(t.fim).split(', ')[1]} · ${quantosVao(inscritosNo(t.id).length)}${t.lotacao?` de ${t.lotacao}`:''}</div><div style="margin-top:8px">${botaoTurno(t)}</div>
+  ${ts.map(t=>`<div class="card"><div>${fmtData(t.inicio)} até ${fmtData(t.fim).split(', ')[1]} · ${quantosVao(inscritosNo(t.id).length)}${t.lotacao?` de ${t.lotacao}`:''}</div><div style="margin-top:8px">${fechada?'':botaoTurno(t)}</div>
     ${ins&&ins.turno===t.id&&ins.passo==='dados'?`<label>Seu nome</label><input id="vnome"><label>Seu WhatsApp</label><input id="vtel" placeholder="(11) 9xxxx-xxxx"><p class="muted">Seu nome e telefone vão para quem organiza esta ação.</p><button class="btn" onclick="pedirCodigo()">Receber código</button>`:''}
     ${ins&&ins.turno===t.id&&ins.passo==='codigo'?`<label>Código que chegou no WhatsApp</label><input id="vcod" maxlength="4" placeholder="0000"><button class="btn" onclick="inscrever(${t.id})">Confirmar</button>`:''}</div>`).join('')}
   ${inscritoEmAlgum?`<h2>Combinado</h2><div class="card"><p>${a.detalhe}</p><a class="btn" href="${a.grupo}" target="_blank">Entrar no grupo do WhatsApp</a> <button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`:''}
   <h2>Quem organiza</h2><div class="muted">${nomeOrganizador(a)}</div>`}
-function montarMiniMapa(a){const el=document.getElementById('minimapa');if(!el||!window.L)return;const m=L.map(el,{zoomControl:false}).setView([a.lugar.lat,a.lugar.lon],15);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);L.marker([a.lugar.lat,a.lugar.lon]).addTo(m)}
+function montarMiniMapa(a){const el=document.getElementById('minimapa');if(!el||!window.L)return;const m=L.map(el,{zoomControl:false}).setView([a.lugar.lat,a.lugar.lon],15);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);L.marker([a.lugar.lat,a.lugar.lon],{icon:PINO(a.tipo)}).addTo(m)}
 const MODELOS={
  'panfletagem':{titulo:'Panfletagem na estação',descricao:'Vamos distribuir material do Lula na saída da estação. Traga disposição; o material a gente leva.',dica:'Leve 2 pessoas por saída e combine um ponto de encontro fácil de achar.'},
  'adesivaço':{titulo:'Adesivaço no semáforo',descricao:'Adesivos do Lula para carros, motos e quem passar. Material garantido.',dica:'Escolha um cruzamento com semáforo longo e calçada larga.'},
@@ -799,18 +800,23 @@ function novoCriar(){return {passo:1,editando:null,tipo:null,titulo:'',descricao
 estado.criar=novoCriar();estado.aviso=null;
 function cv(campo,valor){estado.criar[campo]=valor}
 function buscarLugar(el){estado.criar.buscaLugar=el.value;render();const n=document.getElementById('buscaLugar');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}}
-function escolherTipo(t){const c=estado.criar;c.tipo=t;c.titulo=MODELOS[t].titulo;c.descricao=MODELOS[t].descricao;c.erros={};c.passo=2;render()}
+function escolherTipo(t){const c=estado.criar;c.tipo=t;if(!c.editando){c.titulo=MODELOS[t].titulo;c.descricao=MODELOS[t].descricao}c.erros={};c.passo=2;render()}
+function novaCriacao(){estado.criar=novoCriar()}
+function cancelarEdicao(){estado.criar=novoCriar();location.hash='#/minhas'}
 function escolherLugar(i){estado.criar.lugar=LUGARES[i];render()}
 function trocarLugar(){estado.criar.lugar=null;render()}
 function addTurno(){estado.criar.turnos.push({inicio:'',fim:'',lotacao:''});render()}
 function telValido(t){return /^\(\d{2}\) 9[\dx]{4}-[\dx]{4}$/.test(t)||/^\d{11}$/.test(t.replace(/\D/g,''))}
 function validarPasso2(){const c=estado.criar,e={};if(!c.titulo.trim())e.titulo='Dê um título.';if(!c.lugar)e.lugar='Escolha um lugar público.';
-  const ts=c.turnos.filter(t=>t.inicio||t.fim);if(!ts.length)e.turnos='Informe pelo menos um turno.';else if(ts.some(t=>!t.inicio||!t.fim||t.fim<=t.inicio))e.turnos='Cada turno precisa de início e fim, e o fim depois do início.';
+  const ts=c.turnos.filter(t=>t.inicio||t.fim);if(!ts.length)e.turnos='Informe pelo menos um turno.';else if(ts.some(t=>!t.inicio||!t.fim||t.fim<=t.inicio))e.turnos='Cada turno precisa de início e fim, e o fim depois do início.';else if(ts.some(t=>t.inicio.slice(0,10)<DADOS.config.hoje))e.turnos='Turno no passado.';
   c.erros=e;if(!Object.keys(e).length)c.passo=3;render()}
+function atualizarTurnos(c,acaoId){const atuais=turnosDa(acaoId);const form=c.turnos.filter(t=>t.inicio&&t.fim);
+  form.forEach((t,i)=>{const lot=t.lotacao?Number(t.lotacao):null;if(atuais[i])Object.assign(atuais[i],{inicio:t.inicio,fim:t.fim,lotacao:lot});else DADOS.turnos.push({id:Date.now()+i,acao:acaoId,inicio:t.inicio,fim:t.fim,lotacao:lot})});
+  const sobra=atuais.slice(form.length).map(t=>t.id);DADOS.turnos=DADOS.turnos.filter(t=>!sobra.includes(t.id))}
 function turnosDoFormulario(c,acaoId){return c.turnos.filter(t=>t.inicio&&t.fim).map((t,i)=>({id:Date.now()+i,acao:acaoId,inicio:t.inicio,fim:t.fim,lotacao:t.lotacao?Number(t.lotacao):null}))}
 function publicarAcao(){const c=estado.criar,e={};if(!c.nome.trim())e.nome='Seu nome.';if(!telValido(c.telefone))e.telefone='Telefone no formato (11) 9xxxx-xxxx.';c.erros=e;if(Object.keys(e).length){render();return}
   if(c.editando){const a=acao(c.editando);Object.assign(a,{titulo:c.titulo,descricao:c.descricao,lugar:c.lugar,detalhe:c.detalhe,grupo:c.grupo,organizacao:c.organizacao,prioritaria:DADOS.areasPrioritarias.includes(c.lugar.bairro)});
-    DADOS.turnos=DADOS.turnos.filter(t=>t.acao!==a.id).concat(turnosDoFormulario(c,a.id));estado.aviso='Ação atualizada.';estado.criar=novoCriar();location.hash='#/minhas';return}
+    atualizarTurnos(c,a.id);estado.aviso='Ação atualizada.';estado.criar=novoCriar();location.hash='#/minhas';return}
   const o=c.organizacao?org(c.organizacao):null;const status=o&&o.verificada?'publicada':'em análise';
   const id=Math.max(...DADOS.acoes.map(a=>a.id))+1;
   DADOS.acoes.push({id,titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,organizador:eu(),organizacao:c.organizacao,lugar:c.lugar,detalhe:c.detalhe,grupo:c.grupo,status,motivoRecusa:null,prioritaria:DADOS.areasPrioritarias.includes(c.lugar.bairro),criadaEm:DADOS.config.hoje});
@@ -830,7 +836,7 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
    <button class="btn sec" onclick="addTurno()">+ outro turno</button>${E('turnos')}
    <label>Detalhe do encontro, só para inscritos</label><input placeholder="ex.: saída 2, camisa vermelha" value="${c.detalhe}" oninput="cv('detalhe',this.value)">
    <label>Link do grupo de WhatsApp</label><input placeholder="https://chat.whatsapp.com/..." value="${c.grupo}" oninput="cv('grupo',this.value)">
-   <p><button class="btn sec" onclick="estado.criar.passo=1;render()">Voltar</button> <button class="btn" onclick="validarPasso2()">Continuar</button></p>`;
+   <p>${c.editando?'<button class="btn sec" onclick="cancelarEdicao()">Cancelar</button>':'<button class="btn sec" onclick="estado.criar.passo=1;render()">Voltar</button>'} <button class="btn" onclick="validarPasso2()">Continuar</button></p>`;
   const o=c.organizacao?org(c.organizacao):null;
   return `<h1>${c.editando?'Editar ação':'Criar ação'}</h1><p class="muted">Passo 3 de 3: quem organiza</p>
    <label>Seu nome</label><input value="${c.nome}" oninput="cv('nome',this.value)">${E('nome')}
@@ -873,6 +879,7 @@ function telaFila(){const aba=estado.filaAba;
 function render(){
   const h=location.hash||'#/inicio';
   const [,rota,arg]=h.split('/');
+  if(rota!=='acao')estado.inscrevendo=null;if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}
   const app=document.getElementById('app');
   app.innerHTML = rota==='acao'?telaAcao(Number(arg)) : rota==='criar'?telaCriar() : rota==='minhas'?telaMinhas() : rota==='fila'?telaFila() : telaInicio();
   document.querySelectorAll('nav a[data-rota]').forEach(a=>a.classList.toggle('ativo',a.dataset.rota===(rota||'inicio')));

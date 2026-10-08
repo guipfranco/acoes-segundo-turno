@@ -144,3 +144,33 @@ def test_textos_singular_e_bairro_igual_a_cidade():
 
 def test_inscritos_no_singular():
     assert "function quantosInscritos" in HTML and "1 inscrito'" in HTML
+
+
+# Achados da revisão final
+def test_editar_preserva_turnos_e_inscritos():
+    assert "function atualizarTurnos" in HTML
+    assert "DADOS.turnos=DADOS.turnos.filter(t=>t.acao!==a.id)" not in HTML
+
+
+def test_acao_fora_de_publicada_nao_aceita_inscricao():
+    assert "não está aberta a inscrições" in HTML
+    assert "a.status!=='publicada'" in HTML
+
+
+def test_voltar_na_edicao_nao_perde_texto_e_nav_reseta_criacao():
+    assert 'onclick="novaCriacao()"' in HTML
+    assert "if(!c.editando){c.titulo=MODELOS[t].titulo" in HTML
+
+
+def test_turno_no_passado_e_recusado_ao_criar():
+    assert "Turno no passado." in HTML
+
+
+def test_turno_encerrado_vence_inscrito():
+    i = HTML.index("function botaoTurno")
+    corpo = HTML[i:i + 800]
+    assert corpo.index("turno encerrado") < corpo.index("Você vai")
+
+
+def test_marcadores_sem_imagem_externa():
+    assert "L.divIcon" in HTML
