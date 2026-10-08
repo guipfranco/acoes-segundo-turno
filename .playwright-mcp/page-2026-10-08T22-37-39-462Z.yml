@@ -1,0 +1,284 @@
+- generic [active] [ref=f1e1]:
+  - main [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - generic [ref=f1e4]:
+        - heading "O que você pode fazer hoje para eleger o Lula" [level=1] [ref=f1e5]
+        - paragraph [ref=f1e6]: Panfletagem, adesivaço, roda de conversa, ligatona. Encontre uma ação perto de você e diga que vai.
+        - generic [ref=f1e8]:
+          - generic [ref=f1e9]: 🔍
+          - textbox "Em que cidade você está?" [ref=f1e10]
+          - button "📍" [ref=f1e11] [cursor=pointer]
+        - button "Prefiro ajudar online, de onde estiver" [ref=f1e12] [cursor=pointer]
+      - generic [ref=f1e13]:
+        - generic [ref=f1e14]:
+          - generic [ref=f1e15]: Quando
+          - button "Em breve" [ref=f1e16] [cursor=pointer]
+          - button "Hoje" [ref=f1e17] [cursor=pointer]
+          - button "Amanhã" [ref=f1e18] [cursor=pointer]
+          - button "Esta semana" [ref=f1e19] [cursor=pointer]
+          - button "Fim de semana" [ref=f1e20] [cursor=pointer]
+          - button "Próxima semana" [ref=f1e21] [cursor=pointer]
+          - button "Escolher datas" [ref=f1e22] [cursor=pointer]
+        - generic [ref=f1e23]:
+          - generic [ref=f1e24]: Formato
+          - button "Presencial e online" [ref=f1e25] [cursor=pointer]
+          - button "Presencial" [ref=f1e26] [cursor=pointer]
+          - button "Online" [ref=f1e27] [cursor=pointer]
+      - generic [ref=f1e28]:
+        - button "📄 panfletagem" [ref=f1e29] [cursor=pointer]:
+          - generic [ref=f1e30]: 📄
+          - text: panfletagem
+        - button "🏷️ adesivaço" [ref=f1e31] [cursor=pointer]:
+          - generic [ref=f1e32]: 🏷️
+          - text: adesivaço
+        - button "🗣️ roda de conversa" [ref=f1e33] [cursor=pointer]:
+          - generic [ref=f1e34]: 🗣️
+          - text: roda de conversa
+        - button "📞 ligatona" [ref=f1e35] [cursor=pointer]:
+          - generic [ref=f1e36]: 📞
+          - text: ligatona
+        - button "🚪 porta a porta" [ref=f1e37] [cursor=pointer]:
+          - generic [ref=f1e38]: 🚪
+          - text: porta a porta
+        - button "🚩 bandeiraço" [ref=f1e39] [cursor=pointer]:
+          - generic [ref=f1e40]: 🚩
+          - text: bandeiraço
+        - button "✨ outro" [ref=f1e41] [cursor=pointer]:
+          - generic [ref=f1e42]: ✨
+          - text: outro
+      - generic [ref=f1e43]:
+        - generic [ref=f1e44]:
+          - 'heading "Perto de você: São Paulo" [level=2] [ref=f1e45]'
+          - link "Ver no mapa" [ref=f1e46] [cursor=pointer]:
+            - /url: "#/mapa"
+        - paragraph [ref=f1e47]: Chutamos a cidade. Não é aí? Digite a sua na busca.
+        - generic [ref=f1e48]:
+          - link "adesivaço Adesivaço na Sé sex 09/10, 12h Sé, São Paulo Mandato Vereadora Rosa ✓ verificada, 3 vão" [ref=f1e49] [cursor=pointer]:
+            - /url: "#/acao/3"
+            - img "adesivaço" [ref=f1e50]:
+              - text: 🏷️
+              - generic [ref=f1e51]: sex 12h
+            - generic [ref=f1e52]: Adesivaço na Sé
+            - generic [ref=f1e53]: sex 09/10, 12h
+            - generic [ref=f1e54]: Sé, São Paulo
+            - generic [ref=f1e55]: Mandato Vereadora Rosa ✓ verificada, 3 vão
+          - link "panfletagem Panfletagem na estação Grajaú sáb 10/10, 8h Grajaú, São Paulo Carlos Lima, 3 vão" [ref=f1e56] [cursor=pointer]:
+            - /url: "#/acao/1"
+            - img "panfletagem" [ref=f1e57]:
+              - text: 📄
+              - generic [ref=f1e58]: sáb 8h
+            - generic [ref=f1e59]: Panfletagem na estação Grajaú
+            - generic [ref=f1e60]: sáb 10/10, 8h
+            - generic [ref=f1e61]: Grajaú, São Paulo
+            - generic [ref=f1e62]: Carlos Lima, 3 vão
+          - link "bandeiraço Bandeiraço no Largo 13 sáb 10/10, 17h30 Santo Amaro, São Paulo Mandato Vereadora Rosa ✓ verificada, 1 vai" [ref=f1e63] [cursor=pointer]:
+            - /url: "#/acao/5"
+            - img "bandeiraço" [ref=f1e64]:
+              - text: 🚩
+              - generic [ref=f1e65]: sáb 17h30
+            - generic [ref=f1e66]: Bandeiraço no Largo 13
+            - generic [ref=f1e67]: sáb 10/10, 17h30
+            - generic [ref=f1e68]: Santo Amaro, São Paulo
+            - generic [ref=f1e69]: Mandato Vereadora Rosa ✓ verificada, 1 vai
+          - link "porta a porta Porta a porta no Jardim Ângela dom 11/10, 9h Jardim Ângela, São Paulo Mandato Vereadora Rosa ✓ verificada, 2 vão" [ref=f1e70] [cursor=pointer]:
+            - /url: "#/acao/4"
+            - img "porta a porta" [ref=f1e71]:
+              - text: 🚪
+              - generic [ref=f1e72]: dom 9h
+            - generic [ref=f1e73]: Porta a porta no Jardim Ângela
+            - generic [ref=f1e74]: dom 11/10, 9h
+            - generic [ref=f1e75]: Jardim Ângela, São Paulo
+            - generic [ref=f1e76]: Mandato Vereadora Rosa ✓ verificada, 2 vão
+          - link "panfletagem Panfletagem na Praça da Matriz dom 11/10, 9h São Bernardo do Campo Comitê Popular de Diadema ✓ verificada, 0 vão" [ref=f1e77] [cursor=pointer]:
+            - /url: "#/acao/7"
+            - img "panfletagem" [ref=f1e78]:
+              - text: 📄
+              - generic [ref=f1e79]: dom 9h
+            - generic [ref=f1e80]: Panfletagem na Praça da Matriz
+            - generic [ref=f1e81]: dom 11/10, 9h
+            - generic [ref=f1e82]: São Bernardo do Campo
+            - generic [ref=f1e83]: Comitê Popular de Diadema ✓ verificada, 0 vão
+          - link "ligatona Ligatona para indecisos de Diadema seg 12/10, 14h Diadema Comitê Popular de Diadema ✓ verificada, 0 vão" [ref=f1e84] [cursor=pointer]:
+            - /url: "#/acao/6"
+            - img "ligatona" [ref=f1e85]:
+              - text: 📞
+              - generic [ref=f1e86]: seg 14h
+            - generic [ref=f1e87]: Ligatona para indecisos de Diadema
+            - generic [ref=f1e88]: seg 12/10, 14h
+            - generic [ref=f1e89]: Diadema
+            - generic [ref=f1e90]: Comitê Popular de Diadema ✓ verificada, 0 vão
+          - link "roda de conversa Roda de conversa na Brasilândia ter 13/10, 19h Brasilândia, São Paulo Coletivo Periferia Viva, 0 vão" [ref=f1e91] [cursor=pointer]:
+            - /url: "#/acao/8"
+            - img "roda de conversa" [ref=f1e92]:
+              - text: 🗣️
+              - generic [ref=f1e93]: ter 19h
+            - generic [ref=f1e94]: Roda de conversa na Brasilândia
+            - generic [ref=f1e95]: ter 13/10, 19h
+            - generic [ref=f1e96]: Brasilândia, São Paulo
+            - generic [ref=f1e97]: Coletivo Periferia Viva, 0 vão
+          - link "roda de conversa Roda de conversa em Parelheiros qua 14/10, 18h30 Parelheiros, São Paulo Carlos Lima, 3 vão" [ref=f1e98] [cursor=pointer]:
+            - /url: "#/acao/2"
+            - img "roda de conversa" [ref=f1e99]:
+              - text: 🗣️
+              - generic [ref=f1e100]: qua 18h30
+            - generic [ref=f1e101]: Roda de conversa em Parelheiros
+            - generic [ref=f1e102]: qua 14/10, 18h30
+            - generic [ref=f1e103]: Parelheiros, São Paulo
+            - generic [ref=f1e104]: Carlos Lima, 3 vão
+          - link "adesivaço Adesivaço em Guaianases sáb 17/10, 9h Guaianases, São Paulo Mandato Deputado Chico ✓ verificada, 0 vão" [ref=f1e105] [cursor=pointer]:
+            - /url: "#/acao/9"
+            - img "adesivaço" [ref=f1e106]:
+              - text: 🏷️
+              - generic [ref=f1e107]: sáb 9h
+            - generic [ref=f1e108]: Adesivaço em Guaianases
+            - generic [ref=f1e109]: sáb 17/10, 9h
+            - generic [ref=f1e110]: Guaianases, São Paulo
+            - generic [ref=f1e111]: Mandato Deputado Chico ✓ verificada, 0 vão
+      - generic [ref=f1e112]:
+        - generic [ref=f1e113]:
+          - heading "Recife" [level=2] [ref=f1e114]
+          - link "Ver no mapa" [ref=f1e115] [cursor=pointer]:
+            - /url: "#/mapa"
+        - generic [ref=f1e116]:
+          - link "panfletagem Panfletagem no Marco Zero dom 11/10, 9h Recife Antigo, Recife Comitê Lula Recife ✓ verificada, 2 vão" [ref=f1e117] [cursor=pointer]:
+            - /url: "#/acao/15"
+            - img "panfletagem" [ref=f1e118]:
+              - text: 📄
+              - generic [ref=f1e119]: dom 9h
+            - generic [ref=f1e120]: Panfletagem no Marco Zero
+            - generic [ref=f1e121]: dom 11/10, 9h
+            - generic [ref=f1e122]: Recife Antigo, Recife
+            - generic [ref=f1e123]: Comitê Lula Recife ✓ verificada, 2 vão
+          - link "adesivaço Adesivaço em Boa Viagem seg 12/10, 16h30 Boa Viagem, Recife Comitê Lula Recife ✓ verificada, 0 vão" [ref=f1e124] [cursor=pointer]:
+            - /url: "#/acao/16"
+            - img "adesivaço" [ref=f1e125]:
+              - text: 🏷️
+              - generic [ref=f1e126]: seg 16h30
+            - generic [ref=f1e127]: Adesivaço em Boa Viagem
+            - generic [ref=f1e128]: seg 12/10, 16h30
+            - generic [ref=f1e129]: Boa Viagem, Recife
+            - generic [ref=f1e130]: Comitê Lula Recife ✓ verificada, 0 vão
+      - generic [ref=f1e131]:
+        - generic [ref=f1e132]:
+          - heading "Belo Horizonte" [level=2] [ref=f1e133]
+          - link "Ver no mapa" [ref=f1e134] [cursor=pointer]:
+            - /url: "#/mapa"
+        - generic [ref=f1e135]:
+          - link "bandeiraço Bandeiraço na Praça Sete sáb 10/10, 17h30 Centro, Belo Horizonte Juventude pela Democracia BH ✓ verificada, 1 vai" [ref=f1e136] [cursor=pointer]:
+            - /url: "#/acao/17"
+            - img "bandeiraço" [ref=f1e137]:
+              - text: 🚩
+              - generic [ref=f1e138]: sáb 17h30
+            - generic [ref=f1e139]: Bandeiraço na Praça Sete
+            - generic [ref=f1e140]: sáb 10/10, 17h30
+            - generic [ref=f1e141]: Centro, Belo Horizonte
+            - generic [ref=f1e142]: Juventude pela Democracia BH ✓ verificada, 1 vai
+          - link "roda de conversa Roda de conversa na Savassi ter 13/10, 19h Savassi, Belo Horizonte Juventude pela Democracia BH ✓ verificada, 0 vão" [ref=f1e143] [cursor=pointer]:
+            - /url: "#/acao/18"
+            - img "roda de conversa" [ref=f1e144]:
+              - text: 🗣️
+              - generic [ref=f1e145]: ter 19h
+            - generic [ref=f1e146]: Roda de conversa na Savassi
+            - generic [ref=f1e147]: ter 13/10, 19h
+            - generic [ref=f1e148]: Savassi, Belo Horizonte
+            - generic [ref=f1e149]: Juventude pela Democracia BH ✓ verificada, 0 vão
+      - generic [ref=f1e150]:
+        - generic [ref=f1e151]:
+          - heading "Porto Alegre" [level=2] [ref=f1e152]
+          - link "Ver no mapa" [ref=f1e153] [cursor=pointer]:
+            - /url: "#/mapa"
+        - generic [ref=f1e154]:
+          - link "panfletagem Panfletagem no Mercado Público sáb 10/10, 11h Centro Histórico, Porto Alegre Comitê Popular Porto Alegre ✓ verificada, 1 vai" [ref=f1e155] [cursor=pointer]:
+            - /url: "#/acao/19"
+            - img "panfletagem" [ref=f1e156]:
+              - text: 📄
+              - generic [ref=f1e157]: sáb 11h
+            - generic [ref=f1e158]: Panfletagem no Mercado Público
+            - generic [ref=f1e159]: sáb 10/10, 11h
+            - generic [ref=f1e160]: Centro Histórico, Porto Alegre
+            - generic [ref=f1e161]: Comitê Popular Porto Alegre ✓ verificada, 1 vai
+          - link "porta a porta Porta a porta na Restinga dom 11/10, 9h Restinga, Porto Alegre Comitê Popular Porto Alegre ✓ verificada, 0 vão" [ref=f1e162] [cursor=pointer]:
+            - /url: "#/acao/20"
+            - img "porta a porta" [ref=f1e163]:
+              - text: 🚪
+              - generic [ref=f1e164]: dom 9h
+            - generic [ref=f1e165]: Porta a porta na Restinga
+            - generic [ref=f1e166]: dom 11/10, 9h
+            - generic [ref=f1e167]: Restinga, Porto Alegre
+            - generic [ref=f1e168]: Comitê Popular Porto Alegre ✓ verificada, 0 vão
+      - generic [ref=f1e169]:
+        - generic [ref=f1e170]:
+          - heading "Salvador" [level=2] [ref=f1e171]
+          - link "Ver no mapa" [ref=f1e172] [cursor=pointer]:
+            - /url: "#/mapa"
+        - generic [ref=f1e173]:
+          - link "adesivaço Adesivaço no Campo Grande sáb 10/10, 16h Campo Grande, Salvador Rede Salvador Vota Lula, 0 vão" [ref=f1e174] [cursor=pointer]:
+            - /url: "#/acao/21"
+            - img "adesivaço" [ref=f1e175]:
+              - text: 🏷️
+              - generic [ref=f1e176]: sáb 16h
+            - generic [ref=f1e177]: Adesivaço no Campo Grande
+            - generic [ref=f1e178]: sáb 10/10, 16h
+            - generic [ref=f1e179]: Campo Grande, Salvador
+            - generic [ref=f1e180]: Rede Salvador Vota Lula, 0 vão
+          - link "panfletagem Panfletagem na Estação da Lapa qua 14/10, 17h Centro, Salvador Rede Salvador Vota Lula, 4 vão" [ref=f1e181] [cursor=pointer]:
+            - /url: "#/acao/22"
+            - img "panfletagem" [ref=f1e182]:
+              - text: 📄
+              - generic [ref=f1e183]: qua 17h
+            - generic [ref=f1e184]: Panfletagem na Estação da Lapa
+            - generic [ref=f1e185]: qua 14/10, 17h
+            - generic [ref=f1e186]: Centro, Salvador
+            - generic [ref=f1e187]: Rede Salvador Vota Lula, 4 vão
+      - generic [ref=f1e189]:
+        - heading "Online, de qualquer lugar" [level=2] [ref=f1e191]
+        - paragraph [ref=f1e192]: "Ligatona e mutirão de mensagens: você participa de casa, pelo celular."
+        - generic [ref=f1e193]:
+          - link "ligatona Ligatona nacional para indecisos sáb 10/10, 19h Online Brigada Digital 13 ✓ verificada, 0 vão" [ref=f1e194] [cursor=pointer]:
+            - /url: "#/acao/23"
+            - img "ligatona" [ref=f1e195]:
+              - text: 📞
+              - generic [ref=f1e196]: sáb 19h
+              - generic [ref=f1e197]: Online
+            - generic [ref=f1e198]: Ligatona nacional para indecisos
+            - generic [ref=f1e199]: sáb 10/10, 19h
+            - generic [ref=f1e200]: Online
+            - generic [ref=f1e201]: Brigada Digital 13 ✓ verificada, 0 vão
+          - link "outro Mutirão de mensagens no WhatsApp seg 12/10, 20h Online Brigada Digital 13 ✓ verificada, 0 vão" [ref=f1e202] [cursor=pointer]:
+            - /url: "#/acao/24"
+            - img "outro" [ref=f1e203]:
+              - text: ✨
+              - generic [ref=f1e204]: seg 20h
+              - generic [ref=f1e205]: Online
+            - generic [ref=f1e206]: Mutirão de mensagens no WhatsApp
+            - generic [ref=f1e207]: seg 12/10, 20h
+            - generic [ref=f1e208]: Online
+            - generic [ref=f1e209]: Brigada Digital 13 ✓ verificada, 0 vão
+      - generic [ref=f1e211]:
+        - paragraph [ref=f1e212]: Não achou ação na sua cidade?
+        - link "Criar a primeira ação" [ref=f1e213] [cursor=pointer]:
+          - /url: "#/criar"
+  - navigation [ref=f1e214]:
+    - generic [ref=f1e215]:
+      - link "🔍 Ações" [ref=f1e216] [cursor=pointer]:
+        - /url: "#/inicio"
+        - generic [ref=f1e217]: 🔍
+        - generic [ref=f1e218]: Ações
+      - link "🗺️ Mapa" [ref=f1e219] [cursor=pointer]:
+        - /url: "#/mapa"
+        - generic [ref=f1e220]: 🗺️
+        - generic [ref=f1e221]: Mapa
+      - link "＋ Criar ação" [ref=f1e222] [cursor=pointer]:
+        - /url: "#/criar"
+        - generic [ref=f1e223]: ＋
+        - generic [ref=f1e224]: Criar ação
+      - link "👤 Minhas" [ref=f1e225] [cursor=pointer]:
+        - /url: "#/minhas"
+        - generic [ref=f1e226]: 👤
+        - generic [ref=f1e227]: Minhas
+      - link "✅ Fila" [ref=f1e228] [cursor=pointer]:
+        - /url: "#/fila"
+        - generic [ref=f1e229]: ✅
+        - generic [ref=f1e230]: Fila
+      - link "Doar" [ref=f1e231] [cursor=pointer]:
+        - /url: https://exemplo.vaquinha.oficial/lula

@@ -1,0 +1,49 @@
+- generic [active] [ref=e1]:
+  - text: +
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - 'region "Mapa: de onde saiu o voto do Lula na RMSP" [ref=e4]':
+        - generic:
+          - generic [ref=e7]:
+            - button "Zoom in" [ref=e8] [cursor=pointer]: +
+            - button "Zoom out" [ref=e9] [cursor=pointer]: −
+          - generic: © OpenStreetMap · Protomaps
+      - button "Ver a região inteira" [ref=e12] [cursor=pointer]
+    - tablist "Painéis" [ref=e13]:
+      - button "Legenda" [pressed] [ref=e14] [cursor=pointer]
+      - button "Listas de trabalho" [ref=e15] [cursor=pointer]
+    - region "Controles" [ref=e16]:
+      - generic [ref=e18]:
+        - heading "Variação 2022 → 2026" [level=1] [ref=e19]
+        - paragraph [ref=e20]: Presidente no 1º turno, 2022 e 2026, por área e escola na RMSP.
+      - generic [ref=e21]:
+        - combobox "Cidade, bairro, distrito ou escola" [ref=e23]
+        - generic [ref=e24]:
+          - generic [ref=e25]: Mostrar no mapa
+          - generic [ref=e26]:
+            - generic "Distrito na capital; zona eleitoral nas cidades com mais de uma; município nas outras" [ref=e27] [cursor=pointer]:
+              - checkbox "Áreas" [checked] [ref=e28]
+              - text: Áreas
+            - generic [ref=e29] [cursor=pointer]:
+              - checkbox "Escolas" [ref=e30]
+              - text: Escolas
+            - generic "Igrejas, equipamentos públicos, associações, estações e terminais (OpenStreetMap), só nos nove distritos da zona sul" [ref=e31] [cursor=pointer]:
+              - checkbox "Pontos de interesse" [checked] [ref=e32]
+              - text: Pontos de interesse
+        - generic [ref=e33]:
+          - generic [ref=e34]: Pintar por
+          - generic [ref=e35]:
+            - button "Votos do Lula" [pressed] [ref=e36] [cursor=pointer]
+            - button "O que cresceu" [ref=e37] [cursor=pointer]
+          - generic [ref=e38]:
+            - generic "Ligada, cada clique junta o lugar à seleção (ou tira, se já estiver); desligada, use Ctrl+clique" [ref=e39] [cursor=pointer]:
+              - checkbox "Múltipla seleção" [checked] [ref=e40]
+              - text: Múltipla seleção
+            - button "× Limpar" [disabled] [ref=e41]
+    - generic [ref=e42]:
+      - generic [ref=e43]: Votos do Lula, 1º turno de 2026 menos 2022
+      - generic [ref=e54]:
+        - generic [ref=e55]: −12.000
+        - generic [ref=e56]: "0"
+        - generic [ref=e57]: "+12.000"
+      - generic [ref=e58]: Sem comparação 2022 × 2026

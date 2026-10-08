@@ -29,3 +29,20 @@ Meetup (cards com cara de evento).
 Primeira versão tinha chips iguais para tudo, cards idênticos com a mesma sombra e cinza no lugar de
 hierarquia. Trocado por: um único elemento com sombra forte (a gaveta), cards sem sombra separados por
 linha, tipos como linha rolável com ícone grande e rótulo pequeno, e o mapa como protagonista.
+
+## Inicial sem mapa (segunda rodada, 2026-10-08)
+
+Pedido do Gui: entrar como Airbnb e Meetup, sem mapa na primeira tela. A inicial passa a ser: frase da
+campanha, busca grande "Em que cidade você está?", linha de filtros do Meetup (Quando, Formato, tipo de
+ação) e vitrine de ações por cidade, cada uma com foto. A cidade de "Perto de você" é chutada pela
+geolocalização (São Paulo se não der), com aviso "Chutamos a cidade". Depois vêm Recife, Belo Horizonte,
+Porto Alegre, Salvador e o bloco "Online, de qualquer lugar". O mapa continua existindo em `#/mapa`.
+
+- Filtro "Quando" explícito: Em breve (padrão, próximos turnos primeiro), Hoje, Amanhã, Esta semana,
+  Fim de semana, Próxima semana, Escolher datas (campos "de" e "até"). Cada ação entra com o primeiro
+  turno que cabe no intervalo.
+- Formato: Presencial e online, Presencial, Online. Ação online não tem pino nem minimapa; na página
+  diz "Você participa de casa. O link da chamada vai para quem se inscreve".
+- Foto: placeholder em CSS (gradiente da cor do tipo e o ícone), com a hora no canto. A foto real
+  entra no mesmo lugar depois. Sem imagem externa.
+- Capturas: `r7-inicio-celular.png`, `r8-inicio-datas.png`, `r9-mapa-celular.png`, `r10-inicio-desktop.png`.

@@ -1,0 +1,200 @@
+- generic [active] [ref=f2e1]:
+  - main:
+    - generic [ref=f2e2]:
+      - generic "Mapa das ações" [ref=f2e3]:
+        - generic:
+          - generic:
+            - button "🏷️ sex 12h"
+            - button "📄 sáb 8h"
+            - button "📄 sáb 11h"
+            - button "🏷️ sáb 16h"
+            - button "🚩 sáb 17h30"
+            - button "🚩 sáb 17h30"
+            - button "🚪 dom 9h"
+            - button "📄 dom 9h"
+            - button "📄 dom 9h"
+            - button "🚪 dom 9h"
+            - button "📞 seg 14h"
+            - button "🏷️ seg 16h30"
+            - button "🗣️ ter 19h"
+            - button "🗣️ ter 19h"
+            - button "📄 qua 17h"
+            - button "🗣️ qua 18h30"
+            - button "🏷️ sáb 9h"
+        - generic:
+          - generic:
+            - generic [ref=f2e21]:
+              - button "Zoom in" [ref=f2e22] [cursor=pointer]: +
+              - button "Zoom out" [ref=f2e23] [cursor=pointer]: −
+            - generic [ref=f2e24]:
+              - link "Leaflet" [ref=f2e25] [cursor=pointer]:
+                - /url: https://leafletjs.com
+              - text: "| © OpenStreetMap"
+      - generic [ref=f2e30]:
+        - generic [ref=f2e31]:
+          - generic [ref=f2e32]: 🔍
+          - textbox "Cidade ou bairro" [ref=f2e33]
+          - button "📍" [ref=f2e34] [cursor=pointer]
+        - generic [ref=f2e35]:
+          - button "📄 panfletagem" [ref=f2e36] [cursor=pointer]:
+            - generic [ref=f2e37]: 📄
+            - text: panfletagem
+          - button "🏷️ adesivaço" [ref=f2e38] [cursor=pointer]:
+            - generic [ref=f2e39]: 🏷️
+            - text: adesivaço
+          - button "🗣️ roda de conversa" [ref=f2e40] [cursor=pointer]:
+            - generic [ref=f2e41]: 🗣️
+            - text: roda de conversa
+          - button "📞 ligatona" [ref=f2e42] [cursor=pointer]:
+            - generic [ref=f2e43]: 📞
+            - text: ligatona
+          - button "🚪 porta a porta" [ref=f2e44] [cursor=pointer]:
+            - generic [ref=f2e45]: 🚪
+            - text: porta a porta
+          - button "🚩 bandeiraço" [ref=f2e46] [cursor=pointer]:
+            - generic [ref=f2e47]: 🚩
+            - text: bandeiraço
+          - button "✨ outro" [ref=f2e48] [cursor=pointer]:
+            - generic [ref=f2e49]: ✨
+            - text: outro
+      - generic [ref=f2e50]:
+        - generic [ref=f2e52]:
+          - strong [ref=f2e54]: 9 ações nesta área
+          - generic [ref=f2e55]:
+            - generic [ref=f2e56]:
+              - button "Em breve" [ref=f2e57] [cursor=pointer]
+              - button "Hoje" [ref=f2e58] [cursor=pointer]
+              - button "Amanhã" [ref=f2e59] [cursor=pointer]
+              - button "Esta semana" [ref=f2e60] [cursor=pointer]
+              - button "Fim de semana" [ref=f2e61] [cursor=pointer]
+              - button "Próxima semana" [ref=f2e62] [cursor=pointer]
+              - button "Escolher datas" [ref=f2e63] [cursor=pointer]
+            - generic [ref=f2e64]:
+              - button "Presencial e online" [ref=f2e65] [cursor=pointer]
+              - button "Presencial" [ref=f2e66] [cursor=pointer]
+              - button "Online" [ref=f2e67] [cursor=pointer]
+        - generic [ref=f2e68]:
+          - link "🏷️ Adesivaço na Sé Mandato Vereadora Rosa ✓ verificada sex 09/10, 12h Sé, São Paulo 3 vão" [ref=f2e69] [cursor=pointer]:
+            - /url: "#/acao/3"
+            - generic [ref=f2e70]: 🏷️
+            - generic [ref=f2e71]:
+              - generic [ref=f2e72]: Adesivaço na Sé
+              - generic [ref=f2e73]: Mandato Vereadora Rosa ✓ verificada
+              - generic [ref=f2e74]: sex 09/10, 12h
+              - generic [ref=f2e75]: Sé, São Paulo
+              - generic [ref=f2e76]: 3 vão
+          - link "📄 Panfletagem na estação Grajaú Carlos Lima sáb 10/10, 8h Grajaú, São Paulo 3 vão Área prioritária" [ref=f2e77] [cursor=pointer]:
+            - /url: "#/acao/1"
+            - generic [ref=f2e78]: 📄
+            - generic [ref=f2e79]:
+              - generic [ref=f2e80]: Panfletagem na estação Grajaú
+              - generic [ref=f2e81]: Carlos Lima
+              - generic [ref=f2e82]: sáb 10/10, 8h
+              - generic [ref=f2e83]: Grajaú, São Paulo
+              - generic [ref=f2e84]: 3 vão Área prioritária
+          - link "🚩 Bandeiraço no Largo 13 Mandato Vereadora Rosa ✓ verificada sáb 10/10, 17h30 Santo Amaro, São Paulo 1 vai" [ref=f2e85] [cursor=pointer]:
+            - /url: "#/acao/5"
+            - generic [ref=f2e86]: 🚩
+            - generic [ref=f2e87]:
+              - generic [ref=f2e88]: Bandeiraço no Largo 13
+              - generic [ref=f2e89]: Mandato Vereadora Rosa ✓ verificada
+              - generic [ref=f2e90]: sáb 10/10, 17h30
+              - generic [ref=f2e91]: Santo Amaro, São Paulo
+              - generic [ref=f2e92]: 1 vai
+          - link "🚪 Porta a porta no Jardim Ângela Mandato Vereadora Rosa ✓ verificada dom 11/10, 9h Jardim Ângela, São Paulo 2 vão Área prioritária" [ref=f2e93] [cursor=pointer]:
+            - /url: "#/acao/4"
+            - generic [ref=f2e94]: 🚪
+            - generic [ref=f2e95]:
+              - generic [ref=f2e96]: Porta a porta no Jardim Ângela
+              - generic [ref=f2e97]: Mandato Vereadora Rosa ✓ verificada
+              - generic [ref=f2e98]: dom 11/10, 9h
+              - generic [ref=f2e99]: Jardim Ângela, São Paulo
+              - generic [ref=f2e100]: 2 vão Área prioritária
+          - link "📄 Panfletagem na Praça da Matriz Comitê Popular de Diadema ✓ verificada dom 11/10, 9h São Bernardo do Campo 0 vão Área prioritária" [ref=f2e101] [cursor=pointer]:
+            - /url: "#/acao/7"
+            - generic [ref=f2e102]: 📄
+            - generic [ref=f2e103]:
+              - generic [ref=f2e104]: Panfletagem na Praça da Matriz
+              - generic [ref=f2e105]: Comitê Popular de Diadema ✓ verificada
+              - generic [ref=f2e106]: dom 11/10, 9h
+              - generic [ref=f2e107]: São Bernardo do Campo
+              - generic [ref=f2e108]: 0 vão Área prioritária
+          - link "📞 Ligatona para indecisos de Diadema Comitê Popular de Diadema ✓ verificada seg 12/10, 14h Diadema 0 vão Área prioritária" [ref=f2e109] [cursor=pointer]:
+            - /url: "#/acao/6"
+            - generic [ref=f2e110]: 📞
+            - generic [ref=f2e111]:
+              - generic [ref=f2e112]: Ligatona para indecisos de Diadema
+              - generic [ref=f2e113]: Comitê Popular de Diadema ✓ verificada
+              - generic [ref=f2e114]: seg 12/10, 14h
+              - generic [ref=f2e115]: Diadema
+              - generic [ref=f2e116]: 0 vão Área prioritária
+          - link "🗣️ Roda de conversa na Brasilândia Coletivo Periferia Viva ter 13/10, 19h Brasilândia, São Paulo 0 vão Área prioritária" [ref=f2e117] [cursor=pointer]:
+            - /url: "#/acao/8"
+            - generic [ref=f2e118]: 🗣️
+            - generic [ref=f2e119]:
+              - generic [ref=f2e120]: Roda de conversa na Brasilândia
+              - generic [ref=f2e121]: Coletivo Periferia Viva
+              - generic [ref=f2e122]: ter 13/10, 19h
+              - generic [ref=f2e123]: Brasilândia, São Paulo
+              - generic [ref=f2e124]: 0 vão Área prioritária
+          - link "🗣️ Roda de conversa em Parelheiros Carlos Lima qua 14/10, 18h30 Parelheiros, São Paulo 3 vão Área prioritária" [ref=f2e125] [cursor=pointer]:
+            - /url: "#/acao/2"
+            - generic [ref=f2e126]: 🗣️
+            - generic [ref=f2e127]:
+              - generic [ref=f2e128]: Roda de conversa em Parelheiros
+              - generic [ref=f2e129]: Carlos Lima
+              - generic [ref=f2e130]: qua 14/10, 18h30
+              - generic [ref=f2e131]: Parelheiros, São Paulo
+              - generic [ref=f2e132]: 3 vão Área prioritária
+          - link "🏷️ Adesivaço em Guaianases Mandato Deputado Chico ✓ verificada sáb 17/10, 9h Guaianases, São Paulo 0 vão Área prioritária" [ref=f2e133] [cursor=pointer]:
+            - /url: "#/acao/9"
+            - generic [ref=f2e134]: 🏷️
+            - generic [ref=f2e135]:
+              - generic [ref=f2e136]: Adesivaço em Guaianases
+              - generic [ref=f2e137]: Mandato Deputado Chico ✓ verificada
+              - generic [ref=f2e138]: sáb 17/10, 9h
+              - generic [ref=f2e139]: Guaianases, São Paulo
+              - generic [ref=f2e140]: 0 vão Área prioritária
+          - heading "Online, de qualquer lugar" [level=2] [ref=f2e141]
+          - link "📞 Ligatona nacional para indecisos Brigada Digital 13 ✓ verificada sáb 10/10, 19h Online 0 vão" [ref=f2e142] [cursor=pointer]:
+            - /url: "#/acao/23"
+            - generic [ref=f2e143]: 📞
+            - generic [ref=f2e144]:
+              - generic [ref=f2e145]: Ligatona nacional para indecisos
+              - generic [ref=f2e146]: Brigada Digital 13 ✓ verificada
+              - generic [ref=f2e147]: sáb 10/10, 19h
+              - generic [ref=f2e148]: Online
+              - generic [ref=f2e149]: 0 vão
+          - link "✨ Mutirão de mensagens no WhatsApp Brigada Digital 13 ✓ verificada seg 12/10, 20h Online 0 vão" [ref=f2e150] [cursor=pointer]:
+            - /url: "#/acao/24"
+            - generic [ref=f2e151]: ✨
+            - generic [ref=f2e152]:
+              - generic [ref=f2e153]: Mutirão de mensagens no WhatsApp
+              - generic [ref=f2e154]: Brigada Digital 13 ✓ verificada
+              - generic [ref=f2e155]: seg 12/10, 20h
+              - generic [ref=f2e156]: Online
+              - generic [ref=f2e157]: 0 vão
+  - navigation [ref=f2e158]:
+    - generic [ref=f2e159]:
+      - link "🔍 Ações" [ref=f2e160] [cursor=pointer]:
+        - /url: "#/inicio"
+        - generic [ref=f2e161]: 🔍
+        - generic [ref=f2e162]: Ações
+      - link "🗺️ Mapa" [ref=f2e163] [cursor=pointer]:
+        - /url: "#/mapa"
+        - generic [ref=f2e164]: 🗺️
+        - generic [ref=f2e165]: Mapa
+      - link "＋ Criar ação" [ref=f2e166] [cursor=pointer]:
+        - /url: "#/criar"
+        - generic [ref=f2e167]: ＋
+        - generic [ref=f2e168]: Criar ação
+      - link "👤 Minhas" [ref=f2e169] [cursor=pointer]:
+        - /url: "#/minhas"
+        - generic [ref=f2e170]: 👤
+        - generic [ref=f2e171]: Minhas
+      - link "✅ Fila" [ref=f2e172] [cursor=pointer]:
+        - /url: "#/fila"
+        - generic [ref=f2e173]: ✅
+        - generic [ref=f2e174]: Fila
+      - link "Doar" [ref=f2e175] [cursor=pointer]:
+        - /url: https://exemplo.vaquinha.oficial/lula

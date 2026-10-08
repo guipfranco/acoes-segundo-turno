@@ -5,8 +5,8 @@ RAIZ = Path(__file__).resolve().parents[1]
 HTML = (RAIZ / "mockup" / "index.html").read_text(encoding="utf-8")
 
 
-def test_tem_as_cinco_telas():
-    for nome in ["telaInicio", "telaAcao", "telaCriar", "telaMinhas", "telaFila"]:
+def test_tem_as_seis_telas():
+    for nome in ["telaInicio", "telaMapa", "telaAcao", "telaCriar", "telaMinhas", "telaFila"]:
         assert f"function {nome}" in HTML, nome
 
 
@@ -55,7 +55,7 @@ def test_dados_tem_verificada_e_nao_verificada_e_eu_sou_organizador():
 
 def test_inicio_tem_filtros_abas_e_helpers():
     for s in ["function fmtData", "function turnosFuturos", "function vaoNa", "function distanciaKm",
-              "data-quando=\"${k}\"", "'fds'", "id=\"gaveta\"",
+              "data-${campo}=\"${k}\"", "'fds'", "id=\"gaveta\"",
               "Ainda não tem ação", "Área prioritária", "leaflet"]:
         assert s in HTML, s
 
@@ -66,7 +66,7 @@ def test_acao_com_turno_passado_fica_fora_da_lista():
     futuros = {t["acao"] for t in d["turnos"] if t["inicio"][:10] >= hoje}
     a10 = next(a for a in d["acoes"] if a["id"] == 10)
     assert a10["status"] == "publicada" and 10 not in futuros
-    assert "turnosFuturos(a.id).length" in HTML  # filtro da lista exige turno futuro
+    assert "turnosNoFiltro(a.id)[0]" in HTML  # a lista só entra com turno futuro que caiba no filtro de data
 
 
 def test_tela_acao_regras_de_inscricao():
@@ -208,3 +208,65 @@ def test_pino_mostra_dia_e_hora():
 def test_criar_marca_o_lugar_no_mapa():
     for s in ["draggable:!!arrastavel", "Nome do ponto de encontro", "Cidade ou bairro"]:
         assert s in HTML, s
+
+
+# Inicial sem mapa (Airbnb/Meetup): busca por cidade, vitrine por cidade com foto, filtro de data claro, ações online
+WORKFLOW = (RAIZ / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
+
+
+def test_inicial_sem_mapa_com_busca_e_vitrine():
+    i = HTML.index("function telaInicio"); corpo = HTML[i:HTML.index("function irParaCidade")]
+    assert 'id="mapa"' not in corpo
+    for s in ["Em que cidade você está?", "Perto de você", "Chutamos a cidade", "Online, de qualquer lugar", "Ver no mapa",
+              "blocoVitrine", "Criar a primeira ação"]:
+        assert s in corpo, s
+    assert "function chutarCidade" in HTML and "getCurrentPosition" in HTML
+
+
+def test_vitrine_tem_cidades_exemplo_pelo_brasil_e_foto_por_acao():
+    for c in ["Recife", "Belo Horizonte", "Porto Alegre", "Salvador", "São Paulo"]:
+        assert c in HTML[HTML.index("const VITRINE"):HTML.index("const PADRAO")], c
+    assert "function fotoEvento" in HTML and 'class="foto f-${' in HTML
+
+
+def test_dados_tem_acoes_em_pelo_menos_quatro_cidades_e_online():
+    d = carregar_dados()
+    pub = [a for a in d["acoes"] if a["status"] == "publicada"]
+    cidades = {a["lugar"]["cidade"] for a in pub if not a["lugar"].get("online")}
+    assert {"Recife", "Belo Horizonte", "Porto Alegre", "Salvador", "São Paulo"} <= cidades
+    online = [a for a in pub if a["lugar"].get("online")]
+    assert len(online) >= 2
+    for a in online:
+        assert a["lugar"]["lat"] is None and a["lugar"]["lon"] is None and not a["prioritaria"]
+
+
+def test_organizacoes_de_exemplo_sao_ficticias():
+    nomes = {o["nome"] for o in carregar_dados()["organizacoes"]}
+    for real in ["Mandato Barba", "Mandato Alfredinho", "PT Diadema", "MTST Grajaú"]:
+        assert real not in nomes, real
+
+
+def test_filtro_de_data_claro_com_proximos_primeiro_e_intervalo():
+    for k in ["'breve'", "'hoje'", "'amanha'", "'semana'", "'fds'", "'proxima'", "'datas'"]:
+        assert k in HTML[HTML.index("const QUANDO"):HTML.index("const FORMATOS")], k
+    for s in ["Escolher datas", 'type="date"', "function intervaloQuando", "function turnosNoFiltro",
+              "p.t.inicio.localeCompare(q.t.inicio)"]:
+        assert s in HTML, s
+
+
+def test_formato_presencial_ou_online_em_toda_a_cadeia():
+    for s in ["const FORMATOS", "'presencial'", "'online'", "const ehOnline", "acoesOnline", "LUGAR_ONLINE",
+              "Ação online (ligatona", "O link da chamada vai para quem se inscreve", "if(!c.online){"]:
+        assert s in HTML, s
+    assert "!ehOnline(acao(Number(arg)))" in HTML  # ação online não monta minimapa
+    assert "if(l.online)return 'Online'" in HTML
+
+
+def test_mapa_virou_rota_propria():
+    assert 'href="#/mapa"' in HTML and "rota==='mapa'?telaMapa()" in HTML and "function montarMapa" in HTML
+    assert "location.hash='#/mapa'" in HTML  # escolher cidade na inicial leva ao mapa
+
+
+def test_workflow_do_pages_publica_so_a_pasta_mockup():
+    assert "actions/upload-pages-artifact" in WORKFLOW and "actions/deploy-pages" in WORKFLOW
+    assert "path: mockup" in WORKFLOW

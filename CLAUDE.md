@@ -3,11 +3,18 @@
 Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segundo-turno` em 2026-10-08.
 
 - Tudo em pt-BR, datas AAAA-MM-DD. Push logo depois de cada commit.
-- `mockup/` é protótipo estático, sem build. Publicação só como artifact privado do claude.ai
-  https://claude.ai/artifact/5FLiCyZHCJD6ADZbofmrjL ; o mapa base lá é o Protomaps da RMSP copiado dos assets do artifact do mapa principal (ids em mockup/fundo.js); fora do artifact o mockup usa tiles do OpenStreetMap. Nunca URL pública enquanto tiver dados de exemplo com nomes.
-- Sem dado pessoal real no repo.
-- Estado em 2026-10-08: mockup navegável redesenhado (busca por cidade ou bairro, lista que acompanha o
-  mapa, gaveta, etiquetas de hora nos pinos). Spec em `docs/superpowers/specs/`, desenho visual em
+- `mockup/` é protótipo estático, sem build. Publicado em https://guipfranco.github.io/acoes-segundo-turno/
+  (GitHub Pages via `.github/workflows/pages.yml`, só a pasta `mockup/`; repo público desde 2026-10-08) e também
+  como artifact do claude.ai https://claude.ai/artifact/5FLiCyZHCJD6ADZbofmrjL ; o mapa base no artifact é o
+  Protomaps da RMSP copiado dos assets do artifact do mapa principal (ids em mockup/fundo.js); fora dele o
+  mockup usa tiles do OpenStreetMap.
+- Sem dado pessoal real no repo. Como o repo é público, pessoas e organizações de exemplo são inventadas
+  (nada de mandato, partido ou movimento real nos dados).
+- Estado em 2026-10-08: mockup navegável. Inicial sem mapa (estilo Meetup): busca por cidade que chuta a
+  cidade pela geolocalização, filtro "Quando" (em breve, hoje, amanhã, esta semana, fim de semana, próxima
+  semana, escolher datas), formato presencial ou online, vitrine por cidade (SP, Recife, BH, Porto Alegre,
+  Salvador) com foto placeholder por ação e bloco "Online". Mapa com lista que acompanha o enquadramento em
+  `#/mapa`. Ação online: `lugar.online: true`, sem pino nem minimapa. Spec em `docs/superpowers/specs/`, desenho visual em
   `docs/2026-10-08-design-mockup.md`, capturas em `docs/capturas/`. Testes: `python -m pytest tests`.
 - Decisões do Gui: inscrição com nome e telefone desde a v1; moderação humana por voluntários no
   início, automação depois; uma vaquinha só, geral, apontando para arrecadação oficial; busca por
@@ -15,4 +22,4 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
 - Para republicar o artifact: publicar `mockup/index.html` com os arquivos `dados.js`, `lugares.js`,
   `fundo.js` e `leaflet.css` ao lado (o artifact só carrega stylesheet próprio). Fora do artifact o
   mapa usa tiles do OpenStreetMap.
-- GitHub Pages ainda não ativado (repo privado; Pages exigiria torná-lo público).
+- Pages publica a cada push em `master` que toque `mockup/`.
