@@ -6,3 +6,13 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
 - `mockup/` é protótipo estático, sem build. Publicação só como artifact privado do claude.ai
   https://claude.ai/artifact/5FLiCyZHCJD6ADZbofmrjL ; o mapa base lá é o Protomaps da RMSP copiado dos assets do artifact do mapa principal (ids em mockup/fundo.js); fora do artifact o mockup usa tiles do OpenStreetMap. Nunca URL pública enquanto tiver dados de exemplo com nomes.
 - Sem dado pessoal real no repo.
+- Estado em 2026-10-08: mockup navegável redesenhado (busca por cidade ou bairro, lista que acompanha o
+  mapa, gaveta, etiquetas de hora nos pinos). Spec em `docs/superpowers/specs/`, desenho visual em
+  `docs/2026-10-08-design-mockup.md`, capturas em `docs/capturas/`. Testes: `python -m pytest tests`.
+- Decisões do Gui: inscrição com nome e telefone desde a v1; moderação humana por voluntários no
+  início, automação depois; uma vaquinha só, geral, apontando para arrecadação oficial; busca por
+  lugar livre (Brasil inteiro), referência visual Airbnb/Meetup.
+- Para republicar o artifact: publicar `mockup/index.html` com os arquivos `dados.js`, `lugares.js`,
+  `fundo.js` e `leaflet.css` ao lado (o artifact só carrega stylesheet próprio). Fora do artifact o
+  mapa usa tiles do OpenStreetMap.
+- GitHub Pages ainda não ativado (repo privado; Pages exigiria torná-lo público).
