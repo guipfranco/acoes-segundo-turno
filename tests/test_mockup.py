@@ -140,3 +140,7 @@ def test_turno_passado_do_organizador_tem_inscritos_para_marcar_presenca():
 def test_textos_singular_e_bairro_igual_a_cidade():
     assert "function quantosVao" in HTML and "1 vai" in HTML
     assert "function lugarCurto" in HTML
+
+
+def test_inscritos_no_singular():
+    assert "function quantosInscritos" in HTML and "1 inscrito'" in HTML

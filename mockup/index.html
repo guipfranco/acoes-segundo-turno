@@ -54,6 +54,7 @@ function fmtData(iso){const d=new Date(iso);const dias=['dom','seg','ter','qua',
 function distanciaKm(a,b){const r=6371,x=(b.lat-a.lat)*Math.PI/180,y=(b.lon-a.lon)*Math.PI/180;
   const s=Math.sin(x/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(y/2)**2;
   return 2*r*Math.asin(Math.sqrt(s))}
+function quantosInscritos(n){return n===1?'1 inscrito':n+' inscritos'}
 function quantosVao(n){return n===1?'1 vai':n+' vão'}
 function lugarCurto(l){return l.bairro===l.cidade?l.cidade:`${l.bairro}, ${l.cidade}`}
 function nomeOrganizador(a){if(a.organizacao){const o=org(a.organizacao);return o.nome+(o.verificada?' <span class="selo">✓ verificada</span>':'')}return pessoa(a.organizador).nome}
@@ -184,8 +185,8 @@ function editar(id){const a=acao(id);const c=novoCriar();Object.assign(c,{passo:
 function telaMinhas(){const minhas=DADOS.acoes.filter(a=>a.organizador===eu()).sort((p,q)=>ORDEM[p.status]-ORDEM[q.status]);
   const aviso=estado.aviso?`<div class="card" style="background:#eaf7ee">${estado.aviso}</div>`:'';estado.aviso=null;
   return `<h1>Minhas ações</h1>${aviso}${minhas.length?'':'<p class="muted">Você ainda não criou nenhuma ação.</p>'}
-  ${minhas.map(a=>`<div class="card"><div onclick="estado.minhasAberta=estado.minhasAberta===${a.id}?null:${a.id};render()" style="cursor:pointer"><strong>${ICONES[a.tipo]} ${a.titulo}</strong> <span class="muted">· ${a.status}</span>${a.motivoRecusa?`<div class="erro">Motivo: ${a.motivoRecusa}</div>`:''}<div class="muted">${vaoNa(a.id)} inscritos</div></div>
-   ${estado.minhasAberta===a.id?turnosDa(a.id).map(t=>{const ins=inscritosNo(t.id);const passado=t.inicio.slice(0,10)<DADOS.config.hoje;return `<div style="margin-top:8px;border-top:1px solid var(--borda);padding-top:8px"><strong>${fmtData(t.inicio)}</strong> · ${ins.length} inscritos
+  ${minhas.map(a=>`<div class="card"><div onclick="estado.minhasAberta=estado.minhasAberta===${a.id}?null:${a.id};render()" style="cursor:pointer"><strong>${ICONES[a.tipo]} ${a.titulo}</strong> <span class="muted">· ${a.status}</span>${a.motivoRecusa?`<div class="erro">Motivo: ${a.motivoRecusa}</div>`:''}<div class="muted">${quantosInscritos(vaoNa(a.id))}</div></div>
+   ${estado.minhasAberta===a.id?turnosDa(a.id).map(t=>{const ins=inscritosNo(t.id);const passado=t.inicio.slice(0,10)<DADOS.config.hoje;return `<div style="margin-top:8px;border-top:1px solid var(--borda);padding-top:8px"><strong>${fmtData(t.inicio)}</strong> · ${quantosInscritos(ins.length)}
      ${ins.map(i=>`<div>${pessoa(i.pessoa).nome} <span class="muted">${pessoa(i.pessoa).telefone}</span>${passado?` <label style="display:inline;font-weight:400"><input type="checkbox" style="width:auto" ${i.presenca?'checked':''} onchange="marcarPresenca(${i.id},this.checked)"> presente</label>`:''}</div>`).join('')}
      <div style="margin-top:6px"><button class="btn sec" onclick="copiar('${ins.map(i=>pessoa(i.pessoa).telefone).join(', ')}')">Copiar números</button> <button class="btn sec" onclick="estado.avisoTexto=${t.id};render()">Mandar aviso</button>${passado?' <span class="muted">Marcar presença: marque quem foi</span>':''}</div>
      ${estado.avisoTexto===t.id?`<textarea rows="3" id="aviso${t.id}">${textoAviso(a,t)}</textarea><button class="btn sec" onclick="copiar(document.getElementById('aviso${t.id}').value)">copiar</button>`:''}</div>`}).join('')+`<div style="margin-top:8px"><button class="btn sec" onclick="editar(${a.id})">Editar</button> ${a.status!=='encerrada'?`<button class="btn sec" onclick="encerrar(${a.id})">Encerrar</button>`:''}</div>`:''}</div>`).join('')}`}
