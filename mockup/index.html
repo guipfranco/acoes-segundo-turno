@@ -64,6 +64,10 @@ nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
 .evento{scroll-snap-align:start;text-decoration:none;color:inherit;display:block}
 .foto{aspect-ratio:16/10;border-radius:16px;position:relative;display:grid;place-items:center;font-size:56px;overflow:hidden;background:var(--nevoa)}
 .foto::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 18% 12%,rgba(255,255,255,.6),transparent 55%)}
+.foto .img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;display:block}
+.foto .img~.data,.foto .img~.online{z-index:2}.foto .img~.data{box-shadow:0 1px 6px rgba(23,23,26,.35)}
+.foto.capa{aspect-ratio:16/9;margin:0 0 14px;font-size:64px}.credito{color:var(--cinza);font-size:12px;margin:-8px 0 14px}.credito a{color:inherit}
+.cubo.com-foto{background-size:cover;background-position:center}
 .foto .data,.foto .online{position:absolute;top:10px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;z-index:1}
 .foto .data{left:10px;background:#fff;box-shadow:0 1px 5px rgba(23,23,26,.2)}.foto .online{right:10px;background:var(--tinta);color:#fff}
 .evento .tit{font-weight:600;font-size:16px;line-height:1.25;margin:10px 0 2px}
@@ -113,15 +117,42 @@ nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
   #gaveta{left:16px;right:auto;width:440px;top:132px;height:auto;border-radius:22px;transform:none!important;box-shadow:0 8px 28px rgba(23,23,26,.18);bottom:16px}
   .alca{display:none}
   .leaflet-bottom.leaflet-right{margin-bottom:0}
-  nav .barra{max-width:none;justify-content:flex-end}nav a{flex:0 0 120px}
-  .hero h1{font-size:40px}.hero p{font-size:18px}
+  /* cabeçalho no topo no lugar da barra de baixo */
+  :root{--cab:64px}
+  body{padding-top:var(--cab)}
+  nav{top:0;bottom:auto;height:var(--cab);border-top:0;border-bottom:1px solid var(--nevoa)}
+  nav .barra{max-width:1180px;padding:0 24px;align-items:center;justify-content:flex-start;gap:4px}
+  nav .marca{display:inline-flex;margin-right:auto;font-size:19px;font-weight:800;letter-spacing:-.02em;color:var(--tinta);padding:0}
+  nav .marca em{font-style:normal;color:var(--vermelho)}
+  nav a{flex:0 0 auto;flex-direction:row;gap:7px;font-size:14px;padding:0 14px;height:40px;border-radius:10px}
+  nav a span:first-child{font-size:17px}nav a:hover{background:var(--nevoa)}nav a.ativo{color:var(--tinta);background:var(--nevoa)}
+  nav a.doar{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.doar:hover{background:var(--vinho)}
+  /* páginas internas mais largas e com respiro */
+  .pagina{max-width:760px;padding:32px 24px 56px}.pagina.estreita{max-width:620px}
+  h1{font-size:34px}
+  /* página da ação em duas colunas: conteúdo à esquerda, turnos fixos à direita */
+  .acao{display:grid;grid-template-columns:minmax(0,1fr) 340px;column-gap:40px;align-items:start}
+  .acao-lado{grid-column:2;grid-row:1/span 2;position:sticky;top:calc(var(--cab) + 24px);border:1.5px solid var(--nevoa);border-radius:18px;padding:6px 20px 16px;box-shadow:0 8px 28px rgba(23,23,26,.08)}
+  .acao-lado h2{margin-top:14px}.acao-corpo,.acao-resto{grid-column:1}
+  /* inicial: filtros em uma linha, cards em grade com hover */
+  .inicio-pg{padding:36px 24px 56px}.hero{margin-bottom:28px}
+  .hero h1{font-size:44px}.hero p{font-size:18px}
+  .filtros{flex-direction:row;flex-wrap:wrap;gap:8px 28px;align-items:center}.datas{margin-left:0}
   .trilho{grid-auto-flow:row;grid-template-columns:repeat(4,1fr);overflow:visible}
+  .foto{transition:transform .2s ease,box-shadow .2s ease}.evento:hover .foto{transform:translateY(-2px);box-shadow:0 10px 24px rgba(23,23,26,.14)}
+  .evento:hover .tit{text-decoration:underline}
+  /* mapa: ocupa a área abaixo do cabeçalho */
+  #tela-mapa{inset:var(--cab) 0 0 0}
+  #topo{top:16px}
+  .cabeca .filtro{flex-wrap:wrap}
 }
+@media (max-width:899px){nav .marca{display:none}}
 </style>
 </head>
 <body>
 <main id="app"></main>
 <nav><div class="barra">
+  <a class="marca" href="#/inicio">Ações do <em>2º turno</em></a>
   <a href="#/inicio" data-rota="inicio"><span>🔍</span><span>Ações</span></a>
   <a href="#/mapa" data-rota="mapa"><span>🗺️</span><span>Mapa</span></a>
   <a href="#/criar" data-rota="criar" onclick="novaCriacao()"><span>＋</span><span>Criar ação</span></a>
@@ -222,8 +253,11 @@ function tiposHtml(){return `<div class="tipos">${TIPOS.map(t=>`<button class="c
 const VITRINE=[['São Paulo','SP',-23.55,-46.63],['Recife','PE',-8.05,-34.9],['Belo Horizonte','MG',-19.92,-43.94],['Porto Alegre','RS',-30.03,-51.23],['Salvador','BA',-12.97,-38.51]];
 const PADRAO={rotulo:'São Paulo',lat:-23.55,lon:-46.63,chute:true};
 function acoesPerto(c,raio=60){return acoesVisiveis().filter(x=>!ehOnline(x.a)&&distanciaKm(c,x.a.lugar)<=raio)}
-// placeholder de foto: cor por tipo + ícone; a foto real da ação entra aqui depois
-function fotoEvento(x){const a=x.a;return `<div class="foto f-${CLASSE[a.tipo].slice(2)}" role="img" aria-label="${esc(a.tipo)}">${ICONES[a.tipo]}<span class="data">${fmtCurta(x.t.inicio)}</span>${ehOnline(a)?'<span class="online">Online</span>':''}</div>`}
+// foto da ação sobre um fundo com a cor do tipo e o ícone; se a imagem falhar, fica só o fundo
+const imgFoto=a=>a.foto&&a.foto.url?`<img class="img" src="${esc(a.foto.url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:'';
+function fotoEvento(x){const a=x.a;return `<div class="foto f-${CLASSE[a.tipo].slice(2)}" role="img" aria-label="${esc(a.tipo)}">${ICONES[a.tipo]}${imgFoto(a)}<span class="data">${fmtCurta(x.t.inicio)}</span>${ehOnline(a)?'<span class="online">Online</span>':''}</div>`}
+function creditoFoto(a){return a.foto&&a.foto.credito?`<p class="credito">Foto: ${a.foto.pagina?`<a href="${esc(a.foto.pagina)}" target="_blank" rel="noopener">${esc(a.foto.credito)}</a>`:esc(a.foto.credito)}</p>`:''}
+const cuboAcao=(a,extra='')=>a.foto&&a.foto.url?`<div class="cubo ${CLASSE[a.tipo]} com-foto" style="background-image:url('${esc(a.foto.url)}');${extra}"></div>`:`<div class="cubo ${CLASSE[a.tipo]}" style="${extra}">${ICONES[a.tipo]}</div>`;
 function cardEvento(x){const a=x.a;return `<a class="evento" href="#/acao/${a.id}">${fotoEvento(x)}
   <div class="tit">${esc(a.titulo)}</div>
   <div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
@@ -241,7 +275,8 @@ function telaInicio(){const perto=estado.perto||PADRAO;
   ${estado.formato==='online'?'':blocoVitrine(`Perto de você: ${esc(perto.rotulo)}`,acoesPerto(perto),linkMapa(perto),perto.chute?'Chutamos a cidade. Não é aí? Digite a sua na busca.':'')}
   ${estado.formato==='online'?'':VITRINE.filter(c=>c[0]!==perto.rotulo).map(c=>blocoVitrine(esc(c[0]),acoesPerto({lat:c[2],lon:c[3]}),linkMapa({rotulo:c[0],lat:c[2],lon:c[3]}))).join('')}
   ${estado.formato==='presencial'?'':`<div id="bloco-online">${blocoVitrine('Online, de qualquer lugar',acoesOnline(),'','Ligatona e mutirão de mensagens: você participa de casa, pelo celular.')}</div>`}
-  <section class="bloco"><div class="vazio"><p>Não achou ação na sua cidade?</p><a class="btn" href="#/criar" onclick="novaCriacao()">Criar a primeira ação</a></div></section></div>`}
+  <section class="bloco"><div class="vazio"><p>Não achou ação na sua cidade?</p><a class="btn" href="#/criar" onclick="novaCriacao()">Criar a primeira ação</a></div></section>
+  <p class="credito" style="text-align:center;margin-top:24px">Fotos de exemplo do Wikimedia Commons, com licenças livres. O crédito de cada uma está na página da ação.</p></div>`}
 function irParaCidade(lat,lon,rotulo){estado.onde={rotulo,lat,lon};estado.vista={lat,lon,zoom:11};location.hash='#/mapa'}
 // chute da cidade: pede a localização uma vez e escolhe o município mais próximo (capital se estiver a até 40 km)
 function chutarCidade(){if(estado.geoTentada||!navigator.geolocation)return;estado.geoTentada=true;
@@ -251,7 +286,7 @@ function chutarCidade(){if(estado.geoTentada||!navigator.geolocation)return;esta
     if((location.hash||'#/inicio').startsWith('#/inicio'))render()},()=>{},{timeout:8000,maximumAge:600000})}
 // ---------- mapa ----------
 function cardAcao(x){const a=x.a;return `<a class="card ${estado.foco===a.id?'foco':''}" id="card-${a.id}" href="#/acao/${a.id}" onmouseenter="focar(${a.id})" onmouseleave="focar(null)">
-  <div class="cubo ${CLASSE[a.tipo]}">${ICONES[a.tipo]}</div>
+  ${cuboAcao(a)}
   <div><div class="tit">${esc(a.titulo)}</div>
   <div class="meta">${nomeOrganizador(a)}</div>
   <div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
@@ -316,21 +351,21 @@ function botaoTurno(t){const n=inscritosNo(t.id).length;
   return `<button class="btn" onclick="iniciarVou(${t.id})">Vou</button>`}
 function telaAcao(id){const a=acao(id);if(!a)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const fechada=a.status!=='publicada';
   const ts=turnosDa(id),futuros=turnosFuturos(id),ins=estado.inscrevendo;const inscritoEmAlgum=ts.some(t=>estouInscrito(t.id));
-  return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a>
-  <div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>
+  return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a><div class="acao"><div class="acao-corpo">
+  ${a.foto&&a.foto.url?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a)}</div>${creditoFoto(a)}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
   <h1>${esc(a.titulo)}</h1>
   <div class="sec" style="font-size:15px">${nomeOrganizador(a)}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div>
   ${fechada?`<p class="erro">Esta ação não está aberta a inscrições (${a.status}).</p>`:futuros.length?'':'<p class="erro">Esta ação já aconteceu.</p>'}
   <p style="margin-top:12px">${esc(a.descricao)}</p>
   <h2>Onde</h2>${ehOnline(a)?`<div><strong>Online</strong></div><div class="sec" style="font-size:15px">Você participa de casa. O link da chamada vai para quem se inscreve.</div>`:
   `<div><strong>${esc(a.lugar.nome)}</strong></div><div class="sec" style="font-size:15px">${esc(lugarCurto(a.lugar))}</div>
-  <div id="minimapa" style="height:180px;border-radius:14px;margin:10px 0"></div>`}
-  <h2>Quando</h2>
+  <div id="minimapa" style="height:200px;border-radius:14px;margin:10px 0"></div>`}</div>
+  <aside class="acao-lado"><h2>Quando</h2>
   ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${quantosVao(inscritosNo(t.id).length)}${t.lotacao?` de ${t.lotacao} vagas`:''}</div><div style="margin-top:8px">${fechada?'':botaoTurno(t)}</div>
     ${ins&&ins.turno===t.id&&ins.passo==='dados'?`<label>Seu nome</label><input id="vnome"><label>Seu WhatsApp</label><input id="vtel" placeholder="(11) 9xxxx-xxxx"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p><button class="btn" onclick="pedirCodigo()">Receber código</button>`:''}
-    ${ins&&ins.turno===t.id&&ins.passo==='codigo'?`<label>Código que chegou no WhatsApp</label><input id="vcod" maxlength="4" placeholder="0000"><div style="margin-top:8px"><button class="btn" onclick="inscrever(${t.id})">Confirmar</button></div>`:''}</div>`).join('')}
-  ${inscritoEmAlgum?`<h2>Combinado</h2><div class="aviso"><p>${esc(a.detalhe)}</p><a class="btn" href="${esc(a.grupo)}" target="_blank" rel="noopener">Entrar no grupo do WhatsApp</a> <button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`:''}
-  <h2>Quem organiza</h2><div class="sec" style="font-size:15px">${nomeOrganizador(a)}</div></div>`}
+    ${ins&&ins.turno===t.id&&ins.passo==='codigo'?`<label>Código que chegou no WhatsApp</label><input id="vcod" maxlength="4" placeholder="0000"><div style="margin-top:8px"><button class="btn" onclick="inscrever(${t.id})">Confirmar</button></div>`:''}</div>`).join('')}</aside>
+  <div class="acao-resto">${inscritoEmAlgum?`<h2>Combinado</h2><div class="aviso"><p>${esc(a.detalhe)}</p><a class="btn" href="${esc(a.grupo)}" target="_blank" rel="noopener">Entrar no grupo do WhatsApp</a> <button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`:''}
+  <h2>Quem organiza</h2><div class="sec" style="font-size:15px">${nomeOrganizador(a)}</div></div></div></div>`}
 function montarMiniMapa(l,arrastavel){const el=document.getElementById('minimapa');if(!el)return null;const m=L.map(el,{zoomControl:false,attributionControl:false}).setView([l.lat,l.lon],arrastavel?14:15);fundoBase(m);
   const mk=L.marker([l.lat,l.lon],{icon:L.divIcon({html:'<span class="etiqueta">📍 aqui</span>',className:'',iconSize:[0,0]}),draggable:!!arrastavel}).addTo(m);return {m,mk}}
 // ---------- criar ----------
@@ -343,7 +378,7 @@ const MODELOS={
  'bandeiraço':{titulo:'Bandeiraço na avenida',descricao:'Bandeiras e faixas do Lula na hora do rush. Traga bandeira se tiver.',dica:'Hora do rush, calçada larga, longe da faixa de pedestres.'},
  'outro':{titulo:'',descricao:'',dica:'Descreva o que vai acontecer e o que a pessoa precisa levar.'}};
 const LUGAR_ONLINE=()=>({nome:'Online',bairro:'Online',cidade:'Online',lat:null,lon:null,online:true});
-function novoCriar(){return {passo:1,editando:null,tipo:null,online:false,titulo:'',descricao:'',lugar:{nome:'',bairro:'',cidade:'',lat:null,lon:null},buscaLugar:'',turnos:[{inicio:'',fim:'',lotacao:''}],detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
+function novoCriar(){return {passo:1,editando:null,tipo:null,online:false,titulo:'',descricao:'',foto:'',lugar:{nome:'',bairro:'',cidade:'',lat:null,lon:null},buscaLugar:'',turnos:[{inicio:'',fim:'',lotacao:''}],detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
 estado.criar=novoCriar();
 function cv(campo,valor){estado.criar[campo]=valor}
 function escolherTipo(t){const c=estado.criar;c.tipo=t;if(!c.editando){c.titulo=MODELOS[t].titulo;c.descricao=MODELOS[t].descricao}c.erros={};c.passo=2;render()}
@@ -365,19 +400,20 @@ function atualizarTurnos(c,acaoId){const atuais=turnosDa(acaoId);const form=c.tu
 function turnosDoFormulario(c,acaoId){return c.turnos.filter(t=>t.inicio&&t.fim).map((t,i)=>({id:Date.now()+i,acao:acaoId,inicio:t.inicio,fim:t.fim,lotacao:t.lotacao?Number(t.lotacao):null}))}
 function publicarAcao(){const c=estado.criar,e={};if(!c.nome.trim())e.nome='Seu nome.';if(!telValido(c.telefone))e.telefone='Telefone no formato (11) 9xxxx-xxxx.';c.erros=e;if(Object.keys(e).length){render();return}
   const lugar=c.online?LUGAR_ONLINE():Object.assign({},c.lugar);
-  if(c.editando){const a=acao(c.editando);Object.assign(a,{titulo:c.titulo,descricao:c.descricao,lugar,detalhe:c.detalhe,grupo:c.grupo,organizacao:c.organizacao,prioritaria:!c.online&&DADOS.areasPrioritarias.includes(lugar.bairro)});
+  if(c.editando){const a=acao(c.editando);Object.assign(a,{titulo:c.titulo,descricao:c.descricao,foto:c.foto.trim()?{url:c.foto.trim(),credito:''}:null,lugar,detalhe:c.detalhe,grupo:c.grupo,organizacao:c.organizacao,prioritaria:!c.online&&DADOS.areasPrioritarias.includes(lugar.bairro)});
     atualizarTurnos(c,a.id);estado.aviso='Ação atualizada.';estado.criar=novoCriar();location.hash='#/minhas';return}
   const o=c.organizacao?org(c.organizacao):null;const status=o&&o.verificada?'publicada':'em análise';
   const id=Math.max(...DADOS.acoes.map(a=>a.id))+1;
-  DADOS.acoes.push({id,titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,organizador:eu(),organizacao:c.organizacao,lugar,detalhe:c.detalhe,grupo:c.grupo,status,motivoRecusa:null,prioritaria:!c.online&&DADOS.areasPrioritarias.includes(lugar.bairro),criadaEm:DADOS.config.hoje});
+  DADOS.acoes.push({id,titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,foto:c.foto.trim()?{url:c.foto.trim(),credito:''}:null,organizador:eu(),organizacao:c.organizacao,lugar,detalhe:c.detalhe,grupo:c.grupo,status,motivoRecusa:null,prioritaria:!c.online&&DADOS.areasPrioritarias.includes(lugar.bairro),criadaEm:DADOS.config.hoje});
   DADOS.turnos.push(...turnosDoFormulario(c,id));
   estado.aviso=status==='publicada'?'Publicada! Sua ação já aparece no mapa.':'Recebemos: sua ação está em análise, avisamos pelo WhatsApp.';
   estado.criar=novoCriar();location.hash='#/minhas'}
 function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c.erros[k]}</div>`:'';const titulo=c.editando?'Editar ação':'Criar ação';
-  if(c.passo===1)return `<div class="pagina"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 1 de 3. Que tipo de ação?</p>${TIPOS.map(t=>`<a class="card" href="#" onclick="escolherTipo('${t}');return false"><div class="cubo ${CLASSE[t]}">${ICONES[t]}</div><div><div class="tit">${t}</div><div class="meta">${MODELOS[t].dica}</div></div></a>`).join('')}</div>`;
-  if(c.passo===2)return `<div class="pagina"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 2 de 3. Onde e quando. ${ICONES[c.tipo]} ${c.tipo}</p>
+  if(c.passo===1)return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 1 de 3. Que tipo de ação?</p>${TIPOS.map(t=>`<a class="card" href="#" onclick="escolherTipo('${t}');return false"><div class="cubo ${CLASSE[t]}">${ICONES[t]}</div><div><div class="tit">${t}</div><div class="meta">${MODELOS[t].dica}</div></div></a>`).join('')}</div>`;
+  if(c.passo===2)return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 2 de 3. Onde e quando. ${ICONES[c.tipo]} ${c.tipo}</p>
    <label>Título</label><input value="${esc(c.titulo)}" oninput="cv('titulo',this.value)">${E('titulo')}
    <label>Descrição</label><textarea rows="3" oninput="cv('descricao',this.value)">${esc(c.descricao)}</textarea>
+   <label>Foto da ação (link, opcional)</label><input type="url" placeholder="https://..." value="${esc(c.foto)}" oninput="cv('foto',this.value)"><p class="sec" style="margin-top:4px">Uma foto do lugar ou de uma ação anterior. Sem foto, entra a cor do tipo.</p>
    <label style="display:flex;gap:8px;align-items:center;margin-top:18px"><input type="checkbox" style="width:auto" ${c.online?'checked':''} onchange="estado.criar.online=this.checked;render()"> Ação online (ligatona, mutirão de mensagens): a pessoa participa de casa</label>
    ${c.online?'<p class="sec">O link da chamada vai no detalhe do encontro, que só quem se inscreve vê.</p>':`<label>Nome do ponto de encontro</label><input placeholder="ex.: Estação Grajaú, saída 2" value="${esc(c.lugar.nome)}" oninput="estado.criar.lugar.nome=this.value">${E('lugarNome')}
    <label>Cidade ou bairro</label><div style="position:relative"><input id="busca-criar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(c.buscaLugar)}" oninput="sugerirCriar(this.value)"><div id="sug-criar" style="position:absolute;left:0;right:0;top:48px;background:#fff;border-radius:12px;box-shadow:0 8px 28px rgba(23,23,26,.2);z-index:5;display:none"></div></div>
@@ -388,7 +424,7 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
    <label>Link do grupo de WhatsApp</label><input placeholder="https://chat.whatsapp.com/..." value="${esc(c.grupo)}" oninput="cv('grupo',this.value)">
    <p style="margin-top:18px">${c.editando?'<button class="btn sec" onclick="cancelarEdicao()">Cancelar</button>':'<button class="btn sec" onclick="estado.criar.passo=1;render()">Voltar</button>'} <button class="btn" onclick="validarPasso2()">Continuar</button></p></div>`;
   const o=c.organizacao?org(c.organizacao):null;
-  return `<div class="pagina"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 3 de 3. Quem organiza.</p>
+  return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 3 de 3. Quem organiza.</p>
    <label>Seu nome</label><input value="${esc(c.nome)}" oninput="cv('nome',this.value)">${E('nome')}
    <label>Seu WhatsApp</label><input placeholder="(11) 9xxxx-xxxx" value="${esc(c.telefone)}" oninput="cv('telefone',this.value)">${E('telefone')}
    <label>Em nome de uma organização?</label><select onchange="estado.criar.organizacao=this.value?Number(this.value):null;render()"><option value="">Sou eu mesmo(a)</option>${DADOS.organizacoes.map(x=>`<option value="${x.id}" ${c.organizacao===x.id?'selected':''}>${esc(x.nome)}</option>`).join('')}</select>
@@ -400,11 +436,11 @@ function textoAviso(a,t){return `Oi! ${fmtData(t.inicio)} tem ${a.titulo}${ehOnl
 function copiar(txt){navigator.clipboard&&navigator.clipboard.writeText(txt);alert('Copiado')}
 function marcarPresenca(insId,v){const i=DADOS.inscricoes.find(i=>i.id===insId);if(i)i.presenca=v}
 function encerrar(id){acao(id).status='encerrada';render()}
-function editar(id){const a=acao(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,online:ehOnline(a),titulo:a.titulo,descricao:a.descricao,lugar:Object.assign({},a.lugar),buscaLugar:lugarCurto(a.lugar),detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,nome:pessoa(a.organizador).nome,telefone:pessoa(a.organizador).telefone,turnos:turnosDa(id).map(t=>({inicio:t.inicio,fim:t.fim,lotacao:t.lotacao||''}))});estado.criar=c;location.hash='#/criar'}
+function editar(id){const a=acao(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,online:ehOnline(a),titulo:a.titulo,foto:a.foto&&a.foto.url||'',descricao:a.descricao,lugar:Object.assign({},a.lugar),buscaLugar:lugarCurto(a.lugar),detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,nome:pessoa(a.organizador).nome,telefone:pessoa(a.organizador).telefone,turnos:turnosDa(id).map(t=>({inicio:t.inicio,fim:t.fim,lotacao:t.lotacao||''}))});estado.criar=c;location.hash='#/criar'}
 function telaMinhas(){const minhas=DADOS.acoes.filter(a=>a.organizador===eu()).sort((p,q)=>ORDEM[p.status]-ORDEM[q.status]);
   const aviso=estado.aviso?`<div class="aviso">${estado.aviso}</div>`:'';estado.aviso=null;
   return `<div class="pagina"><h1>Minhas ações</h1>${aviso}${minhas.length?'':'<div class="vazio"><p>Você ainda não criou nenhuma ação.</p><a class="btn" href="#/criar" onclick="novaCriacao()">Criar ação</a></div>'}
-  ${minhas.map(a=>`<div class="linha"><div onclick="estado.minhasAberta=estado.minhasAberta===${a.id}?null:${a.id};render()" style="cursor:pointer;display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center"><div class="cubo ${CLASSE[a.tipo]}" style="width:44px;height:44px;font-size:22px">${ICONES[a.tipo]}</div><div><div class="tit" style="font-weight:600">${esc(a.titulo)}</div><div class="sec">${a.status}${a.motivoRecusa?`. Motivo: ${esc(a.motivoRecusa)}`:''}. ${quantosInscritos(vaoNa(a.id))}</div></div></div>
+  ${minhas.map(a=>`<div class="linha"><div onclick="estado.minhasAberta=estado.minhasAberta===${a.id}?null:${a.id};render()" style="cursor:pointer;display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center">${cuboAcao(a,'width:44px;height:44px;font-size:22px')}<div><div class="tit" style="font-weight:600">${esc(a.titulo)}</div><div class="sec">${a.status}${a.motivoRecusa?`. Motivo: ${esc(a.motivoRecusa)}`:''}. ${quantosInscritos(vaoNa(a.id))}</div></div></div>
    ${estado.minhasAberta===a.id?turnosDa(a.id).map(t=>{const ins=inscritosNo(t.id);const passado=t.inicio.slice(0,10)<DADOS.config.hoje;return `<div style="margin-top:10px;padding-left:54px"><strong>${fmtData(t.inicio)}</strong> <span class="sec">${quantosInscritos(ins.length)}</span>
      ${ins.map(i=>`<div>${esc(pessoa(i.pessoa).nome)} <span class="sec">${pessoa(i.pessoa).telefone}</span>${passado?` <label style="display:inline;font-weight:400;font-size:14px"><input type="checkbox" style="width:auto" ${i.presenca?'checked':''} onchange="marcarPresenca(${i.id},this.checked)"> presente</label>`:''}</div>`).join('')}
      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec mini" onclick="copiar('${ins.map(i=>pessoa(i.pessoa).telefone).join(', ')}')">Copiar números</button> <button class="btn sec mini" onclick="estado.avisoTexto=${t.id};render()">Mandar aviso</button>${passado?' <span class="sec" style="align-self:center">Marcar presença: marque quem foi</span>':''}</div>

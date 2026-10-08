@@ -2,3 +2,6 @@ __pycache__/
 .pytest_cache/
 .superpowers/
 .playwright-mcp/
+
+# varredura de fontes com dados pessoais: nunca versionar
+levantamento/

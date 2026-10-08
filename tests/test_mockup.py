@@ -270,3 +270,19 @@ def test_mapa_virou_rota_propria():
 def test_workflow_do_pages_publica_so_a_pasta_mockup():
     assert "actions/upload-pages-artifact" in WORKFLOW and "actions/deploy-pages" in WORKFLOW
     assert "path: mockup" in WORKFLOW
+
+
+# Fotos de verdade nos cards (Wikimedia Commons, licença livre), com o ícone de reserva
+def test_acoes_de_exemplo_tem_foto_livre_com_credito():
+    d = carregar_dados()
+    com_foto = [a for a in d["acoes"] if a.get("foto")]
+    assert len(com_foto) >= 18
+    for a in com_foto:
+        assert a["foto"]["url"].startswith("https://commons.wikimedia.org/wiki/Special:Redirect/file/"), a["titulo"]
+        assert "via Wikimedia Commons" in a["foto"]["credito"]
+
+
+def test_foto_tem_reserva_e_credito_e_campo_no_criar():
+    for s in ["const imgFoto", 'onerror="this.remove()"', "function creditoFoto", "const cuboAcao",
+              "Foto da ação (link, opcional)", "foto:c.foto.trim()", 'class="foto capa']:
+        assert s in HTML, s

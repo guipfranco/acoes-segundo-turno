@@ -46,3 +46,19 @@ Porto Alegre, Salvador e o bloco "Online, de qualquer lugar". O mapa continua ex
 - Foto: placeholder em CSS (gradiente da cor do tipo e o ícone), com a hora no canto. A foto real
   entra no mesmo lugar depois. Sem imagem externa.
 - Capturas: `r7-inicio-celular.png`, `r8-inicio-datas.png`, `r9-mapa-celular.png`, `r10-inicio-desktop.png`.
+
+## Desktop de verdade e fotos reais (terceira rodada, 2026-10-08)
+
+Pedido do Gui: a barra de baixo é coisa de celular; no PC a experiência tem que ser pensada para PC. E as
+fotos dos cards devem ser imagens, não ícones.
+
+- A partir de 900 px a navegação vira cabeçalho fixo no topo: marca "Ações do 2º turno" à esquerda, itens
+  em linha com ícone e texto, Doar como botão à direita. No celular continua a barra de baixo.
+- Páginas internas mais largas (760 px; criar ação em 620 px). A página da ação fica em duas colunas:
+  conteúdo à esquerda e um cartão fixo à direita com os turnos e o botão "Vou", que acompanha a rolagem.
+- Inicial: filtros em linha, grade de quatro cards, hover sobe a foto e sublinha o título.
+- Fotos: cada ação tem `foto {url, credito, pagina}`. O card mostra a imagem sobre o fundo da cor do tipo;
+  se a imagem falhar, fica o fundo com o ícone. Na página da ação a foto vira capa 16:9 com crédito e link.
+  As fotos de exemplo vêm do Wikimedia Commons (licenças CC e domínio público), inclusive do acervo
+  CC BY-SA do Lula Oficial. Criar ação tem campo "Foto da ação (link, opcional)".
+- Capturas: `r10-inicio-desktop.png`, `r11-acao-desktop.png`, `r4-desktop.png` (mapa), `r6-criar-lugar.png`.

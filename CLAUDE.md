@@ -14,7 +14,8 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   cidade pela geolocalização, filtro "Quando" (em breve, hoje, amanhã, esta semana, fim de semana, próxima
   semana, escolher datas), formato presencial ou online, vitrine por cidade (SP, Recife, BH, Porto Alegre,
   Salvador) com foto placeholder por ação e bloco "Online". Mapa com lista que acompanha o enquadramento em
-  `#/mapa`. Ação online: `lugar.online: true`, sem pino nem minimapa. Spec em `docs/superpowers/specs/`, desenho visual em
+  `#/mapa`. Ação online: `lugar.online: true`, sem pino nem minimapa. Desktop (≥ 900 px) com cabeçalho no topo e
+  página da ação em duas colunas. Fotos das ações vêm do Wikimedia Commons (campo `foto` com crédito). Spec em `docs/superpowers/specs/`, desenho visual em
   `docs/2026-10-08-design-mockup.md`, capturas em `docs/capturas/`. Testes: `python -m pytest tests`.
 - Decisões do Gui: inscrição com nome e telefone desde a v1; moderação humana por voluntários no
   início, automação depois; uma vaquinha só, geral, apontando para arrecadação oficial; busca por

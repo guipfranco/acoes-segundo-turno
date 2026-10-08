@@ -193,7 +193,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
-   "criadaEm": "2026-10-02"
+   "criadaEm": "2026-10-02",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Esta%C3%A7%C3%A3o_Graja%C3%BA_%E2%80%A2_Linha_9_Esmeralda_%E2%80%A2_S%C3%A3o_Paulo_%E2%80%A2_plataforma_%E2%80%A2_1.jpg?width=800",
+    "credito": "Geogast, CC BY 4.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Esta%C3%A7%C3%A3o_Graja%C3%BA_%E2%80%A2_Linha_9_Esmeralda_%E2%80%A2_S%C3%A3o_Paulo_%E2%80%A2_plataforma_%E2%80%A2_1.jpg"
+   }
   },
   {
    "id": 2,
@@ -214,7 +219,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
-   "criadaEm": "2026-10-03"
+   "criadaEm": "2026-10-03",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Di%C3%A1logos_com_o_Teatro_-_Roda_de_Conversa_%2818%29.jpg?width=800",
+    "credito": "Ministério da Cultura, CC BY 2.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Di%C3%A1logos_com_o_Teatro_-_Roda_de_Conversa_%2818%29.jpg"
+   }
   },
   {
    "id": 3,
@@ -235,7 +245,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-04"
+   "criadaEm": "2026-10-04",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/30.09.2022-LULA_NO_CEAR%C3%81-Lula_na_caminhada_Brasil_da_Esperan%C3%A7a%2C_em_Fortaleza_-_52396875937.jpg?width=800",
+    "credito": "Ricardo Stuckert/Lula Oficial, CC BY-SA 4.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:30.09.2022-LULA_NO_CEAR%C3%81-Lula_na_caminhada_Brasil_da_Esperan%C3%A7a%2C_em_Fortaleza_-_52396875937.jpg"
+   }
   },
   {
    "id": 4,
@@ -256,7 +271,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
-   "criadaEm": "2026-10-05"
+   "criadaEm": "2026-10-05",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Area_7_-_Term._Jardim_%C3%82ngela_%282%29.jpg?width=800",
+    "credito": "MacGyver Santista, CC0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Area_7_-_Term._Jardim_%C3%82ngela_%282%29.jpg"
+   }
   },
   {
    "id": 5,
@@ -277,7 +297,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Bandeira%C3%A7o_13-09-2010_%284987417346%29.jpg?width=800",
+    "credito": "Helio Costa, CC BY-SA 2.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Bandeira%C3%A7o_13-09-2010_%284987417346%29.jpg"
+   }
   },
   {
    "id": 6,
@@ -298,7 +323,8 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
-   "criadaEm": "2026-10-07"
+   "criadaEm": "2026-10-07",
+   "foto": null
   },
   {
    "id": 7,
@@ -319,7 +345,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
-   "criadaEm": "2026-10-08"
+   "criadaEm": "2026-10-08",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/06.10.2022-Lula_faz_caminhada_em_S%C3%A3o_Bernardo_do_Campo_%2852409755043%29.jpg?width=800",
+    "credito": "Ricardo Stuckert/Lula Oficial, CC BY-SA 4.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:06.10.2022-Lula_faz_caminhada_em_S%C3%A3o_Bernardo_do_Campo_%2852409755043%29.jpg"
+   }
   },
   {
    "id": 8,
@@ -340,7 +371,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
-   "criadaEm": "2026-10-01"
+   "criadaEm": "2026-10-01",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Di%C3%A1logos_com_o_Teatro_-_Roda_de_Conversa_%2810%29.jpg?width=800",
+    "credito": "Ministério da Cultura, CC BY 2.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Di%C3%A1logos_com_o_Teatro_-_Roda_de_Conversa_%2810%29.jpg"
+   }
   },
   {
    "id": 9,
@@ -361,7 +397,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
-   "criadaEm": "2026-10-02"
+   "criadaEm": "2026-10-02",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Esta%C3%A7%C3%A3o_Guaianases_2011.jpg?width=800",
+    "credito": "NickBr956, CC BY-SA 4.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Esta%C3%A7%C3%A3o_Guaianases_2011.jpg"
+   }
   },
   {
    "id": 10,
@@ -382,7 +423,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
-   "criadaEm": "2026-10-03"
+   "criadaEm": "2026-10-03",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Cidade_Tiradentes_-_S%C3%A3o_Paulo_City.jpg?width=800",
+    "credito": "André Bonacin, CC BY 3.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Cidade_Tiradentes_-_S%C3%A3o_Paulo_City.jpg"
+   }
   },
   {
    "id": 11,
@@ -403,7 +449,12 @@ window.DADOS = {
    "status": "encerrada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-04"
+   "criadaEm": "2026-10-04",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Bandeira%C3%A7o_13-09-2010_%284986814105%29.jpg?width=800",
+    "credito": "Helio Costa, CC BY-SA 2.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Bandeira%C3%A7o_13-09-2010_%284986814105%29.jpg"
+   }
   },
   {
    "id": 12,
@@ -424,7 +475,8 @@ window.DADOS = {
    "status": "em análise",
    "motivoRecusa": null,
    "prioritaria": true,
-   "criadaEm": "2026-10-05"
+   "criadaEm": "2026-10-05",
+   "foto": null
   },
   {
    "id": 13,
@@ -445,7 +497,12 @@ window.DADOS = {
    "status": "em análise",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Esta%C3%A7%C3%A3o_do_Metr%C3%B4_Corinthians-Itaquera.jpg?width=800",
+    "credito": "Anderson Bueno Pereira, CC BY-SA 4.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Esta%C3%A7%C3%A3o_do_Metr%C3%B4_Corinthians-Itaquera.jpg"
+   }
   },
   {
    "id": 14,
@@ -466,7 +523,12 @@ window.DADOS = {
    "status": "recusada",
    "motivoRecusa": "pede dinheiro para o material",
    "prioritaria": true,
-   "criadaEm": "2026-10-07"
+   "criadaEm": "2026-10-07",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Morro_do_S_do_Cap%C3%A3o_Redondo%2C_S%C3%A3o_Paulo.jpg?width=800",
+    "credito": "Olivianawiki, CC BY-SA 4.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Morro_do_S_do_Cap%C3%A3o_Redondo%2C_S%C3%A3o_Paulo.jpg"
+   }
   },
   {
    "id": 15,
@@ -487,7 +549,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pra%C3%A7a_do_Marco_Zero%2C_Recife%2C_Pernambuco%2C_Brasil.jpg?width=800",
+    "credito": "Wilfredor, CC0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Pra%C3%A7a_do_Marco_Zero%2C_Recife%2C_Pernambuco%2C_Brasil.jpg"
+   }
   },
   {
    "id": 16,
@@ -508,7 +575,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Praia_de_Boa_Viagem%2C_Recife-PE.jpg?width=800",
+    "credito": "JKroz, CC BY 2.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Praia_de_Boa_Viagem%2C_Recife-PE.jpg"
+   }
   },
   {
    "id": 17,
@@ -529,7 +601,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pra%C3%A7a_Sete_de_Setembro_e_Obelisco_-_Belo_Horizonte_-_20191227144625.jpg?width=800",
+    "credito": "Rafael Lemieszek, CC BY-SA 4.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Pra%C3%A7a_Sete_de_Setembro_e_Obelisco_-_Belo_Horizonte_-_20191227144625.jpg"
+   }
   },
   {
    "id": 18,
@@ -550,7 +627,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/P%C3%B4r_do_sol_na_Savassi%2C_Belo_Horizonte_MG.JPG?width=800",
+    "credito": "HVL, CC BY 3.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:P%C3%B4r_do_sol_na_Savassi%2C_Belo_Horizonte_MG.JPG"
+   }
   },
   {
    "id": 19,
@@ -571,7 +653,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Mercado_P%C3%BAblico_de_Porto_Alegre_2021_1.jpg?width=800",
+    "credito": "Hedestad, CC BY-SA 4.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Mercado_P%C3%BAblico_de_Porto_Alegre_2021_1.jpg"
+   }
   },
   {
    "id": 20,
@@ -592,7 +679,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/%282020.03.16%29_Panfletagem_Conscientiza%C3%A7%C3%A3o_ao_Corona-Virus_%2849666417863%29.jpg?width=800",
+    "credito": "Prefeitura de Itapevi, CC BY 2.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:%282020.03.16%29_Panfletagem_Conscientiza%C3%A7%C3%A3o_ao_Corona-Virus_%2849666417863%29.jpg"
+   }
   },
   {
    "id": 21,
@@ -613,7 +705,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pra%C3%A7a_Campo_Grande%2C_Salvador%2C_March_2014_%2813488613474%29.jpg?width=800",
+    "credito": "Bryn Pinzgauer, CC BY 2.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Pra%C3%A7a_Campo_Grande%2C_Salvador%2C_March_2014_%2813488613474%29.jpg"
+   }
   },
   {
    "id": 22,
@@ -634,7 +731,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Esta%C3%A7%C3%A3o_da_Lapa.jpg?width=800",
+    "credito": "Evandro Nascimento, CC BY 2.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Esta%C3%A7%C3%A3o_da_Lapa.jpg"
+   }
   },
   {
    "id": 23,
@@ -656,7 +758,8 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": null
   },
   {
    "id": 24,
@@ -678,7 +781,12 @@ window.DADOS = {
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
-   "criadaEm": "2026-10-06"
+   "criadaEm": "2026-10-06",
+   "foto": {
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Corte_de_EE.UU._rechaza_apelaci%C3%B3n_de_NSO_Group_en_litigio_contra_WhatsApp.jpg?width=800",
+    "credito": "Gibrán Aquino, CC BY-SA 4.0, via Wikimedia Commons",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Corte_de_EE.UU._rechaza_apelaci%C3%B3n_de_NSO_Group_en_litigio_contra_WhatsApp.jpg"
+   }
   }
  ],
  "turnos": [
