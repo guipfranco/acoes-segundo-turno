@@ -67,3 +67,26 @@ def test_acao_com_turno_passado_fica_fora_da_lista():
     a10 = next(a for a in d["acoes"] if a["id"] == 10)
     assert a10["status"] == "publicada" and 10 not in futuros
     assert "turnosFuturos(a.id).length" in HTML  # filtro da lista exige turno futuro
+
+
+def test_tela_acao_regras_de_inscricao():
+    for s in ["function telaAcao", "function inscrever", "function desistir", "lotado", "turno encerrado",
+              "Esta ação já aconteceu", "Você vai", "Seu nome e telefone vão para quem organiza esta ação",
+              "Receber código", "Entrar no grupo do WhatsApp", "minimapa"]:
+        assert s in HTML, s
+
+
+def test_detalhe_e_grupo_so_para_inscritos():
+    # o bloco "Combinado" só é montado dentro do ramo que checa inscrição
+    i = HTML.index("Combinado")
+    assert "inscritoEmAlgum" in HTML[i-400:i]
+
+
+def test_turno_lotado_e_inscricao_duplicada_nos_dados_e_no_codigo():
+    d = carregar_dados()
+    t5 = next(t for t in d["turnos"] if t["id"] == 5)
+    n5 = len([i for i in d["inscricoes"] if i["turno"] == 5 and not i["canceladaEm"]])
+    assert t5["lotacao"] == n5 == 2
+    assert any(i["turno"] == 7 and i["pessoa"] == d["config"]["eu"] for i in d["inscricoes"])
+    assert "if(estouInscrito(tid))return" in HTML  # não duplica
+    assert "n>=t.lotacao" in HTML

@@ -89,7 +89,37 @@ function montarMapa(){const el=document.getElementById('mapa');if(!el||!window.L
   const m=L.map(el).setView([-23.6,-46.6],10);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(m);
   acoesVisiveis().forEach(x=>L.marker([x.a.lugar.lat,x.a.lugar.lon]).addTo(m).bindPopup(`${ICONES[x.a.tipo]} <a href="#/acao/${x.a.id}">${x.a.titulo}</a><br>${fmtData(x.t.inicio)}`))}
-function telaAcao(id){return '<h1>Ação '+id+'</h1>'}
+estado.inscrevendo=null;
+const eu=()=>DADOS.config.eu;
+const estouInscrito=tid=>inscritosNo(tid).some(i=>i.pessoa===eu());
+function inscrever(tid){if(estouInscrito(tid))return;DADOS.inscricoes.push({id:Date.now(),pessoa:eu(),turno:tid,criadaEm:DADOS.config.hoje,canceladaEm:null,presenca:null});estado.inscrevendo=null;render()}
+function desistir(tid){const i=DADOS.inscricoes.find(i=>i.turno===tid&&i.pessoa===eu()&&!i.canceladaEm);if(i)i.canceladaEm=DADOS.config.hoje;render()}
+function iniciarVou(tid){estado.inscrevendo={turno:tid,passo:'dados'};render()}
+function pedirCodigo(){estado.inscrevendo.passo='codigo';render()}
+function compartilhar(){const u=location.href;if(navigator.share)navigator.share({url:u});else{navigator.clipboard&&navigator.clipboard.writeText(u);alert('Link copiado')}}
+function botaoTurno(t){
+  const n=inscritosNo(t.id).length;
+  if(estouInscrito(t.id))return `<span class="selo">Você vai ✓</span> <button class="btn sec" onclick="desistir(${t.id})">desistir</button>`;
+  if(t.inicio.slice(0,10)<DADOS.config.hoje)return `<button class="btn" disabled>turno encerrado</button>`;
+  if(t.lotacao&&n>=t.lotacao)return `<button class="btn" disabled>lotado</button>`;
+  return `<button class="btn" onclick="iniciarVou(${t.id})">Vou</button>`}
+function telaAcao(id){const a=acao(id);if(!a)return '<p>Ação não encontrada.</p>';
+  const ts=turnosDa(id),futuros=turnosFuturos(id);const ins=estado.inscrevendo;
+  const inscritoEmAlgum=ts.some(t=>estouInscrito(t.id));
+  return `<a href="#/inicio" class="muted">← voltar</a>
+  <h1>${ICONES[a.tipo]} ${a.titulo}</h1>
+  <div class="muted">${nomeOrganizador(a)}${a.prioritaria?' · <span class="prior">Área prioritária</span>':''}</div>
+  ${futuros.length?'':'<p class="erro">Esta ação já aconteceu.</p>'}
+  <p>${a.descricao}</p>
+  <h2>Onde</h2><div>${a.lugar.nome}</div><div class="muted">${a.lugar.bairro}, ${a.lugar.cidade}</div>
+  <div id="minimapa" style="height:180px;border-radius:12px;margin:8px 0"></div>
+  <h2>Quando</h2>
+  ${ts.map(t=>`<div class="card"><div>${fmtData(t.inicio)} até ${fmtData(t.fim).split(', ')[1]} · ${inscritosNo(t.id).length} vão${t.lotacao?` de ${t.lotacao}`:''}</div><div style="margin-top:8px">${botaoTurno(t)}</div>
+    ${ins&&ins.turno===t.id&&ins.passo==='dados'?`<label>Seu nome</label><input id="vnome"><label>Seu WhatsApp</label><input id="vtel" placeholder="(11) 9xxxx-xxxx"><p class="muted">Seu nome e telefone vão para quem organiza esta ação.</p><button class="btn" onclick="pedirCodigo()">Receber código</button>`:''}
+    ${ins&&ins.turno===t.id&&ins.passo==='codigo'?`<label>Código que chegou no WhatsApp</label><input id="vcod" maxlength="4" placeholder="0000"><button class="btn" onclick="inscrever(${t.id})">Confirmar</button>`:''}</div>`).join('')}
+  ${inscritoEmAlgum?`<h2>Combinado</h2><div class="card"><p>${a.detalhe}</p><a class="btn" href="${a.grupo}" target="_blank">Entrar no grupo do WhatsApp</a> <button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`:''}
+  <h2>Quem organiza</h2><div class="muted">${nomeOrganizador(a)}</div>`}
+function montarMiniMapa(a){const el=document.getElementById('minimapa');if(!el||!window.L)return;const m=L.map(el,{zoomControl:false}).setView([a.lugar.lat,a.lugar.lon],15);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);L.marker([a.lugar.lat,a.lugar.lon]).addTo(m)}
 function telaCriar(){return '<h1>Criar ação</h1>'}
 function telaMinhas(){return '<h1>Minhas ações</h1>'}
 function telaFila(){return '<h1>Fila</h1>'}
@@ -101,6 +131,7 @@ function render(){
   document.querySelectorAll('nav a[data-rota]').forEach(a=>a.classList.toggle('ativo',a.dataset.rota===(rota||'inicio')));
   document.getElementById('doar').href=(window.DADOS&&DADOS.config.vaquinha)||'#';
   if((rota||'inicio')==='inicio'&&estado.aba==='mapa')montarMapa();
+  if(rota==='acao'&&acao(Number(arg)))montarMiniMapa(acao(Number(arg)));
   window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',render);
