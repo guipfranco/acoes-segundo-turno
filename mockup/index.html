@@ -54,6 +54,8 @@ function fmtData(iso){const d=new Date(iso);const dias=['dom','seg','ter','qua',
 function distanciaKm(a,b){const r=6371,x=(b.lat-a.lat)*Math.PI/180,y=(b.lon-a.lon)*Math.PI/180;
   const s=Math.sin(x/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(y/2)**2;
   return 2*r*Math.asin(Math.sqrt(s))}
+function quantosVao(n){return n===1?'1 vai':n+' vão'}
+function lugarCurto(l){return l.bairro===l.cidade?l.cidade:`${l.bairro}, ${l.cidade}`}
 function nomeOrganizador(a){if(a.organizacao){const o=org(a.organizacao);return o.nome+(o.verificada?' <span class="selo">✓ verificada</span>':'')}return pessoa(a.organizador).nome}
 function somaDias(iso,n){const d=new Date(iso+'T00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
 function acoesVisiveis(){
@@ -70,8 +72,8 @@ function acoesVisiveis(){
 function cardAcao(x){const a=x.a;return `<a class="card" href="#/acao/${a.id}">
   <div>${ICONES[a.tipo]} <strong>${a.titulo}</strong></div>
   <div class="muted">${nomeOrganizador(a)}</div>
-  <div>${fmtData(x.t.inicio)} · ${a.lugar.bairro}, ${a.lugar.cidade}${x.km!=null?` · ${x.km.toFixed(1)} km`:''}</div>
-  <div class="muted">${vaoNa(a.id)} vão${a.prioritaria?' · <span class="prior">Área prioritária</span>':''}</div></a>`}
+  <div>${fmtData(x.t.inicio)} · ${lugarCurto(a.lugar)}${x.km!=null?` · ${x.km.toFixed(1)} km`:''}</div>
+  <div class="muted">${quantosVao(vaoNa(a.id))}${a.prioritaria?' · <span class="prior">Área prioritária</span>':''}</div></a>`}
 const LOCAIS=[{rotulo:'Sé',lat:-23.5505,lon:-46.6333},{rotulo:'Grajaú',lat:-23.7746,lon:-46.6978},{rotulo:'Diadema',lat:-23.6861,lon:-46.6228}];
 function setOnde(i){estado.onde=LOCAIS[i];render()}
 function telaInicio(){
@@ -111,10 +113,10 @@ function telaAcao(id){const a=acao(id);if(!a)return '<p>Ação não encontrada.<
   <div class="muted">${nomeOrganizador(a)}${a.prioritaria?' · <span class="prior">Área prioritária</span>':''}</div>
   ${futuros.length?'':'<p class="erro">Esta ação já aconteceu.</p>'}
   <p>${a.descricao}</p>
-  <h2>Onde</h2><div>${a.lugar.nome}</div><div class="muted">${a.lugar.bairro}, ${a.lugar.cidade}</div>
+  <h2>Onde</h2><div>${a.lugar.nome}</div><div class="muted">${lugarCurto(a.lugar)}</div>
   <div id="minimapa" style="height:180px;border-radius:12px;margin:8px 0"></div>
   <h2>Quando</h2>
-  ${ts.map(t=>`<div class="card"><div>${fmtData(t.inicio)} até ${fmtData(t.fim).split(', ')[1]} · ${inscritosNo(t.id).length} vão${t.lotacao?` de ${t.lotacao}`:''}</div><div style="margin-top:8px">${botaoTurno(t)}</div>
+  ${ts.map(t=>`<div class="card"><div>${fmtData(t.inicio)} até ${fmtData(t.fim).split(', ')[1]} · ${quantosVao(inscritosNo(t.id).length)}${t.lotacao?` de ${t.lotacao}`:''}</div><div style="margin-top:8px">${botaoTurno(t)}</div>
     ${ins&&ins.turno===t.id&&ins.passo==='dados'?`<label>Seu nome</label><input id="vnome"><label>Seu WhatsApp</label><input id="vtel" placeholder="(11) 9xxxx-xxxx"><p class="muted">Seu nome e telefone vão para quem organiza esta ação.</p><button class="btn" onclick="pedirCodigo()">Receber código</button>`:''}
     ${ins&&ins.turno===t.id&&ins.passo==='codigo'?`<label>Código que chegou no WhatsApp</label><input id="vcod" maxlength="4" placeholder="0000"><button class="btn" onclick="inscrever(${t.id})">Confirmar</button>`:''}</div>`).join('')}
   ${inscritoEmAlgum?`<h2>Combinado</h2><div class="card"><p>${a.detalhe}</p><a class="btn" href="${a.grupo}" target="_blank">Entrar no grupo do WhatsApp</a> <button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`:''}

@@ -603,6 +603,22 @@ window.DADOS = {
   },
   {
    "id": 11,
+   "pessoa": 7,
+   "turno": 3,
+   "criadaEm": "2026-10-08",
+   "canceladaEm": null,
+   "presenca": null
+  },
+  {
+   "id": 12,
+   "pessoa": 6,
+   "turno": 3,
+   "criadaEm": "2026-10-08",
+   "canceladaEm": null,
+   "presenca": null
+  },
+  {
+   "id": 13,
    "pessoa": 5,
    "turno": 14,
    "criadaEm": "2026-10-03",
@@ -610,7 +626,7 @@ window.DADOS = {
    "presenca": true
   },
   {
-   "id": 12,
+   "id": 14,
    "pessoa": 6,
    "turno": 14,
    "criadaEm": "2026-10-03",
@@ -618,7 +634,7 @@ window.DADOS = {
    "presenca": true
   },
   {
-   "id": 13,
+   "id": 15,
    "pessoa": 8,
    "turno": 14,
    "criadaEm": "2026-10-03",

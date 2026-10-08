@@ -127,3 +127,16 @@ def test_fluxo_de_status_nos_dados_e_no_codigo():
     assert a12["status"] == "em análise" and a12["organizacao"] in (None, 4)
     assert ".status='publicada'" in HTML  # aprovar
     assert "a.status='recusada'" in HTML  # recusar
+
+
+def test_turno_passado_do_organizador_tem_inscritos_para_marcar_presenca():
+    d = carregar_dados()
+    hoje = d["config"]["hoje"]
+    meus_passados = {t["id"] for t in d["turnos"] if t["inicio"][:10] < hoje
+                     and next(a for a in d["acoes"] if a["id"] == t["acao"])["organizador"] == d["config"]["eu"]}
+    assert any(i["turno"] in meus_passados for i in d["inscricoes"])
+
+
+def test_textos_singular_e_bairro_igual_a_cidade():
+    assert "function quantosVao" in HTML and "1 vai" in HTML
+    assert "function lugarCurto" in HTML
