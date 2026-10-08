@@ -107,3 +107,23 @@ def test_validacao_dos_campos_obrigatorios():
     for s in ["Dê um título.", "Escolha um lugar público.", "Informe pelo menos um turno.",
               "Telefone no formato", "t.fim<=t.inicio"]:
         assert s in HTML, s
+
+
+def test_minhas_e_fila():
+    for s in ["function telaMinhas", "function telaFila", "Copiar números", "Mandar aviso", "Marcar presença",
+              "Encerrar", "Editar", "Aprovar", "Recusar", "Dar selo à organização", "Despublicar",
+              "Bloquear organizador", "Recuse se:", "já criou"]:
+        assert s in HTML, s
+
+
+def test_recusa_exige_motivo_e_bloqueio_despublica_tudo():
+    assert "Escreva o motivo" in HTML
+    assert "bloqueada=true" in HTML.replace(" ", "")
+
+
+def test_fluxo_de_status_nos_dados_e_no_codigo():
+    d = carregar_dados()
+    a12 = next(a for a in d["acoes"] if a["id"] == 12)
+    assert a12["status"] == "em análise" and a12["organizacao"] in (None, 4)
+    assert ".status='publicada'" in HTML  # aprovar
+    assert "a.status='recusada'" in HTML  # recusar

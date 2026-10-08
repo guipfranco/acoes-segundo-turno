@@ -172,8 +172,38 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
    <label>Em nome de uma organização?</label><select onchange="estado.criar.organizacao=this.value?Number(this.value):null;render()"><option value="">Sou eu mesmo(a)</option>${DADOS.organizacoes.map(x=>`<option value="${x.id}" ${c.organizacao===x.id?'selected':''}>${x.nome}</option>`).join('')}</select>
    <div class="muted">${o&&o.verificada?'✓ verificada: publica na hora':'sem selo: passa pela fila (sua ação está em análise até um moderador aprovar)'}</div>
    <p><button class="btn sec" onclick="estado.criar.passo=2;render()">Voltar</button> <button class="btn" onclick="publicarAcao()">${c.editando?'Salvar':'Publicar'}</button></p>`}
-function telaMinhas(){return '<h1>Minhas ações</h1>'}
-function telaFila(){return '<h1>Fila</h1>'}
+estado.minhasAberta=null;estado.avisoTexto=null;estado.recusando=null;estado.erroRecusa=null;
+const ORDEM={'em análise':0,'publicada':1,'encerrada':2,'recusada':3,'rascunho':4};
+function textoAviso(a,t){return `Oi! ${fmtData(t.inicio)} tem ${a.titulo} em ${a.lugar.nome}, ${a.lugar.bairro}. ${a.detalhe} Até lá!`}
+function copiar(txt){navigator.clipboard&&navigator.clipboard.writeText(txt);alert('Copiado')}
+function marcarPresenca(insId,v){const i=DADOS.inscricoes.find(i=>i.id===insId);if(i)i.presenca=v}
+function encerrar(id){acao(id).status='encerrada';render()}
+function editar(id){const a=acao(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,titulo:a.titulo,descricao:a.descricao,lugar:a.lugar,detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,nome:pessoa(a.organizador).nome,telefone:pessoa(a.organizador).telefone,turnos:turnosDa(id).map(t=>({inicio:t.inicio,fim:t.fim,lotacao:t.lotacao||''}))});estado.criar=c;location.hash='#/criar'}
+function telaMinhas(){const minhas=DADOS.acoes.filter(a=>a.organizador===eu()).sort((p,q)=>ORDEM[p.status]-ORDEM[q.status]);
+  const aviso=estado.aviso?`<div class="card" style="background:#eaf7ee">${estado.aviso}</div>`:'';estado.aviso=null;
+  return `<h1>Minhas ações</h1>${aviso}${minhas.length?'':'<p class="muted">Você ainda não criou nenhuma ação.</p>'}
+  ${minhas.map(a=>`<div class="card"><div onclick="estado.minhasAberta=estado.minhasAberta===${a.id}?null:${a.id};render()" style="cursor:pointer"><strong>${ICONES[a.tipo]} ${a.titulo}</strong> <span class="muted">· ${a.status}</span>${a.motivoRecusa?`<div class="erro">Motivo: ${a.motivoRecusa}</div>`:''}<div class="muted">${vaoNa(a.id)} inscritos</div></div>
+   ${estado.minhasAberta===a.id?turnosDa(a.id).map(t=>{const ins=inscritosNo(t.id);const passado=t.inicio.slice(0,10)<DADOS.config.hoje;return `<div style="margin-top:8px;border-top:1px solid var(--borda);padding-top:8px"><strong>${fmtData(t.inicio)}</strong> · ${ins.length} inscritos
+     ${ins.map(i=>`<div>${pessoa(i.pessoa).nome} <span class="muted">${pessoa(i.pessoa).telefone}</span>${passado?` <label style="display:inline;font-weight:400"><input type="checkbox" style="width:auto" ${i.presenca?'checked':''} onchange="marcarPresenca(${i.id},this.checked)"> presente</label>`:''}</div>`).join('')}
+     <div style="margin-top:6px"><button class="btn sec" onclick="copiar('${ins.map(i=>pessoa(i.pessoa).telefone).join(', ')}')">Copiar números</button> <button class="btn sec" onclick="estado.avisoTexto=${t.id};render()">Mandar aviso</button>${passado?' <span class="muted">Marcar presença: marque quem foi</span>':''}</div>
+     ${estado.avisoTexto===t.id?`<textarea rows="3" id="aviso${t.id}">${textoAviso(a,t)}</textarea><button class="btn sec" onclick="copiar(document.getElementById('aviso${t.id}').value)">copiar</button>`:''}</div>`}).join('')+`<div style="margin-top:8px"><button class="btn sec" onclick="editar(${a.id})">Editar</button> ${a.status!=='encerrada'?`<button class="btn sec" onclick="encerrar(${a.id})">Encerrar</button>`:''}</div>`:''}</div>`).join('')}`}
+function historicoOrganizador(pid){const as=DADOS.acoes.filter(a=>a.organizador===pid);return `já criou ${as.length} ações (${as.filter(a=>a.status==='publicada'||a.status==='encerrada').length} aprovadas, ${as.filter(a=>a.status==='recusada').length} recusadas)`}
+function aprovar(id){acao(id).status='publicada';render()}
+function recusar(id){const m=(document.getElementById('motivo'+id)||{}).value||'';if(!m.trim()){estado.recusando=id;estado.erroRecusa='Escreva o motivo.';render();return}const a=acao(id);a.status='recusada';a.motivoRecusa=m;estado.recusando=null;estado.erroRecusa=null;render()}
+function darSelo(oid){org(oid).verificada=true;render()}
+function despublicar(id){acao(id).status='rascunho';render()}
+function bloquear(pid){pessoa(pid).bloqueada=true;DADOS.acoes.filter(a=>a.organizador===pid&&a.status==='publicada').forEach(a=>a.status='rascunho');render()}
+function telaFila(){const aba=estado.filaAba;
+  const lista=aba==='analise'?DADOS.acoes.filter(a=>a.status==='em análise').sort((p,q)=>q.criadaEm.localeCompare(p.criadaEm)):DADOS.acoes.filter(a=>a.status==='publicada');
+  return `<h1>Fila de moderação</h1>
+  <span class="chip ${aba==='analise'?'ativo':''}" onclick="estado.filaAba='analise';render()">Em análise (${DADOS.acoes.filter(a=>a.status==='em análise').length})</span><span class="chip ${aba==='publicadas'?'ativo':''}" onclick="estado.filaAba='publicadas';render()">Publicadas</span>
+  <p class="muted">Recuse se: não é ação de campanha; o lugar não é público; convoca para confronto; pede dinheiro; tem dado pessoal no texto.</p>
+  ${lista.length?'':'<p class="muted">Nada por aqui.</p>'}
+  ${lista.map(a=>{const t=turnosDa(a.id)[0]||{inicio:a.criadaEm+'T00:00'};const p=pessoa(a.organizador);const o=a.organizacao?org(a.organizacao):null;return `<div class="card">${cardAcao({a,t,km:null})}
+   <div class="muted">Organizador: ${p.nome} · ${p.telefone} · ${historicoOrganizador(p.id)}</div>
+   <div style="margin-top:8px">${aba==='analise'?`<button class="btn" onclick="aprovar(${a.id})">Aprovar</button> <button class="btn sec" onclick="estado.recusando=${a.id};render()">Recusar</button>${o&&!o.verificada?` <button class="btn sec" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}`:
+     `<button class="btn sec" onclick="despublicar(${a.id})">Despublicar</button> <button class="btn sec" onclick="bloquear(${p.id})">Bloquear organizador</button>`}</div>
+   ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: pede dinheiro para o material">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<button class="btn" onclick="recusar(${a.id})">Confirmar recusa</button>`:''}</div>`}).join('')}`}
 function render(){
   const h=location.hash||'#/inicio';
   const [,rota,arg]=h.split('/');
