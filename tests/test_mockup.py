@@ -55,7 +55,7 @@ def test_dados_tem_verificada_e_nao_verificada_e_eu_sou_organizador():
 
 def test_inicio_tem_filtros_abas_e_helpers():
     for s in ["function fmtData", "function turnosFuturos", "function vaoNa", "function distanciaKm",
-              "data-quando=\"hoje\"", "data-quando=\"fds\"", "data-aba=\"mapa\"",
+              "data-quando=\"${k}\"", "'fds'", "data-aba=\"mapa\"",
               "Ainda não tem ação perto de você", "Área prioritária", "leaflet"]:
         assert s in HTML, s
 
