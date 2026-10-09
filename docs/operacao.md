@@ -140,10 +140,9 @@ Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capt
   (token do `.env`); o dono passou a `moderador`.
 - Em 2026-10-09 (fim da tarde): migrações 20261009000023 (organização própria, link do perfil oficial e do post da
   organização anunciando a ação) e 20261009000030 (suspender, reativar e excluir ação) aplicadas com `ir_ao_ar.py migrar`.
-- Em 2026-10-09 (noite): merge da branch `ajustes-feedback-1009`; a migração 20261009000040 (canceladas visíveis,
-  `acao.publicada_em`, desistências no histórico) está PENDENTE em produção: `python scripts/ir_ao_ar.py migrar`
-  (só ela falta; conferido com `npx supabase migration list --linked`). O app no ar funciona sem ela (cancelada abre
-  como "não encontrada" para quem não entrou e o histórico ainda não traz desistências).
+- Em 2026-10-09 (noite): merge da branch `ajustes-feedback-1009` e migração 20261009000040 (canceladas visíveis,
+  `acao.publicada_em`, desistências no histórico) aplicada com `ir_ao_ar.py migrar` (conferida com
+  `npx supabase migration list --linked`).
 
 ## O que falta para ir ao ar
 
