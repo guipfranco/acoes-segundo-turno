@@ -66,13 +66,13 @@ def item_do_feed(x, lugares, geo=None):
     online = bool(x.get("online"))
     cidade, uf = (x.get("cidade") or "").strip(), (x.get("uf") or "").strip()
     local, endereco = (x.get("local") or "").strip(), (x.get("endereco") or "").strip()
-    h_ini, h_fim = bl.faixa(x.get("hora"), x.get("hora_ord"))
+    h_ini, h_fim, aprox = bl.faixa_aproximada(x.get("hora"), x.get("atividade"), x.get("hora_ord"))
     data = x["data"]
     link_bruto = (x.get("link") or "").strip()
     item = {
         "fonte_id": str(x["id"]), "titulo": (x.get("atividade") or "Ação")[:120], "tipo": bl.tipo_mapa(x.get("tipo"), x.get("atividade")),
         "organizacao": (x.get("organizacao") or "").strip() or None, "link": bl.link_valido(link_bruto),
-        "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
+        "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}", "hora_aproximada": aprox,
     }
     if link_bruto and not item["link"]:  # sem link válido o contato vira organizador_chama (importar_acoes)
         item["aviso"] = bl.aviso_link(link_bruto)
@@ -182,13 +182,14 @@ def item_da_rede(r, lugares, geo=None):
     cidade = re.sub(r"\s*[-/,]\s*[A-Za-z]{2}$", "", cidade)  # "Recife - PE" -> "Recife"
     endereco, bairro = (r.get("endereco") or "").strip(), (r.get("bairro") or "").strip()
     hora = (r.get("hora") or "").strip()
-    h_ini, h_fim = bl.faixa(hora, None) if hora else ("09:00", "11:00")
+    # sem hora: o período do texto da divulgação ("Noite - Giro nos Bares") vira faixa aproximada, marcada como tal
+    h_ini, h_fim, aproximada = bl.faixa_aproximada(hora, r.get("texto_original") or "")
     data = r["data"]
     org = limpar_org(r.get("organizador"))
     link_bruto = (r.get("link") or "").strip()
     item = {
         "fonte_id": None, "titulo": (r.get("titulo") or "Ação")[:120], "tipo": tipo_redes(r.get("tipo"), r.get("titulo")),
-        "organizacao": org or None, "organizacao_tipo": bl.tipo_org(org) if org else None,
+        "organizacao": org or None, "organizacao_tipo": bl.tipo_org(org) if org else None, "hora_aproximada": aproximada,
         "organizacao_foto": bl.logo_org(org) if org else None, "link": bl.link_valido(link_bruto), "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
     }
     if link_bruto and not item["link"]:

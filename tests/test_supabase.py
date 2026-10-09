@@ -242,7 +242,7 @@ def test_importar_acoes_grava_foto_da_divulgacao_e_nao_apaga_sem_foto(cenario):
     assert bucket["public"] is True
 
 
-# imagem servida pelo próprio Storage da pilha local (a única que criar_acao aceita desde a migração 50)
+# imagem servida pelo próprio Storage da pilha local (a única que criar_acao aceita desde a migração 51)
 FOTO_BUCKET = f"{sb.URL}/storage/v1/object/public/fotos-acoes/teste/arte.jpg"
 
 
@@ -513,3 +513,68 @@ def test_limite_de_40_fotos_por_pessoa_no_bucket(cenario):
     assert _enviar_foto(cenario, cenario["jwt_b"], f"{cenario['b']}/lote-40.jpg") in (400, 403)
     # a pasta cheia de uma pessoa não trava a outra
     assert _enviar_foto(cenario, cenario["jwt_a"], f"{cenario['a']}/um.jpg") == 200
+
+
+def test_importar_acoes_grava_hora_aproximada_e_a_view_publica_a_expoe(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    r = sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", inicio="2099-02-01T19:00", fim="2099-02-01T23:00", hora_aproximada=True), _item("b")]}, jwt=sb.SERVICE)
+    assert r.status == 200, r.corpo
+    pub = {a["titulo"]: a["id"] for a in sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo}
+    ta = sb.chamar("GET", f"/rest/v1/turno_publico?acao=eq.{pub['Importada a']}").corpo[0]
+    tb = sb.chamar("GET", f"/rest/v1/turno_publico?acao=eq.{pub['Importada b']}").corpo[0]
+    assert ta["hora_aproximada"] is True and ta["inicio"] == "2099-02-01T19:00:00"
+    assert tb["hora_aproximada"] is False
+    # reimportar com hora certa desmarca
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", inicio="2099-02-01T20:00", fim="2099-02-01T22:00"), _item("b")]}, jwt=sb.SERVICE)
+    ta = sb.chamar("GET", f"/rest/v1/turno_publico?acao=eq.{pub['Importada a']}").corpo[0]
+    assert ta["hora_aproximada"] is False and ta["inicio"] == "2099-02-01T20:00:00"
+
+
+def test_inscrever_recusa_turno_que_ja_terminou_hoje_mas_aceita_o_aproximado_do_dia(cenario):
+    import datetime
+    hoje = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3))).strftime("%Y-%m-%d")
+    sb.rpc("salvar_telefone", {"telefone": "11988887777"}, jwt=cenario["jwt_a"])
+    r = sb.admin("POST", "/rest/v1/turno", {"acao": cenario["acao"], "inicio": f"{hoje}T00:00:00", "fim": f"{hoje}T00:01:00"})
+    assert r.status == 201, r.corpo
+    assert sb.rpc("inscrever", {"turno_id": r.corpo[0]["id"]}, jwt=cenario["jwt_a"]).corpo["message"] == "turno_passado"
+    r = sb.admin("POST", "/rest/v1/turno", {"acao": cenario["acao"], "inicio": f"{hoje}T00:00:00", "fim": f"{hoje}T00:01:00", "hora_aproximada": True})
+    assert r.status == 201, r.corpo
+    assert sb.rpc("inscrever", {"turno_id": r.corpo[0]["id"]}, jwt=cenario["jwt_a"]).status == 200
+
+
+def test_feedback_qualquer_pessoa_manda_e_so_moderador_le(cenario):
+    # sem entrar: vai sem pessoa; texto curto não vai
+    assert sb.rpc("enviar_feedback", {"texto": "oi"}).corpo["message"] == "sem_texto"
+    r = sb.rpc("enviar_feedback", {"texto": "  O horário desta ação está errado  ", "contato": " ", "tela": "#/acao/1", "acao_id": cenario["acao"], "navegador": "iOS Safari"})
+    assert r.status == 200, r.corpo
+    anon_id = r.corpo["id"]
+    # logado: vai com a pessoa; ação que não existe vira null
+    r = sb.rpc("enviar_feedback", {"texto": "Ideia: lista das online", "contato": "(11) 99999-0000", "acao_id": 999999999}, jwt=cenario["jwt_a"])
+    assert r.status == 200, r.corpo
+    meu_id = r.corpo["id"]
+    # ninguém lê a tabela direto, nem quem mandou
+    assert sb.chamar("GET", "/rest/v1/feedback", jwt=cenario["jwt_a"]).corpo == []
+    assert sb.chamar("GET", "/rest/v1/feedback").status >= 400 or sb.chamar("GET", "/rest/v1/feedback").corpo == []
+    assert sb.rpc("feedbacks", {}).status >= 400  # anon nem chama
+    assert sb.rpc("feedbacks", {}, jwt=cenario["jwt_a"]).corpo["message"] == "so_moderador"
+    assert sb.rpc("tratar_feedback", {"feedback_id": anon_id}, jwt=cenario["jwt_a"]).corpo["message"] == "so_moderador"
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['b']}", {"papel": "moderador"})
+    pend = {f["id"]: f for f in sb.rpc("feedbacks", {}, jwt=cenario["jwt_b"]).corpo}
+    a, m = pend[anon_id], pend[meu_id]
+    assert a["texto"] == "O horário desta ação está errado" and a["contato"] is None and a["pessoa"] is None
+    assert a["acao"] == cenario["acao"] and a["acao_titulo"].startswith("Teste ") and a["navegador"] == "iOS Safari" and a["tratado_em"] is None
+    assert m["pessoa"]["nome"] == "Pessoa A" and m["contato"] == "(11) 99999-0000" and m["acao"] is None
+    # tratar tira das pendentes e põe nas tratadas; reabrir volta
+    assert sb.rpc("tratar_feedback", {"feedback_id": anon_id}, jwt=cenario["jwt_b"]).status in (200, 204)
+    assert anon_id not in {f["id"] for f in sb.rpc("feedbacks", {}, jwt=cenario["jwt_b"]).corpo}
+    trat = {f["id"]: f for f in sb.rpc("feedbacks", {"pendentes": False}, jwt=cenario["jwt_b"]).corpo}
+    assert trat[anon_id]["tratado_em"] is not None
+    assert sb.rpc("tratar_feedback", {"feedback_id": anon_id, "tratado": False}, jwt=cenario["jwt_b"]).status in (200, 204)
+    assert anon_id in {f["id"] for f in sb.rpc("feedbacks", {}, jwt=cenario["jwt_b"]).corpo}
+    assert sb.rpc("tratar_feedback", {"feedback_id": 999999999}, jwt=cenario["jwt_b"]).corpo["message"] == "nao_pode"
+
+
+def test_feedback_tem_freio_por_pessoa(cenario):
+    for i in range(10):
+        assert sb.rpc("enviar_feedback", {"texto": f"mensagem {i}"}, jwt=cenario["jwt_b"]).status == 200
+    assert sb.rpc("enviar_feedback", {"texto": "a décima primeira"}, jwt=cenario["jwt_b"]).corpo["message"] == "muitas_mensagens"

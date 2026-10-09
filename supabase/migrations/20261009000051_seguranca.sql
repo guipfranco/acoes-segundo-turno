@@ -119,7 +119,7 @@ create or replace function importar_acoes(fonte text, itens jsonb, encerrar_falt
 returns json language plpgsql security definer set search_path = public as $$
 #variable_conflict use_column
 declare
-  it jsonb; org_id bigint; a_id bigint; t_id bigint; nova boolean; link text; foto_url text; logo_url text;
+  it jsonb; org_id bigint; a_id bigint; t_id bigint; nova boolean; link text; foto_url text; logo_url text; aprox boolean;
   n_ins int := 0; n_atu int := 0; n_enc int := 0; ids text[] := '{}';
   sistema constant uuid := '00000000-0000-0000-0000-00000000b07a';
   re_https constant text := '^(https://|http://(127\.0\.0\.1|localhost)[:/])';
@@ -164,11 +164,12 @@ begin
     returning id, (xmax = 0) into a_id, nova;
     if nova then n_ins := n_ins + 1; else n_atu := n_atu + 1; end if;
     ids := ids || (it->>'fonte_id');
+    aprox := coalesce((it->>'hora_aproximada')::boolean, false);
     select id into t_id from turno where acao = a_id order by inicio limit 1;
     if found then
-      update turno set inicio = (it->>'inicio')::timestamp, fim = (it->>'fim')::timestamp where id = t_id;
+      update turno set inicio = (it->>'inicio')::timestamp, fim = (it->>'fim')::timestamp, hora_aproximada = aprox where id = t_id;
     else
-      insert into turno (acao, inicio, fim) values (a_id, (it->>'inicio')::timestamp, (it->>'fim')::timestamp);
+      insert into turno (acao, inicio, fim, hora_aproximada) values (a_id, (it->>'inicio')::timestamp, (it->>'fim')::timestamp, aprox);
     end if;
   end loop;
   if encerrar_faltantes then
