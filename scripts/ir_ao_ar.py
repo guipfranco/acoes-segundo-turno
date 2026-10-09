@@ -10,6 +10,7 @@ Variáveis de ambiente (nunca vão para o repo):
   GOOGLE_CLIENT_SECRET    segredo do cliente OAuth (passo auth; opcional)
 
 Uso:
+  python scripts/ir_ao_ar.py senha          # redefine a senha do banco e guarda em .env (fora do git)
   python scripts/ir_ao_ar.py criar          # cria o projeto em São Paulo e espera ficar pronto
   python scripts/ir_ao_ar.py migrar         # link + db push + confere que as views públicas são só leitura
   python scripts/ir_ao_ar.py auth           # desliga e-mail, liga Google, Site URL e Redirect URLs
@@ -18,11 +19,13 @@ Uso:
   python scripts/ir_ao_ar.py tudo           # criar, migrar, auth e config em sequência
 
 O ref do projeto fica em supabase/.temp/project-ref (fora do git); --ref força outro.
+As variáveis também podem ficar em .env na raiz (NOME=valor por linha; o arquivo está no .gitignore).
 """
 import argparse
 import json
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import sys
@@ -40,6 +43,26 @@ REDIRECTS = ["https://guipfranco.github.io/acoes-segundo-turno/**", "http://loca
 ARQ_REF = RAIZ / "supabase" / ".temp" / "project-ref"
 CONFIG_JS = RAIZ / "app" / "config.js"
 EMAIL_DONO = "guilhermepereirafranco@gmail.com"
+ARQ_ENV = RAIZ / ".env"
+
+
+def ler_env():
+    """NOME=valor por linha de .env; não sobrescreve o que já está no ambiente."""
+    if not ARQ_ENV.exists():
+        return
+    for linha in ARQ_ENV.read_text(encoding="utf-8").splitlines():
+        linha = linha.strip()
+        if not linha or linha.startswith("#") or "=" not in linha:
+            continue
+        k, v = linha.split("=", 1)
+        os.environ.setdefault(k.strip(), v.strip().strip("'\""))
+
+
+def gravar_env(nome, valor):
+    linhas = ARQ_ENV.read_text(encoding="utf-8").splitlines() if ARQ_ENV.exists() else []
+    linhas = [l for l in linhas if not l.startswith(nome + "=")] + [f"{nome}={valor}"]
+    ARQ_ENV.write_text("\n".join(linhas) + "\n", encoding="utf-8")
+    os.environ[nome] = valor
 
 
 class Falha(Exception):
@@ -106,6 +129,15 @@ def npx(*args):
 
 
 # ---- passos ----
+
+def senha(args):
+    """Redefine a senha do banco pela Management API e guarda em .env."""
+    ref = ler_ref(args)
+    nova = secrets.token_urlsafe(27)
+    ok(*chamar("PATCH", f"/projects/{ref}/database/password", {"password": nova}), "redefinir a senha do banco")
+    gravar_env("SUPABASE_DB_PASSWORD", nova)
+    print(f"senha do banco redefinida e guardada em {ARQ_ENV} (fora do git)")
+
 
 def criar(args):
     senha = env("SUPABASE_DB_PASSWORD")
@@ -239,7 +271,7 @@ def tudo(args):
     config(args)
 
 
-PASSOS = {"criar": criar, "migrar": migrar, "auth": auth, "config": config, "semear": semear, "tudo": tudo}
+PASSOS = {"senha": senha, "criar": criar, "migrar": migrar, "auth": auth, "config": config, "semear": semear, "tudo": tudo}
 
 
 def main(argv=None):
@@ -249,6 +281,7 @@ def main(argv=None):
     ap.add_argument("--org", help="id da organização, se a conta tiver mais de uma")
     ap.add_argument("--telefone", help="seu telefone, para o passo semear")
     args = ap.parse_args(argv)
+    ler_env()
     if args.passo == "semear" and not args.telefone:
         ap.error("semear precisa de --telefone")
     try:

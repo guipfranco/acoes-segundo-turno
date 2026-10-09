@@ -9,7 +9,7 @@ Uso:
   python scripts/publicar_acoes.py redes --de ARQ.csv [--feed ARQ.json] [--aplicar]
                                                                    # consolidado das redes, sem o que já está no feed
 
-Destino (variáveis de ambiente, nunca no repo), na ordem em que são procuradas:
+Destino (variáveis de ambiente ou .env na raiz, nunca no repo), na ordem em que são procuradas:
   SUPABASE_URL + SUPABASE_SERVICE_KEY     REST com a chave de serviço (pilha local do `npx supabase start`)
   SUPABASE_ACCESS_TOKEN (+ ref do projeto em supabase/.temp/project-ref ou --ref)
                                           Management API, como em scripts/ir_ao_ar.py (produção)
@@ -229,6 +229,8 @@ def _http(metodo, url, corpo, cab):
 
 
 def destino():
+    import ir_ao_ar
+    ir_ao_ar.ler_env()
     url, chave = os.environ.get("SUPABASE_URL", "").strip(), os.environ.get("SUPABASE_SERVICE_KEY", "").strip()
     if url and chave:
         return "rest", url, chave

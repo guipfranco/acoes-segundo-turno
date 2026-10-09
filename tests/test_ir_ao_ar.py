@@ -46,3 +46,16 @@ def test_sem_token_falha_com_mensagem(monkeypatch, capsys):
     monkeypatch.setenv("SUPABASE_DB_PASSWORD", "x")
     assert m.main(["criar"]) == 1
     assert "SUPABASE_ACCESS_TOKEN" in capsys.readouterr().err
+
+
+def test_env_le_e_grava_sem_sobrescrever_o_ambiente(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "ARQ_ENV", tmp_path / ".env")
+    monkeypatch.delenv("X_TESTE", raising=False)
+    monkeypatch.setenv("Y_TESTE", "ambiente")
+    (tmp_path / ".env").write_text("# comentário\nX_TESTE='abc'\nY_TESTE=arquivo\n", encoding="utf-8")
+    m.ler_env()
+    import os
+    assert os.environ["X_TESTE"] == "abc" and os.environ["Y_TESTE"] == "ambiente"
+    m.gravar_env("X_TESTE", "novo")
+    assert os.environ["X_TESTE"] == "novo"
+    assert (tmp_path / ".env").read_text(encoding="utf-8") == "# comentário\nY_TESTE=arquivo\nX_TESTE=novo\n"

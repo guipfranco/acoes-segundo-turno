@@ -69,7 +69,8 @@ Sem dado real de terceiros: o organizador é o próprio dono do projeto.
 Migração `20261009000001_origem_importacao.sql` (pessoa de sistema, campos `fonte`/`fonte_id`/`lugar_aproximado`,
 contato `divulgacao`, função `importar_acoes`). Em produção ela ainda precisa ser aplicada: `python scripts/ir_ao_ar.py migrar`
 (pede `SUPABASE_ACCESS_TOKEN` e `SUPABASE_DB_PASSWORD`) ou colar o arquivo no SQL Editor e registrar em
-`supabase_migrations.schema_migrations`.
+`supabase_migrations.schema_migrations`. Se a senha do banco se perdeu, `python scripts/ir_ao_ar.py senha`
+redefine pela Management API e guarda em `.env` na raiz (fora do git); os scripts leem o `.env`.
 
 ```bash
 python scripts/publicar_acoes.py bora-lula             # baixa o feed e ensaia: resumo + levantamento/publicar-*.json e revisao-*.csv
