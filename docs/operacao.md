@@ -197,7 +197,7 @@ esperar o Pages -> `python scripts/fotos_divulgacao.py migrar-pages --aplicar` (
 e troca `foto_url` e grava `foto_mini_url` só nas ações cujos dois arquivos já existem; as demais saem listadas como
 "ainda não gerados: rode sem --aplicar, commite e envie"). Depois disso o bucket `divulgacao` pode ser esvaziado.
 
-- Em 2026-10-09 (noite, tarde da noite): merges de `seguranca-1009` e `fotos-e-lista-pages`; migrações 20261009000051 e 20261009000060 aplicadas com `ir_ao_ar.py migrar`; acervo de fotos migrado para `fotos/divulgacao/` com `fotos_divulgacao.py migrar-pages --aplicar` (431 ações apontadas para o Pages, bucket `divulgacao` pode ser esvaziado); `publico.json` servido pelo Pages. Pendente: `supabase functions deploy previa-instagram` (limite por hora).
+- Em 2026-10-09 (noite, tarde da noite): merges de `seguranca-1009` e `fotos-e-lista-pages`; migrações 20261009000051 e 20261009000060 aplicadas com `ir_ao_ar.py migrar`; acervo de fotos migrado para `fotos/divulgacao/` com `fotos_divulgacao.py migrar-pages --aplicar` (431 ações apontadas para o Pages, bucket `divulgacao` pode ser esvaziado); `publico.json` servido pelo Pages. `previa-instagram` republicada com o limite por hora.
 
 ## Incidentes e abuso
 
