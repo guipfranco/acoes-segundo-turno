@@ -1,6 +1,7 @@
 # CLAUDE.md
 
-Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segundo-turno` em 2026-10-08.
+Repo da plataforma "Eleja o Lula" (nome visível desde 2026-10-09; antes "Ações do 2º turno"), de ações do 2º turno pelo voto do Lula.
+Nasceu do `mapa-segundo-turno` em 2026-10-08. URL, repo e projeto Supabase seguem `acoes-segundo-turno` por decisão do Gui.
 
 - Tudo em pt-BR, datas AAAA-MM-DD. Push logo depois de cada commit.
 - `app/` (antes `mockup/`) é o app: estático, sem build. Publicado em https://guipfranco.github.io/acoes-segundo-turno/
