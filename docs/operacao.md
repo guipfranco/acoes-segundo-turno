@@ -84,6 +84,10 @@ Destino pelas variáveis de ambiente: `SUPABASE_URL` + `SUPABASE_SERVICE_KEY` (R
 caminho da pilha local) ou, sem elas, `SUPABASE_ACCESS_TOKEN` + ref em `supabase/.temp/project-ref` (Management API,
 produção). Rode o ensaio e leia o `revisao-*.csv` antes do `--aplicar`. Reimportar é seguro: a chave é
 (`fonte`, `fonte_id`). Ação recusada por moderador não volta. Para o feed, o plano é rodar 2x por dia.
+Nas redes, o `fonte_id` vem só da própria linha (link, início, cidade e título; desde 2026-10-09): corrigir título
+ou hora no consolidado troca o id, e a ação antiga é encerrada. Por isso o `--aplicar` consulta antes as ações com
+"Eu vou" em turno de hoje em diante e para sem gravar nada se fosse encerrar alguma; `--forcar` encerra assim mesmo
+(quem marcou perde a presença). Card com várias ações no mesmo post vira uma ação por linha.
 
 Tipos de ação: a migração `20261009000010_tipos_acao.sql` troca "roda de conversa" por "encontro" e cria "ato",
 "caminhada" e "cultural". Depois de aplicá-la em produção, rode `python scripts/publicar_acoes.py bora-lula --aplicar`
