@@ -79,3 +79,17 @@ def test_migracao_cria_bucket_publico_e_importa_foto_sem_apagar():
     assert "insert into storage.buckets" in sql and "'divulgacao', 'divulgacao', true" in sql
     assert "foto_url = coalesce(excluded.foto_url, acao.foto_url)" in sql
     assert "nullif(it->'foto'->>'url', '')" in sql
+
+
+def test_og_da_pagina_e_coletar_para_no_429():
+    pag = '<meta property="og:image" content="https://cdn/x.jpg?a=1&amp;b=2" /><meta content="https://www.instagram.com/une/p/AAA/" property="og:url">'
+    assert fd.og_da_pagina(pag) == {"img": "https://cdn/x.jpg?a=1&b=2", "url": "https://www.instagram.com/une/p/AAA/"}
+    assert fd.og_da_pagina("<html></html>") == {"img": None, "url": None}
+    pausas = []
+
+    def ler(c):
+        if c == "CCC":
+            raise fd.Limite()
+        return {"codigo": c, "img": "i", "url": "u"}
+    assert [x["codigo"] for x in fd.coletar(["AAA", "BBB", "CCC", "DDD"], ler=ler, pausa=3, dormir=pausas.append)] == ["AAA", "BBB"]
+    assert pausas == [3, 3]

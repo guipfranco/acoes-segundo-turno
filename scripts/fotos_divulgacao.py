@@ -1,20 +1,22 @@
 """Imagem da divulgação original (post do Instagram) como foto das ações importadas.
 
-O Instagram só mostra o post a quem está logado, então a coleta é feita num navegador logado (Claude in
-Chrome): para cada código de post, abrir https://www.instagram.com/p/<código>/ e ler as metas og:image e og:url.
-Fazer devagar (uma página a cada poucos segundos): o Instagram devolve 429 se for rápido.
+A imagem vem da prévia de link do post (metas og:image e og:url), a mesma que o WhatsApp mostra ao colar o link:
+o Instagram a entrega sem login a quem se identifica como robô de prévia. Sem conta, sem navegador. Uma página a
+cada 3 s; se o Instagram devolver 429, o script para e guarda o que já coletou.
 
 Uso:
   python scripts/fotos_divulgacao.py pendentes             # códigos de post das ações a publicar ainda sem foto
-  python scripts/fotos_divulgacao.py coleta ARQ.json       # baixa, reduz e sobe as imagens coletadas
-                                                           # ARQ.json: [{"codigo", "img", "url"}] (og:image, og:url)
+  python scripts/fotos_divulgacao.py coletar               # lê a prévia de cada pendente, baixa, reduz e sobe
+  python scripts/fotos_divulgacao.py coleta ARQ.json       # o mesmo a partir de [{"codigo", "img", "url"}] já lidos
 
 As imagens vão para o bucket público `divulgacao` do Supabase Storage (migração 20261009000003), com o mesmo
 destino de scripts/publicar_acoes.py. O mapa código -> foto fica em levantamento/fotos-divulgacao.json (fora do
 git) e é lido pelo publicar_acoes.py, que manda a foto junto com a ação. Cópias locais em levantamento/divulgacao/.
 """
 import argparse
+import html
 import io
+import time
 import json
 import os
 import re
@@ -48,6 +50,48 @@ def perfil_do_og(url):
     """og:url vem como https://www.instagram.com/<perfil>/reel/<código>/ quando o post é de um perfil."""
     m = RE_PERFIL.search(url or "")
     return m.group(1) if m and m.group(1) not in ("p", "reel", "reels", "tv") else None
+
+
+AGENTE_PREVIA = "Mozilla/5.0 (compatible; acoes-segundo-turno link preview; +https://github.com/guipfranco/acoes-segundo-turno)"
+PAUSA = 3.0
+
+
+class Limite(Exception):
+    """O Instagram pediu para ir mais devagar (429)."""
+
+
+def og_da_pagina(texto):
+    """{img, url} das metas og:image e og:url do HTML."""
+    def meta(prop):
+        m = re.search(r'<meta[^>]+property="og:' + prop + r'"[^>]+content="([^"]*)"', texto) or             re.search(r'<meta[^>]+content="([^"]*)"[^>]+property="og:' + prop + '"', texto)
+        return html.unescape(m.group(1)) if m else None
+    return {"img": meta("image"), "url": meta("url")}
+
+
+def previa(codigo):
+    req = urllib.request.Request(f"https://www.instagram.com/p/{codigo}/", headers={"User-Agent": AGENTE_PREVIA})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            texto = r.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            raise Limite()
+        return {"codigo": codigo, "img": None, "url": None}
+    return dict(og_da_pagina(texto), codigo=codigo)
+
+
+def coletar(codigos, ler=previa, pausa=PAUSA, dormir=time.sleep):
+    """Prévia de cada código, com pausa entre eles. Para no primeiro 429 e devolve o que já tinha."""
+    saida = []
+    for i, c in enumerate(codigos):
+        if i:
+            dormir(pausa)
+        try:
+            saida.append(ler(c))
+        except Limite:
+            print(f"Instagram pediu pausa (429) depois de {i} posts; rode de novo mais tarde", file=sys.stderr)
+            break
+    return saida
 
 
 def carregar_mapa(arq=MAPA):
@@ -150,16 +194,25 @@ def main(argv=None):
     pp.add_argument("--itens", nargs="*", help="publicar-*.json (padrão: os mais recentes de cada fonte)")
     pc = sub.add_parser("coleta")
     pc.add_argument("arquivo")
+    pr = sub.add_parser("coletar")
+    pr.add_argument("--itens", nargs="*", help="publicar-*.json (padrão: os mais recentes de cada fonte)")
+    pr.add_argument("--max", type=int, default=0, help="no máximo N posts nesta rodada")
     args = p.parse_args(argv)
     mapa = carregar_mapa()
     try:
-        if args.cmd == "pendentes":
+        if args.cmd in ("pendentes", "coletar"):
             arqs = args.itens or [str(sorted((RAIZ / "levantamento").glob(f"publicar-{f}-*.json"))[-1])
                                   for f in ("bora-lula", "redes") if list((RAIZ / "levantamento").glob(f"publicar-{f}-*.json"))]
             itens = [it for a in arqs for it in json.loads(Path(a).read_text(encoding="utf-8"))]
-            print(json.dumps(pendentes(itens, mapa)))
-            return 0
-        coleta = json.loads(Path(args.arquivo).read_text(encoding="utf-8"))
+            cods = pendentes(itens, mapa)
+            if args.cmd == "pendentes":
+                print(json.dumps(cods))
+                return 0
+            cods = cods[:args.max] if args.max else cods
+            print(f"{len(cods)} posts para ler (~{round(len(cods) * PAUSA / 60)} min)")
+            coleta = coletar(cods)
+        else:
+            coleta = json.loads(Path(args.arquivo).read_text(encoding="utf-8"))
         base, chave = destino_storage()
         novas, falhas = processar_coleta(coleta, mapa, base, chave)
         MAPA.parent.mkdir(parents=True, exist_ok=True)
