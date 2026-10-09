@@ -69,7 +69,8 @@
         const extra = { inscrita: (mim && mim.inscrita) || [], combinado: (mim && mim.combinado) || null };
         if (aR.data) return Object.assign({ acao: deAcao(aR.data), turnos: tR.data.map(deTurno) }, extra);
         // fora do ar (em análise, suspensa, recusada): só quem criou ou modera vê; cancelada abre para todos
-        const r = await rpc('acao_restrita', { acao_id: id });
+        let r = null;
+        try { r = await rpc('acao_restrita', { acao_id: id }); } catch (e) { if (await uid()) throw e; }
         if (!r) return null;
         return Object.assign({ acao: Object.assign(deAcao(r.acao), { detalhe: r.acao.detalhe || null, contatoLink: r.acao.contato_link || null }),
           turnos: (r.turnos || []).map(deTurno) }, extra);

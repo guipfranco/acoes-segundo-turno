@@ -4,7 +4,7 @@
 --    Quem não criou nem modera recebe só os campos da view pública (sem detalhe, link do grupo, post oficial
 --    nem motivo de recusa).
 -- 2. Minhas inscrições traz também as que a pessoa desistiu (marcadas 'desistiu'), para o histórico.
--- 3. Quem organiza vê, em cada horário, quem desistiu.
+-- 3. Quem organiza vê, em cada horário, quem desistiu (só o nome: quem desistiu não manda mais o telefone).
 
 create or replace function acao_restrita(acao_id bigint) returns json language plpgsql stable security definer set search_path = public as $$
 declare a acao; j json;
@@ -47,7 +47,7 @@ create or replace function turnos_com_inscritos_json(acao_id bigint) returns jso
     'inscritos', coalesce((select json_agg(json_build_object('nome', q.nome, 'telefone', q.telefone) order by i.criada_em)
                            from inscricao i join pessoa q on q.id = i.pessoa
                            where i.turno = t.id and i.cancelada_em is null), '[]'::json),
-    'desistiram', coalesce((select json_agg(json_build_object('nome', q.nome, 'telefone', q.telefone) order by i.cancelada_em)
+    'desistiram', coalesce((select json_agg(json_build_object('nome', q.nome) order by i.cancelada_em)
                             from inscricao i join pessoa q on q.id = i.pessoa
                             where i.turno = t.id and i.cancelada_em is not null), '[]'::json)) order by t.inicio), '[]'::json)
   from turno t where t.acao = acao_id

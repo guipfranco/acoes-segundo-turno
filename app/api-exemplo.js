@@ -34,9 +34,8 @@
     const completa = a => { const o = a.organizacao ? org(a.organizacao) : null;
       return Object.assign(publica(a), { motivoRecusa: a.motivoRecusa || null, detalhe: a.detalhe || null, contatoLink: a.contatoLink || null,
         organizacaoLink: a.organizacaoLink || null, organizacaoDados: o ? { nome: o.nome, verificada: !!o.verificada, link_oficial: o.linkOficial || null } : null }); };
-    const contatoDe = i => { const q = pessoa(i.pessoa) || {}; return { nome: q.nome, telefone: q.telefone || null }; };
-    const comInscritos = aid => turnosDa(aid).map(t => Object.assign(t, { inscritos: ativas(t.id).map(contatoDe),
-      desistiram: dados.inscricoes.filter(i => i.turno === t.id && i.canceladaEm).map(contatoDe) }));
+    const comInscritos = aid => turnosDa(aid).map(t => Object.assign(t, { inscritos: ativas(t.id).map(i => { const q = pessoa(i.pessoa) || {}; return { nome: q.nome, telefone: q.telefone || null }; }),
+      desistiram: dados.inscricoes.filter(i => i.turno === t.id && i.canceladaEm).map(i => ({ nome: (pessoa(i.pessoa) || {}).nome })) }));
     const sessaoObj = () => { if (sessao == null) return null; const p = pessoa(sessao); return { id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, papel: p.papel, bloqueada: !!p.bloqueada, organizacao: p.organizacao || null }; };
     return {
       modo: 'exemplo',

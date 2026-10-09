@@ -100,6 +100,11 @@ test('salvarTelefone valida 11 dígitos e minhasInscricoes guarda a desistência
   const depois = (await api.minhasInscricoes()).find(m => m.turno.id === t.id);
   assert.ok(depois && depois.desistiu); // desistir não some: fica no histórico
   const minhas2 = await api.minhasAcoes(); assert.ok(minhas2.every(m => m.turnos.every(x => Array.isArray(x.desistiram))));
+  // quem organiza vê quem desistiu, só pelo nome (o telefone não segue depois da desistência)
+  const minha = minhas2.find(m => m.acao.status === 'publicada' && m.turnos.some(x => x.inicio.slice(0, 10) >= d.config.hoje)); const tm = minha.turnos.find(x => x.inicio.slice(0, 10) >= d.config.hoje);
+  await api.inscrever(tm.id); await api.desistir(tm.id);
+  const des = (await api.minhasAcoes()).find(m => m.acao.id === minha.acao.id).turnos.find(x => x.id === tm.id).desistiram;
+  assert.ok(des.length >= 1 && des.every(x => x.nome && !('telefone' in x)));
 });
 
 test('ação importada no modo exemplo: lugar aproximado e link de divulgação público, contato ainda escondido', async () => {
