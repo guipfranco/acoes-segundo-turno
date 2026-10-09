@@ -1,7 +1,9 @@
 # Operação (v1)
 
 - Produção: Supabase projeto `acoes-segundo-turno` (região São Paulo, plano grátis). Front no GitHub Pages
-  (`https://guipfranco.github.io/acoes-segundo-turno/`, só a pasta `app/`).
+  (`https://guipfranco.github.io/acoes-segundo-turno/`: a pasta `app/` da master na raiz, mais `publico.json` e
+  `fotos/`; cada outra branch em `/previa/<branch>/`, montado por `scripts/montar_pages.sh`). Veja "Lista e fotos
+  pelo GitHub Pages".
 - Migrações: `supabase/migrations/`. Aplicar com `npx supabase db push` depois de `npx supabase link`.
 - Moderador: por enquanto, `update pessoa set papel='moderador' where email='...'` no SQL Editor. Bloquear e
   desbloquear pessoa já é botão na Fila ("Bloquear organizador", migração 20261009000050); veja "Incidentes e abuso".
@@ -152,6 +154,23 @@ Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capt
 - Em 2026-10-09 (noite): merge da branch `cards-verticais` (card 4:5 com a arte inteira); `refazer` trocou 224
   imagens recortadas pela arte inteira do embed (343 das 356 ações com foto de divulgação; ficaram 3 vídeos que não
   deixam incorporar: DeMS8kWi0jE, DePGosYRM0X, DePeocbkbRR); `previa-instagram` republicada com o embed.
+
+## Lista e fotos pelo GitHub Pages
+
+Quem só olha o site não bate no Supabase: a vitrine (inicial e mapa) lê `publico.json`, que o workflow
+"Publicar app no GitHub Pages" (`.github/workflows/pages.yml`) gera com `scripts/snapshot_publico.py` de hora em
+hora (cron `7 * * * *`) e a cada push que toque `app/` ou `fotos/`. O script baixa as views públicas
+(`configuracao_publica`, `organizacao_publica`, `acao_publica`, `turno_publico` com `inicio >= hoje` em Brasília)
+pela REST com a chave anon, paginando de 1000 em 1000, e grava as linhas cruas com `geradoEm`. Plano B em
+`app/api-supabase.js` (`publico()`): se o arquivo não existir (prévia por branch), falhar ou tiver mais de 3 h,
+lê direto do Supabase como antes; `window.API.origemPublico` diz qual dos dois valeu (`snapshot` ou `supabase`).
+Página da ação, login, "Eu vou!", Perfil, cadastro e Fila continuam ao vivo. Consequência: uma ação aprovada na
+Fila (ou importada) aparece na vitrine em até 1 h; para adiantar, Actions > "Publicar app no GitHub Pages" >
+Run workflow. Se o snapshot falhar, o deploy segue sem o arquivo (`continue-on-error`) e o app cai no plano B.
+As fotos das ações importadas moram em `fotos/divulgacao/` na raiz do repo e `montar_pages.sh` copia a pasta da
+master para a raiz do site (as prévias não a recebem).
+
+<!-- rotina de fotos: o outro agente descreve -->
 
 ## Incidentes e abuso
 

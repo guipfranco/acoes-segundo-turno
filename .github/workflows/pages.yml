@@ -2,10 +2,13 @@ name: Publicar app no GitHub Pages
 
 # A raiz é sempre a master (produção); cada outra branch vira prévia em /previa/<branch>/.
 # Qualquer push que toque o app republica tudo; apagar uma branch tira a prévia dela.
+# De hora em hora regrava publico.json (lista pública do Supabase) para a vitrine não bater no banco.
 on:
   push:
-    paths: ["app/**", ".github/workflows/pages.yml", "scripts/montar_pages.sh"]
+    paths: ["app/**", "fotos/**", ".github/workflows/pages.yml", "scripts/montar_pages.sh", "scripts/snapshot_publico.py"]
   delete:
+  schedule:
+    - cron: "7 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -28,6 +31,9 @@ jobs:
         with:
           fetch-depth: 0
       - run: bash scripts/montar_pages.sh _site
+      # Se o Supabase falhar, publica sem o arquivo: o app cai no plano B (lê direto do Supabase)
+      - run: python3 scripts/snapshot_publico.py _site/publico.json
+        continue-on-error: true
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

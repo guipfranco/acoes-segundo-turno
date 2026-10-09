@@ -287,9 +287,22 @@ def test_mapa_virou_rota_propria():
     assert "location.hash='#/mapa'" in HTML  # escolher cidade na inicial leva ao mapa
 
 
-def test_workflow_do_pages_publica_so_a_pasta_app():
+MONTAR_PAGES = (RAIZ / "scripts" / "montar_pages.sh").read_text(encoding="utf-8")
+
+
+def test_workflow_do_pages_monta_o_site_com_previas_snapshot_e_fotos():
+    # a raiz do site é o app/ da master; cada branch vira prévia; publico.json e fotos/ só na raiz
     assert "actions/upload-pages-artifact" in WORKFLOW and "actions/deploy-pages" in WORKFLOW
-    assert "path: app" in WORKFLOW
+    assert "bash scripts/montar_pages.sh _site" in WORKFLOW and "path: _site" in WORKFLOW
+    assert "path: app" not in WORKFLOW
+    assert 'cron: "7 * * * *"' in WORKFLOW  # snapshot de hora em hora
+    assert '"fotos/**"' in WORKFLOW and '"app/**"' in WORKFLOW
+    i = WORKFLOW.index("python3 scripts/snapshot_publico.py _site/publico.json")
+    assert WORKFLOW.index("montar_pages.sh") < i < WORKFLOW.index("upload-pages-artifact")
+    assert "continue-on-error: true" in WORKFLOW[i:]  # sem snapshot o app lê direto do Supabase
+    assert 'extrair origin/master "$saida"' in MONTAR_PAGES and "origin/master:fotos" in MONTAR_PAGES
+    assert 'cp -r "$tmp/f/fotos" "$saida/fotos"' in MONTAR_PAGES
+    assert 'destino="$saida/previa/$nome"' in MONTAR_PAGES
 
 
 # Fotos de verdade nos cards (Wikimedia Commons, licença livre), com o ícone de reserva
@@ -407,7 +420,8 @@ def test_quem_divulga_tem_avatar_e_logo_da_organizacao_vira_capa():
     assert "logoCapa(a)?`<div class=\"foto capa" in HTML
     assert ".foto .logo{" in HTML and ".avatar{" in HTML
     api_sb = (RAIZ / "app" / "api-supabase.js").read_text(encoding="utf-8")
-    assert "foto_url,foto_credito,foto_pagina" in api_sb and "orgR.data.map(deOrg)" in api_sb
+    assert "foto_url,foto_credito,foto_pagina" in api_sb and "orgs.map(deOrg)" in api_sb
+    assert "montarPublico(cfgR.data, orgR.data, acR.data, tR.data)" in api_sb
 
 
 def test_cards_com_colunas_iguais_e_sem_zero_vao():

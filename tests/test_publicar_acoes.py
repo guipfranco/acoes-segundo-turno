@@ -6,6 +6,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "scripts"))
 
 import bora_lula as bl  # noqa: E402
+import fotos_divulgacao as fd  # noqa: E402
 import publicar_acoes as pa  # noqa: E402
 
 LUGARES = bl.carregar_lugares()
@@ -281,3 +282,48 @@ def test_com_foto_descarta_url_que_nao_e_https(capsys):
     assert itens[0]["foto"] is None and itens[0]["organizacao_foto"] is None
     assert itens[1]["foto"]["url"].endswith("BBB.jpg") and itens[1]["organizacao_foto"]["url"].startswith("https://commons")
     assert capsys.readouterr().err.count("AVISO") == 2
+
+
+def test_com_foto_passa_a_mini_e_descarta_mini_que_nao_e_https(capsys):
+    pages = f"{fd.BASE_PAGES}/AAA.jpg"
+    mapa = {"AAA": {"url": pages, "mini": f"{fd.BASE_PAGES}/AAA-mini.jpg", "pages": True},
+            "BBB": {"url": "https://s/divulgacao/BBB.jpg"},
+            "CCC": {"url": "https://s/divulgacao/CCC.jpg", "mini": "http://cdn/CCC-mini.jpg"}}
+    itens = [{"fonte_id": c, "link": f"https://www.instagram.com/p/{c}/", "organizacao": None} for c in ("AAA", "BBB", "CCC")]
+    pa.com_foto(itens, mapa)
+    assert itens[0]["foto"] == {"url": pages, "mini": f"{fd.BASE_PAGES}/AAA-mini.jpg", "credito": "Divulgação original no Instagram",
+                                "pagina": "https://www.instagram.com/p/AAA/"}
+    assert itens[1]["foto"]["mini"] is None  # ainda no bucket: só a cheia
+    assert itens[2]["foto"]["url"].endswith("CCC.jpg") and itens[2]["foto"]["mini"] is None
+    assert capsys.readouterr().err.count("AVISO: mini descartada") == 1
+
+
+def _rodar_aplicar(tmp_path, monkeypatch, pendentes, sem_fotos=False):
+    """Roda `bora-lula --de feed --aplicar` com o banco, a busca de fotos e o git simulados; devolve (código, erro, gravações)."""
+    feed = tmp_path / "feed.json"
+    feed.write_text(json.dumps({"hoje": "2026-10-09", "acoes": [feed_item(id=1, data="2026-10-10")]}), encoding="utf-8")
+    monkeypatch.setattr(pa, "RAIZ", tmp_path)  # o ensaio escreve em <RAIZ>/levantamento
+    monkeypatch.setattr(pa, "destino", lambda: ("rest", "http://x", "s"))
+    gravacoes = []
+    monkeypatch.setattr(pa, "publicar", lambda *a, **k: gravacoes.append(a) or {"inseridas": 1})
+    monkeypatch.setattr(fd, "carregar_mapa", lambda *a: {})
+    monkeypatch.setattr(fd, "buscar_fotos", lambda itens, mapa: (mapa, 0, []))
+    monkeypatch.setattr(fd, "fotos_pendentes", lambda: fd.MSG_PENDENTES if pendentes else None)
+    args = ["bora-lula", "--de", str(feed), "--aplicar", "--sem-geocodificar"] + (["--sem-fotos"] if sem_fotos else [])
+    import io, contextlib
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        codigo = pa.main(args)
+    return codigo, err.getvalue(), gravacoes
+
+
+def test_aplicar_para_sem_gravar_quando_ha_fotos_pendentes(tmp_path, monkeypatch):
+    codigo, erro, gravacoes = _rodar_aplicar(tmp_path, monkeypatch, pendentes=True)
+    assert codigo == 1 and gravacoes == []
+    assert "fotos novas em fotos/divulgacao ainda não foram commitadas e enviadas para a master" in erro
+    assert list((tmp_path / "levantamento").glob("publicar-bora-lula-*.json"))  # o ensaio ficou gravado para conferir
+    codigo, erro, gravacoes = _rodar_aplicar(tmp_path, monkeypatch, pendentes=False)
+    assert codigo == 0 and len(gravacoes) == 1 and gravacoes[0][0] == "bora-lula"
+    # --sem-fotos ignora a trava
+    codigo, erro, gravacoes = _rodar_aplicar(tmp_path, monkeypatch, pendentes=True, sem_fotos=True)
+    assert codigo == 0 and len(gravacoes) == 1

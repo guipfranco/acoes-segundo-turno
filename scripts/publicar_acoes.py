@@ -18,6 +18,12 @@ Destino (variáveis de ambiente ou .env na raiz, nunca no repo), na ordem em que
 
 O ensaio escreve em levantamento/ (fora do git): publicar-<fonte>-<data>.json com os itens que iriam para o
 banco e revisao-<fonte>-<data>.csv com o que ficou de fora e por quê.
+
+Fotos (desde 2026-10-09): a arte dos posts novos é gravada em fotos/divulgacao/ (raiz do repo) e servida pelo
+GitHub Pages, não pelo bucket do Supabase. O endereço gravado no banco só pode apontar para arquivo que o Pages já
+serve, então `--aplicar` busca as fotos novas e, se houver alguma ainda não commitada e enviada para a master,
+PARA sem gravar: faça commit + push de fotos/, espere o workflow do Pages e rode de novo (`--sem-fotos` pula a
+busca e a trava). Rotina: `publicar_acoes.py <fonte> --aplicar` -> commit + push de fotos/ -> rodar de novo.
 """
 import argparse
 import csv
@@ -363,8 +369,9 @@ def publicar(fonte, itens, encerrar=True, ref=None):
 # ---- linha de comando ----
 
 def com_foto(itens, mapa):
-    """Põe em cada item a imagem da divulgação original já coletada (scripts/fotos_divulgacao.py). Foto ou logo cuja
-    url não é https (nem a pilha local) é descartada, com aviso: só https vira <img> no app."""
+    """Põe em cada item a imagem da divulgação original já coletada (scripts/fotos_divulgacao.py): {url, mini,
+    credito, pagina}; `mini` é None enquanto a foto ainda está no bucket. Foto, mini ou logo cuja url não é https
+    (nem a pilha local) é descartada, com aviso: só https vira <img> no app."""
     for it in itens:
         it["foto"] = fd.foto_do_item(it, mapa)
         for campo in ("foto", "organizacao_foto"):
@@ -372,6 +379,10 @@ def com_foto(itens, mapa):
             if f and not bl.foto_valida(f.get("url")):
                 print(f"AVISO: {campo} descartada em {it.get('fonte_id')} (url não é https): {str(f.get('url'))[:60]}", file=sys.stderr)
                 it[campo] = None
+        f = it.get("foto")
+        if f and f.get("mini") and not bl.foto_valida(f["mini"]):
+            print(f"AVISO: mini descartada em {it.get('fonte_id')} (url não é https): {str(f['mini'])[:60]}", file=sys.stderr)
+            f["mini"] = None
     return itens
 
 
@@ -472,6 +483,10 @@ def main(argv=None):
         if not args.aplicar:
             print("ensaio: nada gravado (use --aplicar)")
             return 0
+        if not args.sem_fotos:  # o banco só pode apontar para foto que o Pages já serve (veja o docstring)
+            pend = fd.fotos_pendentes()
+            if pend:
+                raise Falha(pend)
         r = publicar(args.fonte, itens, encerrar=not args.sem_encerrar, ref=args.ref)
         print(f"gravado: {r}")
     except Falha as e:

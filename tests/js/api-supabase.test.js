@@ -1,6 +1,63 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { deAcao, deTurno, dePessoa, deOrg, hojeBrasilia } = require('../../app/api-supabase.js');
+const { criar, deAcao, deTurno, dePessoa, deOrg, hojeBrasilia } = require('../../app/api-supabase.js');
+
+// Supabase de mentira: cada from(view) devolve uma consulta encadeável que resolve com dados[view]
+function supabaseFalso(dados) {
+  const views = [];
+  const sb = { auth: {}, rpc: async () => null, from(v) {
+    views.push(v);
+    const q = { then: (ok, erro) => Promise.resolve({ data: dados[v] || [], error: null }).then(ok, erro) };
+    for (const m of ['select', 'gte', 'eq', 'order', 'maybeSingle']) q[m] = () => q;
+    return q;
+  } };
+  return { sb, views };
+}
+function comAmbiente(dados, fetchFalso) {
+  const { sb, views } = supabaseFalso(dados);
+  global.window = { supabase: { createClient: () => sb } };
+  global.fetch = fetchFalso;
+  return { api: criar({ url: 'https://x.supabase.co', anonKey: 'anon' }), views };
+}
+const resposta = (status, corpo) => async (url, opts) => {
+  assert.equal(url, 'publico.json'); assert.equal(opts.cache, 'no-cache');
+  return { ok: status === 200, status, json: async () => { if (typeof corpo === 'string') throw new SyntaxError(corpo); return corpo; } };
+};
+const amanha = () => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10) + 'T09:00:00'; };
+const bancoFalso = { configuracao_publica: [{ chave: 'frase', valor: 'do banco' }], organizacao_publica: [{ id: 1, nome: 'PT', tipo: 'partido', verificada: true }],
+  acao_publica: [{ id: 2, titulo: 'Do banco', online: true }], turno_publico: [{ id: 20, acao: 2, inicio: amanha(), fim: amanha() }] };
+
+test('publico() usa o publico.json fresco e mapeia as linhas cruas', async () => {
+  const snap = { geradoEm: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+    configuracao: [{ chave: 'frase', valor: 'do arquivo' }, { chave: 'vaquinha', valor: 'https://v' }],
+    organizacoes: [{ id: 5, nome: 'MST', tipo: 'movimento', verificada: false, foto_url: null }],
+    acoes: [{ id: 7, titulo: 'Do arquivo', online: false, lugar_nome: 'Praça', bairro: 'Centro', cidade: 'SP', lat: -23.5, lon: -46.6,
+      foto_url: 'https://s/f.jpg', foto_mini_url: 'https://s/f-mini.jpg', foto_credito: 'c', foto_pagina: null }],
+    turnos: [{ id: 70, acao: 7, inicio: amanha(), fim: amanha() }, { id: 71, acao: 7, inicio: '2020-01-01T08:00:00', fim: '2020-01-01T10:00:00' }] };
+  const { api, views } = comAmbiente(bancoFalso, resposta(200, snap));
+  const p = await api.publico();
+  assert.equal(api.origemPublico, 'snapshot'); assert.deepEqual(views, []);
+  assert.equal(p.config.frase, 'do arquivo'); assert.equal(p.config.vaquinha, 'https://v'); assert.equal(p.config.hoje, hojeBrasilia());
+  assert.deepEqual(p.organizacoes, [{ id: 5, nome: 'MST', tipo: 'movimento', verificada: false, foto: null }]);
+  assert.equal(p.acoes[0].titulo, 'Do arquivo'); assert.equal(p.acoes[0].lugar.cidade, 'SP');
+  assert.deepEqual(p.acoes[0].foto, { url: 'https://s/f.jpg', mini: 'https://s/f-mini.jpg', credito: 'c', pagina: null });
+  assert.deepEqual(p.turnos.map(t => t.id), [70]); // o turno passado sai, como no Supabase
+  assert.equal(p.turnos[0].inicio.length, 16);
+});
+
+test('publico() cai no Supabase com snapshot velho, 404, JSON inválido ou incompleto', async () => {
+  const velho = { geradoEm: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), configuracao: [], organizacoes: [], acoes: [], turnos: [] };
+  const casos = [resposta(200, velho), resposta(404, null), resposta(200, 'Unexpected token <'), resposta(200, { geradoEm: new Date().toISOString(), acoes: [] }),
+    resposta(200, { configuracao: [], organizacoes: [], acoes: [], turnos: [] }), async () => { throw new TypeError('Failed to fetch'); }];
+  for (const f of casos) {
+    const { api, views } = comAmbiente(bancoFalso, f);
+    const p = await api.publico();
+    assert.equal(api.origemPublico, 'supabase');
+    assert.deepEqual(views.sort(), ['acao_publica', 'configuracao_publica', 'organizacao_publica', 'turno_publico']);
+    assert.equal(p.config.frase, 'do banco'); assert.equal(p.acoes[0].titulo, 'Do banco'); assert.equal(p.organizacoes[0].nome, 'PT');
+    assert.deepEqual(p.turnos.map(t => t.id), [20]);
+  }
+});
 
 test('deOrg leva o logo da organização (ou null)', () => {
   assert.deepEqual(deOrg({ id: 3, nome: 'PT de Diadema', tipo: 'partido', verificada: false, foto_url: 'https://commons.wikimedia.org/x', foto_credito: 'PT, domínio público, via Wikimedia Commons', foto_pagina: 'https://commons.wikimedia.org/wiki/File:x' }),
@@ -18,7 +75,8 @@ test('deAcao converte linha da view no formato AcaoPublica', () => {
   assert.equal(a.criadaEm, '2026-10-08'); assert.equal(a.detalhe, undefined);
   const on = deAcao({ online: true, lugar_nome: null, bairro: null, cidade: null, lat: null, lon: null, foto_url: 'https://x/y.jpg', foto_credito: 'c', foto_pagina: null });
   assert.deepEqual(on.lugar, { nome: 'Online', bairro: 'Online', cidade: 'Online', lat: null, lon: null, online: true });
-  assert.deepEqual(on.foto, { url: 'https://x/y.jpg', credito: 'c', pagina: null });
+  assert.deepEqual(on.foto, { url: 'https://x/y.jpg', mini: null, credito: 'c', pagina: null });
+  assert.equal(deAcao({ foto_url: 'https://x/y.jpg', foto_mini_url: 'https://x/y-mini.jpg' }).foto.mini, 'https://x/y-mini.jpg');
   const imp = deAcao({ online: false, lugar_nome: 'Praça', bairro: null, cidade: 'Recife', lat: -8, lon: -34, lugar_aproximado: true,
     fonte: 'bora-lula', contato_tipo: 'divulgacao', link_divulgacao: 'https://www.instagram.com/p/x/' });
   assert.equal(imp.lugar.aproximado, true); assert.equal(imp.fonte, 'bora-lula');

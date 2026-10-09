@@ -14,7 +14,7 @@
       organizadorNome: r.organizador_nome || '', organizacao: r.organizacao == null ? null : r.organizacao,
       lugar: r.online ? { nome: 'Online', bairro: 'Online', cidade: 'Online', lat: null, lon: null, online: true }
         : { nome: r.lugar_nome, bairro: r.bairro, cidade: r.cidade, lat: r.lat, lon: r.lon, online: false, aproximado: !!r.lugar_aproximado },
-      foto: r.foto_url ? { url: r.foto_url, credito: r.foto_credito || '', pagina: r.foto_pagina || null } : null,
+      foto: r.foto_url ? { url: r.foto_url, mini: r.foto_mini_url || null, credito: r.foto_credito || '', pagina: r.foto_pagina || null } : null,
       prioritaria: !!r.prioritaria, status: r.status, contatoTipo: r.contato_tipo || 'organizador_chama',
       criadaEm: r.criada_em ? String(r.criada_em).slice(0, 10) : null,
       fonte: r.fonte || null, linkDivulgacao: r.link_divulgacao || null, motivoRecusa: r.motivo_recusa || null,
@@ -29,14 +29,36 @@
   const comInscritos = m => ({ acao: Object.assign(deAcao(m.acao), { detalhe: m.acao.detalhe || null, contatoLink: m.acao.contato_link || null,
       organizacaoLink: m.acao.organizacao_link || null, organizacaoDados: m.acao.organizacao_dados || null }),
     turnos: (m.turnos || []).map(t => Object.assign(deTurno(t), { inscritos: t.inscritos || [], desistiram: t.desistiram || [] })) });
+  // publico.json: lista pública gerada pelo workflow do Pages (scripts/snapshot_publico.py) de hora em hora, para
+  // quem só olha o site não gastar a saída do Supabase. Vale por 3 h; na prévia por branch não existe (404).
+  const SNAPSHOT_VALIDADE_MS = 3 * 60 * 60 * 1000;
+  async function lerSnapshot() {
+    try {
+      const r = await fetch('publico.json', { cache: 'no-cache' });
+      if (!r.ok) return null;
+      const s = await r.json();
+      const idade = Date.now() - Date.parse(s && s.geradoEm);
+      if (!(idade < SNAPSHOT_VALIDADE_MS)) return null; // NaN (sem geradoEm) também cai aqui
+      if (![s.configuracao, s.organizacoes, s.acoes, s.turnos].every(Array.isArray)) return null;
+      return s;
+    } catch (e) { return null; }
+  }
+  function montarPublico(cfgLinhas, orgs, acoes, turnos) {
+    const hoje = hojeBrasilia();
+    const config = { hoje, frase: '', vaquinha: '#' };
+    for (const c of cfgLinhas) config[c.chave] = c.valor;
+    return { config, organizacoes: orgs.map(deOrg), acoes: acoes.map(deAcao),
+      turnos: turnos.filter(t => String(t.inicio).slice(0, 16) >= hoje + 'T00:00').map(deTurno) };
+  }
   function erroDe(e) { const x = new Error(e.message || 'erro'); x.codigo = (e.message || '').trim(); x.original = e; return x; }
 
   function criar(cfg) {
     const sb = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true } });
     async function uid() { const { data } = await sb.auth.getSession(); return data.session ? data.session.user.id : null; }
     async function rpc(nome, args) { const { data, error } = await sb.rpc(nome, args || {}); if (error) throw erroDe(error); return data; }
-    return {
+    const api = {
       modo: 'supabase',
+      origemPublico: null, // 'snapshot' | 'supabase', para depuração
       async sessao() {
         const id = await uid(); if (!id) return null;
         const { data, error } = await sb.from('pessoa').select('id,nome,email,telefone,papel,bloqueada,organizacao').eq('id', id).maybeSingle();
@@ -49,6 +71,8 @@
       },
       async sair() { await sb.auth.signOut(); },
       async publico() {
+        const snap = await lerSnapshot();
+        if (snap) { api.origemPublico = 'snapshot'; return montarPublico(snap.configuracao, snap.organizacoes, snap.acoes, snap.turnos); }
         const [cfgR, orgR, acR, tR] = await Promise.all([
           sb.from('configuracao_publica').select('chave,valor'),
           sb.from('organizacao_publica').select('id,nome,tipo,verificada,foto_url,foto_credito,foto_pagina'),
@@ -56,9 +80,8 @@
           sb.from('turno_publico').select('*').gte('inicio', hojeBrasilia() + 'T00:00:00'),
         ]);
         for (const r of [cfgR, orgR, acR, tR]) if (r.error) throw erroDe(r.error);
-        const config = { hoje: hojeBrasilia(), frase: '', vaquinha: '#' };
-        for (const c of cfgR.data) config[c.chave] = c.valor;
-        return { config, organizacoes: orgR.data.map(deOrg), acoes: acR.data.map(deAcao), turnos: tR.data.map(deTurno) };
+        api.origemPublico = 'supabase';
+        return montarPublico(cfgR.data, orgR.data, acR.data, tR.data);
       },
       async acao(id) {
         const [aR, tR, mim] = await Promise.all([
@@ -121,6 +144,7 @@
       async desbloquear(pessoaId) { await rpc('desbloquear_pessoa', { pessoa_id: pessoaId }); },
       async minhasInscricoes() { return (await rpc('minhas_inscricoes')).map(m => ({ acao: deAcao(m.acao), turno: deTurno(m.turno), desistiu: !!m.desistiu })); },
     };
+    return api;
   }
   return { criar, deAcao, deTurno, dePessoa, deOrg, hojeBrasilia };
 });

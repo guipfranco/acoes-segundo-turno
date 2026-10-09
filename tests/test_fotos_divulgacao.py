@@ -30,13 +30,17 @@ def test_foto_do_item_so_credita_perfil_com_organizacao():
     mapa = {"AAA": {"url": "https://s/divulgacao/AAA.jpg", "perfil": "ptdiadema"}}
     com_org = {"link": "https://www.instagram.com/p/AAA/", "organizacao": "PT de Diadema"}
     sem_org = {"link": "https://www.instagram.com/p/AAA/", "organizacao": None}
-    assert fd.foto_do_item(com_org, mapa) == {"url": "https://s/divulgacao/AAA.jpg", "credito": "Divulgação de @ptdiadema no Instagram",
-                                              "pagina": "https://www.instagram.com/p/AAA/"}
+    # foto ainda no bucket (sem mini): mini vai None
+    assert fd.foto_do_item(com_org, mapa) == {"url": "https://s/divulgacao/AAA.jpg", "mini": None,
+                                              "credito": "Divulgação de @ptdiadema no Instagram", "pagina": "https://www.instagram.com/p/AAA/"}
     assert fd.foto_do_item(sem_org, mapa)["credito"] == "Divulgação original no Instagram"
     assert fd.foto_do_item({"link": "https://www.instagram.com/p/BBB/"}, mapa) is None
     assert fd.foto_do_item({"link": ""}, mapa) is None
     itens = pa.com_foto([dict(com_org), {"link": "", "organizacao": None}], mapa)
     assert itens[0]["foto"]["url"].endswith("AAA.jpg") and itens[1]["foto"] is None
+    # foto já no Pages: a mini vai junto
+    pages = {"AAA": {"url": f"{fd.BASE_PAGES}/AAA.jpg", "mini": f"{fd.BASE_PAGES}/AAA-mini.jpg", "perfil": None, "pages": True}}
+    assert fd.foto_do_item(sem_org, pages)["mini"] == "https://guipfranco.github.io/acoes-segundo-turno/fotos/divulgacao/AAA-mini.jpg"
 
 
 def test_pendentes_sem_repetir_e_sem_o_que_ja_tem():
@@ -49,17 +53,22 @@ def test_reduzir_limita_largura_e_gera_jpeg():
     from PIL import Image
     out = fd.reduzir(jpeg(1440, 1800))
     im = Image.open(io.BytesIO(out))
-    assert im.format == "JPEG" and im.size == (720, 900)
-    assert Image.open(io.BytesIO(fd.reduzir(jpeg(400, 500)))).size == (400, 500)
+    assert im.format == "JPEG" and im.size == (1080, 1350)
+    assert Image.open(io.BytesIO(fd.reduzir(jpeg(400, 500)))).size == (400, 500)  # nunca amplia
+    mini = fd.reduzir(jpeg(1440, 1800), fd.LARGURA_MINI, fd.QUALIDADE_MINI)
+    assert Image.open(io.BytesIO(mini)).size == (480, 600) and len(mini) < len(out)
 
 
-def test_processar_coleta_sobe_e_registra(tmp_path):
-    enviados = {}
+def test_gravar_pages_gera_arte_e_mini_na_pasta(tmp_path):
+    from PIL import Image
+    url, mini = fd.gravar_pages("AAA", jpeg(1080, 1350), pasta=tmp_path / "fotos")
+    assert url == "https://guipfranco.github.io/acoes-segundo-turno/fotos/divulgacao/AAA.jpg"
+    assert mini == "https://guipfranco.github.io/acoes-segundo-turno/fotos/divulgacao/AAA-mini.jpg"
+    assert Image.open(tmp_path / "fotos" / "AAA.jpg").size == (1080, 1350)
+    assert Image.open(tmp_path / "fotos" / "AAA-mini.jpg").size == (480, 600)
 
-    def subir(base, chave, nome, dados):
-        enviados[nome] = len(dados)
-        return f"{base}/storage/v1/object/public/divulgacao/{nome}"
 
+def test_processar_coleta_grava_na_pasta_do_pages_e_registra(tmp_path):
     def baixar(url):
         if "quebrada" in url:
             raise OSError("404")
@@ -68,10 +77,11 @@ def test_processar_coleta_sobe_e_registra(tmp_path):
     coleta = [{"codigo": "AAA", "img": "https://cdn/a.jpg", "url": "https://www.instagram.com/ptdiadema/p/AAA/", "inteira": True},
               {"codigo": "BBB", "img": "https://cdn/quebrada.jpg", "url": ""}, {"codigo": "CCC", "img": None}]
     mapa = {}
-    novas, falhas = fd.processar_coleta(coleta, mapa, "https://proj", "k", pasta=tmp_path, baixar=baixar, subir=subir)
+    novas, falhas = fd.processar_coleta(coleta, mapa, pasta=tmp_path, baixar=baixar)
     assert novas == 1 and [f[0] for f in falhas] == ["BBB", "CCC"]
-    assert mapa == {"AAA": {"url": "https://proj/storage/v1/object/public/divulgacao/AAA.jpg", "perfil": "ptdiadema", "inteira": True}}
-    assert (tmp_path / "AAA.jpg").exists() and "AAA.jpg" in enviados
+    assert mapa == {"AAA": {"url": f"{fd.BASE_PAGES}/AAA.jpg", "mini": f"{fd.BASE_PAGES}/AAA-mini.jpg", "perfil": "ptdiadema",
+                            "inteira": True, "pages": True}}
+    assert (tmp_path / "AAA.jpg").exists() and (tmp_path / "AAA-mini.jpg").exists() and not (tmp_path / "BBB.jpg").exists()
 
 
 def test_migracao_cria_bucket_publico_e_importa_foto_sem_apagar():
@@ -96,12 +106,10 @@ def test_og_da_pagina_e_coletar_para_no_429():
 
 
 def test_buscar_fotos_so_le_o_que_falta(tmp_path, monkeypatch):
-    from PIL import Image
     monkeypatch.setattr(fd, "MAPA", tmp_path / "mapa.json")
-    monkeypatch.setattr(fd, "PASTA_IMG", tmp_path / "img")
+    monkeypatch.setattr(fd, "PASTA_PAGES", tmp_path / "fotos")
     monkeypatch.setattr(fd, "PAUSA", 0)
     monkeypatch.setattr(fd, "baixar", lambda url: jpeg(800, 800))
-    monkeypatch.setattr(fd, "subir", lambda base, chave, nome, dados: f"{base}/{nome}")
     monkeypatch.setattr(fd.time, "sleep", lambda s: None)
     lidos = []
 
@@ -109,16 +117,99 @@ def test_buscar_fotos_so_le_o_que_falta(tmp_path, monkeypatch):
         lidos.append(c)
         return {"codigo": c, "img": "https://cdn/x.jpg", "url": f"https://www.instagram.com/org/p/{c}/"}
     itens = [{"link": "https://www.instagram.com/p/AAA/"}, {"link": "https://www.instagram.com/p/BBB/"}]
-    mapa, novas, falhas = fd.buscar_fotos(itens, {"BBB": {"url": "u"}}, ler=ler, base_chave=("https://proj", "k"))
+    mapa, novas, falhas = fd.buscar_fotos(itens, {"BBB": {"url": "u"}}, ler=ler)
     assert lidos == ["AAA"] and novas == 1 and falhas == []
-    assert mapa["AAA"] == {"url": "https://proj/AAA.jpg", "perfil": "org", "inteira": False}
-    assert json.loads((tmp_path / "mapa.json").read_text(encoding="utf-8"))["AAA"]["url"] == "https://proj/AAA.jpg"
-    assert fd.buscar_fotos(itens, mapa, ler=ler, base_chave=("https://proj", "k"))[1] == 0 and lidos == ["AAA"]
+    assert mapa["AAA"] == {"url": f"{fd.BASE_PAGES}/AAA.jpg", "mini": f"{fd.BASE_PAGES}/AAA-mini.jpg", "perfil": "org", "inteira": False, "pages": True}
+    assert json.loads((tmp_path / "mapa.json").read_text(encoding="utf-8"))["AAA"]["mini"].endswith("/AAA-mini.jpg")
+    assert (tmp_path / "fotos" / "AAA.jpg").exists() and (tmp_path / "fotos" / "AAA-mini.jpg").exists()
+    assert fd.buscar_fotos(itens, mapa, ler=ler)[1] == 0 and lidos == ["AAA"]
 
 
-def test_publicar_busca_fotos_ao_aplicar():
+def test_publicar_busca_fotos_ao_aplicar_e_trava_se_houver_pendentes():
     src = (RAIZ / "scripts" / "publicar_acoes.py").read_text(encoding="utf-8")
     assert "if args.aplicar and not args.sem_fotos:" in src and "fd.buscar_fotos(itens, mapa)" in src
+    assert "fd.fotos_pendentes()" in src and src.index("fd.fotos_pendentes()") < src.index("r = publicar(")
+
+
+def test_fotos_pendentes_olha_o_git():
+    def git_de(status, log):
+        return lambda args: status if args[0] == "status" else log
+    assert fd.fotos_pendentes(git=git_de("", "")) is None
+    assert fd.fotos_pendentes(git=git_de("", "\n")) is None
+    assert fd.fotos_pendentes(git=git_de("?? fotos/divulgacao/AAA.jpg\n", "")) == fd.MSG_PENDENTES
+    assert fd.fotos_pendentes(git=git_de("", "abc123 Fotos novas\n")) == fd.MSG_PENDENTES
+    assert "commit + push" in fd.MSG_PENDENTES and "fotos/divulgacao" in fd.MSG_PENDENTES
+
+
+def _bucket(cod, sufixo=""):
+    return f"https://proj.supabase.co/storage/v1/object/public/divulgacao/{cod}{sufixo}.jpg"
+
+
+def test_migrar_pages_ensaio_gera_arquivos_e_aplicar_troca_nas_acoes(tmp_path):
+    mapa = {"AAA": {"url": _bucket("AAA", "-inteira"), "perfil": "une", "inteira": True},
+            "BBB": {"url": _bucket("BBB"), "perfil": None},
+            "CCC": {"url": f"{fd.BASE_PAGES}/CCC.jpg", "mini": f"{fd.BASE_PAGES}/CCC-mini.jpg", "pages": True},
+            "DDD": {"url": "http://127.0.0.1:54321/storage/v1/object/public/divulgacao/DDD.jpg"}}
+    assert fd.no_bucket(mapa) == ["AAA", "BBB", "DDD"]
+    baixados, trocas = [], []
+
+    def baixar(url):
+        baixados.append(url)
+        if "BBB" in url:
+            raise OSError("404")
+        return jpeg(720, 900)
+    # ensaio: baixa do bucket (não do Instagram), gera os dois arquivos, não mexe no banco nem no mapa
+    geradas, trocadas, falhas = fd.migrar_pages(mapa, codigos=["AAA", "BBB"], pasta=tmp_path, baixar=baixar, trocar=lambda *a: trocas.append(a))
+    assert (geradas, trocadas, falhas) == (1, 0, [("BBB", "download: 404")])
+    assert baixados == [_bucket("AAA", "-inteira"), _bucket("BBB")] and trocas == []
+    assert (tmp_path / "AAA.jpg").exists() and (tmp_path / "AAA-mini.jpg").exists()
+    assert mapa["AAA"]["url"] == _bucket("AAA", "-inteira") and "mini" not in mapa["AAA"]
+    # aplicar: não baixa de novo o que já tem arquivo, troca url + mini nas ações e anota no mapa
+    geradas, trocadas, falhas = fd.migrar_pages(mapa, codigos=["AAA"], aplicar=True, base_chave=("https://proj", "k"),
+                                                pasta=tmp_path, baixar=baixar, trocar=lambda *a: trocas.append(a) or 3)
+    assert (geradas, trocadas, falhas) == (0, 1, []) and len(baixados) == 2
+    assert trocas == [("https://proj", "k", _bucket("AAA", "-inteira"), f"{fd.BASE_PAGES}/AAA.jpg", f"{fd.BASE_PAGES}/AAA-mini.jpg")]
+    assert mapa["AAA"] == {"url": f"{fd.BASE_PAGES}/AAA.jpg", "mini": f"{fd.BASE_PAGES}/AAA-mini.jpg", "perfil": "une", "inteira": True, "pages": True}
+    assert fd.no_bucket(mapa) == ["BBB", "DDD"]
+
+
+def _explode(msg):
+    raise AssertionError(msg)
+
+
+def test_migrar_pages_aplicar_exige_fotos_commitadas(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(fd, "MAPA", tmp_path / "mapa.json")
+    monkeypatch.setattr(fd, "PASTA_PAGES", tmp_path / "fotos")
+    (tmp_path / "mapa.json").write_text(json.dumps({"AAA": {"url": _bucket("AAA")}}), encoding="utf-8")
+    monkeypatch.setattr(fd, "fotos_pendentes", lambda: fd.MSG_PENDENTES)
+    monkeypatch.setattr(fd, "destino_storage", lambda: _explode("não devia chegar no banco"))
+    monkeypatch.setattr(fd, "baixar", lambda url: _explode("não devia baixar"))
+    assert fd.main(["migrar-pages", "--aplicar"]) == 1
+    assert "ainda não foram commitadas" in capsys.readouterr().err
+    assert json.loads((tmp_path / "mapa.json").read_text(encoding="utf-8"))["AAA"]["url"] == _bucket("AAA")
+    # sem --aplicar é ensaio: gera os arquivos sem olhar o git nem o banco
+    monkeypatch.setattr(fd, "baixar", lambda url: jpeg(720, 900))
+    assert fd.main(["migrar-pages"]) == 0
+    assert (tmp_path / "fotos" / "AAA-mini.jpg").exists()
+    assert "ensaio" in capsys.readouterr().out
+    assert json.loads((tmp_path / "mapa.json").read_text(encoding="utf-8"))["AAA"]["url"] == _bucket("AAA")
+
+
+def test_migracao_60_poe_a_mini_na_view_nas_funcoes_e_na_importacao():
+    sql = (RAIZ / "supabase" / "migrations" / "20261009000060_foto_mini.sql").read_text(encoding="utf-8")
+    assert "alter table acao add column foto_mini_url text" in sql
+    assert sql.count("'foto_mini_url', a.foto_mini_url") == 2  # acao_completa_json e minhas_inscricoes
+    assert "a.foto_mini_url\n  from acao a" in sql  # view: coluna nova no fim
+    assert "it->'foto'->>'mini'" in sql and "foto_mini !~ re_https" in sql
+    assert "foto_mini_url = case when excluded.foto_url is not null then excluded.foto_mini_url else acao.foto_mini_url end" in sql
+    assert "create or replace function criar_acao" not in sql
+
+
+def test_cards_do_app_usam_a_mini_e_a_pagina_a_cheia():
+    src = (RAIZ / "app" / "index.html").read_text(encoding="utf-8")
+    assert "const fotoCard=a=>a.foto.mini||a.foto.url;" in src
+    assert "background-image:url('${esc(fotoCard(a))}')" in src
+    assert "${imgFoto(a,true)}</div>${creditoFoto(a)}" in src
 
 
 EMBED = ('<a class="Username" href="https://www.instagram.com/une/?utm_source=ig_embed"><span class="UsernameText">une</span></a>'

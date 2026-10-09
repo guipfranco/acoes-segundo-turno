@@ -6,18 +6,29 @@ identifica como robô de prévia, com a arte inteira na proporção original (qu
 Sem conta, sem navegador. Uma página a cada 3 s; se o Instagram devolver 429, o script para e guarda o que já coletou.
 
 Uso:
-  python scripts/fotos_divulgacao.py pendentes             # códigos de post das ações a publicar ainda sem foto
-  python scripts/fotos_divulgacao.py coletar               # lê a prévia de cada pendente, baixa, reduz e sobe
-  python scripts/fotos_divulgacao.py coleta ARQ.json       # o mesmo a partir de [{"codigo", "img", "url"}] já lidos
-  python scripts/fotos_divulgacao.py refazer [--max N]     # troca as imagens recortadas (og:image) pela arte inteira
+  python scripts/fotos_divulgacao.py pendentes               # códigos de post das ações a publicar ainda sem foto
+  python scripts/fotos_divulgacao.py coletar                 # lê a prévia de cada pendente, baixa, reduz e grava
+  python scripts/fotos_divulgacao.py coleta ARQ.json         # o mesmo a partir de [{"codigo", "img", "url"}] já lidos
+  python scripts/fotos_divulgacao.py migrar-pages [--max N] [--aplicar]
+                                                             # tira do bucket do Supabase o que já está publicado
+  python scripts/fotos_divulgacao.py refazer [--max N]       # (antigo) troca og:image recortado pela arte inteira no bucket
 
-As imagens vão para o bucket público `divulgacao` do Supabase Storage (migração 20261009000003), com o mesmo
-destino de scripts/publicar_acoes.py. O mapa código -> foto fica em levantamento/fotos-divulgacao.json (fora do
-git) e é lido pelo publicar_acoes.py, que manda a foto junto com a ação. Cópias locais em levantamento/divulgacao/.
+Onde as imagens ficam (desde 2026-10-09): em fotos/divulgacao/ na RAIZ do repo, servidas pelo GitHub Pages em
+BASE_PAGES/<código>.jpg (arte inteira, até 1080 px) e BASE_PAGES/<código>-mini.jpg (480 px, para os cards). Assim o
+tráfego de imagens não passa pelo Supabase (plano Free, 5 GB/mês de saída). O endereço gravado no banco só pode
+apontar para arquivo que o Pages já serve: por isso `publicar_acoes.py --aplicar` e `migrar-pages --aplicar` param se
+houver foto nova ainda não commitada e enviada para a master (`fotos_pendentes`). Rotina: rodar, commit + push de
+fotos/, esperar o workflow do Pages, rodar de novo.
+
+O bucket público `divulgacao` (migração 20261009000003) só segue para o que ainda não migrou; `migrar-pages` baixa
+cada imagem de lá (não do Instagram), gera os dois arquivos e, com --aplicar, aponta as ações para o Pages.
+O mapa código -> foto fica em levantamento/fotos-divulgacao.json (fora do git) e é lido pelo publicar_acoes.py, que
+manda a foto junto com a ação. Entrada do mapa: {url, mini, perfil, inteira, pages}.
 """
 import argparse
 import html
 import io
+import subprocess
 import time
 import json
 import os
@@ -33,11 +44,19 @@ import bora_lula as bl  # noqa: E402
 
 RAIZ = bl.RAIZ
 MAPA = RAIZ / "levantamento" / "fotos-divulgacao.json"
-PASTA_IMG = RAIZ / "levantamento" / "divulgacao"
+PASTA_IMG = RAIZ / "levantamento" / "divulgacao"   # cópias locais do fluxo antigo (refazer)
+PASTA_PAGES = RAIZ / "fotos" / "divulgacao"        # o que o GitHub Pages serve (versionado)
+BASE_PAGES = "https://guipfranco.github.io/acoes-segundo-turno/fotos/divulgacao"
 BUCKET = "divulgacao"
-LARGURA = 720
+LARGURA = 1080
+LARGURA_MINI = 480
+QUALIDADE = 80
+QUALIDADE_MINI = 78
 RE_POST = re.compile(r"instagram\.com/(?:[A-Za-z0-9_.]+/)?(?:p|reel|reels|tv)/([A-Za-z0-9_-]+)")
 RE_PERFIL = re.compile(r"instagram\.com/([A-Za-z0-9_.]+)/(?:p|reel|tv)/")
+RE_BUCKET = re.compile(r"/storage/v1/object/public/" + BUCKET + "/")  # bucket do Supabase (produção ou pilha local)
+MSG_PENDENTES = ("fotos novas em fotos/divulgacao ainda não foram commitadas e enviadas para a master; "
+                 "faça commit + push e rode de novo")
 
 
 class Falha(Exception):
@@ -131,20 +150,28 @@ def coletar(codigos, ler=previa, pausa=PAUSA, dormir=time.sleep):
     return saida
 
 
-def carregar_mapa(arq=MAPA):
-    return json.loads(Path(arq).read_text(encoding="utf-8")) if Path(arq).exists() else {}
+def carregar_mapa(arq=None):
+    arq = Path(arq or sys.modules[__name__].MAPA)
+    return json.loads(arq.read_text(encoding="utf-8")) if arq.exists() else {}
+
+
+def gravar_mapa(mapa, arq=None):
+    arq = Path(arq or sys.modules[__name__].MAPA)
+    arq.parent.mkdir(parents=True, exist_ok=True)
+    arq.write_text(json.dumps(mapa, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 def foto_do_item(item, mapa):
-    """{url, credito, pagina} para o item da importação, ou None. O @ do perfil só aparece no crédito quando a ação
-    tem organização pública reconhecida; sem isso o perfil pode ser de pessoa comum e o crédito fica genérico."""
+    """{url, mini, credito, pagina} para o item da importação, ou None. `mini` é None enquanto a foto ainda está no
+    bucket (antes do migrar-pages). O @ do perfil só aparece no crédito quando a ação tem organização pública
+    reconhecida; sem isso o perfil pode ser de pessoa comum e o crédito fica genérico."""
     cod = codigo_do_link(item.get("link"))
     f = mapa.get(cod) if cod else None
     if not f or not f.get("url"):
         return None
     perfil = f.get("perfil")
     credito = f"Divulgação de @{perfil} no Instagram" if perfil and item.get("organizacao") else "Divulgação original no Instagram"
-    return {"url": f["url"], "credito": credito, "pagina": item["link"]}
+    return {"url": f["url"], "mini": f.get("mini") or None, "credito": credito, "pagina": item["link"]}
 
 
 def pendentes(itens, mapa):
@@ -156,14 +183,14 @@ def pendentes(itens, mapa):
     return vistos
 
 
-def reduzir(bruto, largura=LARGURA):
-    """JPEG de até `largura` px de largura, qualidade 80, sem metadados."""
+def reduzir(bruto, largura=LARGURA, qualidade=QUALIDADE):
+    """JPEG de até `largura` px de largura (nunca amplia), sem metadados."""
     from PIL import Image
     im = Image.open(io.BytesIO(bruto)).convert("RGB")
     if im.width > largura:
         im = im.resize((largura, round(im.height * largura / im.width)), Image.LANCZOS)
     saida = io.BytesIO()
-    im.save(saida, "JPEG", quality=80, optimize=True, progressive=True)
+    im.save(saida, "JPEG", quality=qualidade, optimize=True, progressive=True)
     return saida.getvalue()
 
 
@@ -172,6 +199,91 @@ def baixar(url):
     with urllib.request.urlopen(req, timeout=60) as r:
         return r.read()
 
+
+# ---- GitHub Pages: fotos/divulgacao/ na raiz do repo ----
+
+def urls_pages(cod):
+    return f"{BASE_PAGES}/{cod}.jpg", f"{BASE_PAGES}/{cod}-mini.jpg"
+
+
+def gravar_pages(cod, bruto, pasta=None):
+    """Grava <código>.jpg (arte inteira) e <código>-mini.jpg (cards) em fotos/divulgacao/; devolve (url, mini)."""
+    pasta = Path(pasta or sys.modules[__name__].PASTA_PAGES)
+    pasta.mkdir(parents=True, exist_ok=True)
+    (pasta / f"{cod}.jpg").write_bytes(reduzir(bruto))
+    (pasta / f"{cod}-mini.jpg").write_bytes(reduzir(bruto, LARGURA_MINI, QUALIDADE_MINI))
+    return urls_pages(cod)
+
+
+def _git(args):
+    r = subprocess.run(["git", *args], cwd=str(RAIZ), capture_output=True, text=True)
+    if r.returncode:
+        raise Falha(f"git {' '.join(args)}: {r.stderr.strip()[:200]}")
+    return r.stdout
+
+
+def fotos_pendentes(git=_git):
+    """MSG_PENDENTES se há foto em fotos/ ainda não commitada ou ainda não enviada para a master do origin; senão None.
+    Só o que já está na master é servido pelo Pages, então o banco não pode apontar para foto pendente."""
+    if git(["status", "--porcelain", "fotos/"]).strip() or git(["log", "origin/master..HEAD", "--", "fotos/"]).strip():
+        return MSG_PENDENTES
+    return None
+
+
+def processar_coleta(coleta, mapa, pasta=None, baixar=None):
+    """Baixa, reduz e grava em fotos/divulgacao/ cada imagem coletada; devolve (novas, falhas). Atualiza `mapa` no lugar."""
+    mod = sys.modules[__name__]
+    baixar = baixar or mod.baixar
+    novas, falhas = 0, []
+    for c in coleta:
+        cod, img = c.get("codigo"), c.get("img")
+        if not cod or not img:
+            falhas.append((cod, "sem imagem"))
+            continue
+        try:
+            url, mini = gravar_pages(cod, baixar(img), pasta)
+        except Exception as e:  # noqa: BLE001 - imagem quebrada ou link vencido: segue para a próxima
+            falhas.append((cod, f"download: {e}"))
+            continue
+        mapa[cod] = {"url": url, "mini": mini, "perfil": c.get("perfil") or perfil_do_og(c.get("url")),
+                     "inteira": bool(c.get("inteira")), "pages": True}
+        novas += 1
+    return novas, falhas
+
+
+def no_bucket(mapa):
+    """Códigos cuja foto ainda está no bucket do Supabase (ainda não migrou para o Pages)."""
+    return [c for c, f in mapa.items() if f.get("url") and RE_BUCKET.search(f["url"])]
+
+
+def migrar_pages(mapa, codigos=None, aplicar=False, base_chave=None, pasta=None, baixar=None, trocar=None):
+    """Para cada foto ainda no bucket: baixa de lá, grava os dois arquivos em fotos/divulgacao/ (pula o que já existe)
+    e, com aplicar, aponta as ações (foto_url + foto_mini_url) para o Pages e atualiza o mapa. Sem aplicar é ensaio:
+    só gera os arquivos, para o commit + push. Devolve (geradas, trocadas, falhas)."""
+    mod = sys.modules[__name__]
+    pasta = Path(pasta or mod.PASTA_PAGES)
+    baixar, trocar = baixar or mod.baixar, trocar or mod.trocar_nas_acoes
+    geradas, trocadas, falhas = 0, 0, []
+    for cod in (no_bucket(mapa) if codigos is None else codigos):
+        velha = mapa[cod]["url"]
+        if not (pasta / f"{cod}.jpg").exists() or not (pasta / f"{cod}-mini.jpg").exists():
+            try:
+                gravar_pages(cod, baixar(velha), pasta)
+            except Exception as e:  # noqa: BLE001 - imagem sumiu do bucket: fica como está
+                falhas.append((cod, f"download: {e}"))
+                continue
+            geradas += 1
+        if not aplicar:
+            continue
+        url, mini = urls_pages(cod)
+        base, chave = base_chave
+        trocar(base, chave, velha, url, mini)
+        mapa[cod] = dict(mapa[cod], url=url, mini=mini, pages=True)
+        trocadas += 1
+    return geradas, trocadas, falhas
+
+
+# ---- Supabase Storage (fluxo antigo: refazer) ----
 
 def destino_storage():
     """(url do projeto, chave de serviço). Local: SUPABASE_URL + SUPABASE_SERVICE_KEY. Produção: a chave de serviço é
@@ -203,38 +315,18 @@ def subir(base, chave, nome, dados):
     return f"{base}/storage/v1/object/public/{BUCKET}/{nome}"
 
 
-def processar_coleta(coleta, mapa, base, chave, pasta=None, baixar=None, subir=None):
-    """Baixa, reduz e sobe cada imagem coletada; devolve (novas, falhas). Atualiza `mapa` no lugar."""
-    mod = sys.modules[__name__]
-    pasta, baixar, subir = pasta or mod.PASTA_IMG, baixar or mod.baixar, subir or mod.subir
-    pasta.mkdir(parents=True, exist_ok=True)
-    novas, falhas = 0, []
-    for c in coleta:
-        cod, img = c.get("codigo"), c.get("img")
-        if not cod or not img:
-            falhas.append((cod, "sem imagem"))
-            continue
-        try:
-            dados = reduzir(baixar(img))
-        except Exception as e:  # noqa: BLE001 - imagem quebrada ou link vencido: segue para a próxima
-            falhas.append((cod, f"download: {e}"))
-            continue
-        (pasta / f"{cod}.jpg").write_bytes(dados)
-        url = subir(base, chave, f"{cod}.jpg", dados)
-        mapa[cod] = {"url": url, "perfil": c.get("perfil") or perfil_do_og(c.get("url")), "inteira": bool(c.get("inteira"))}
-        novas += 1
-    return novas, falhas
-
-
 def recortadas(mapa):
     """Códigos cuja imagem guardada ainda é o og:image recortado (de antes do embed)."""
     return [c for c, f in mapa.items() if f.get("url") and not f.get("inteira")]
 
 
-def trocar_nas_acoes(base, chave, velha, nova):
-    """Aponta para a imagem nova toda ação que usava a velha; devolve quantas mudaram."""
+def trocar_nas_acoes(base, chave, velha, nova, mini=None):
+    """Aponta para a imagem nova toda ação que usava a velha (e grava a mini, quando há); devolve quantas mudaram."""
+    corpo = {"foto_url": nova}
+    if mini is not None:
+        corpo["foto_mini_url"] = mini
     req = urllib.request.Request(f"{base}/rest/v1/acao?foto_url=eq.{urllib.parse.quote(velha, safe='')}",
-                                 data=json.dumps({"foto_url": nova}).encode(), method="PATCH",
+                                 data=json.dumps(corpo).encode(), method="PATCH",
                                  headers={"Authorization": "Bearer " + chave, "apikey": chave, "Content-Type": "application/json",
                                           "Prefer": "return=representation"})
     try:
@@ -246,9 +338,9 @@ def trocar_nas_acoes(base, chave, velha, nova):
 
 def refazer(mapa, base, chave, codigos=None, ler=previa, pasta=None, baixar=None, subir=None, trocar=None,
             pausa=PAUSA, dormir=time.sleep):
-    """Troca as imagens recortadas pela arte inteira do embed. Sobe com nome novo (<código>-inteira.jpg, para não
-    pegar a cópia antiga no cache de quem já abriu o app) e aponta as ações para ela. Devolve (novas, falhas);
-    post sem imagem inteira (apagado, privado, vídeo sem capa) fica com a que tem."""
+    """(Fluxo antigo, no bucket.) Troca as imagens recortadas pela arte inteira do embed. Sobe com nome novo
+    (<código>-inteira.jpg, para não pegar a cópia antiga no cache de quem já abriu o app) e aponta as ações para ela.
+    Devolve (novas, falhas); post sem imagem inteira (apagado, privado, vídeo sem capa) fica com a que tem."""
     mod = sys.modules[__name__]
     pasta, baixar, subir, trocar = pasta or mod.PASTA_IMG, baixar or mod.baixar, subir or mod.subir, trocar or mod.trocar_nas_acoes
     pasta.mkdir(parents=True, exist_ok=True)
@@ -271,19 +363,18 @@ def refazer(mapa, base, chave, codigos=None, ler=previa, pasta=None, baixar=None
     return novas, falhas
 
 
-def buscar_fotos(itens, mapa=None, ler=previa, base_chave=None):
-    """Tenta a imagem de todo post ainda sem foto entre os itens e grava o mapa. Devolve (mapa, novas, falhas).
-    Chamado pelo publicar_acoes.py antes de publicar; post apagado ou privado só fica de fora."""
+def buscar_fotos(itens, mapa=None, ler=previa):
+    """Tenta a imagem de todo post ainda sem foto entre os itens, grava em fotos/divulgacao/ e salva o mapa.
+    Devolve (mapa, novas, falhas). Chamado pelo publicar_acoes.py antes de publicar; post apagado ou privado só
+    fica de fora. Foto nova precisa de commit + push antes de ir para o banco (fotos_pendentes)."""
     mapa = carregar_mapa() if mapa is None else mapa
     cods = pendentes(itens, mapa)
     if not cods:
         return mapa, 0, []
     print(f"fotos: {len(cods)} posts sem imagem, lendo a prévia (~{round(len(cods) * PAUSA / 60)} min)")
     coleta = coletar(cods, ler=ler)
-    base, chave = base_chave or destino_storage()
-    novas, falhas = processar_coleta(coleta, mapa, base, chave)
-    MAPA.parent.mkdir(parents=True, exist_ok=True)
-    MAPA.write_text(json.dumps(mapa, ensure_ascii=False, indent=1), encoding="utf-8")
+    novas, falhas = processar_coleta(coleta, mapa)
+    gravar_mapa(mapa)
     return mapa, novas, falhas
 
 
@@ -297,11 +388,35 @@ def main(argv=None):
     pr = sub.add_parser("coletar")
     pr.add_argument("--itens", nargs="*", help="publicar-*.json (padrão: os mais recentes de cada fonte)")
     pr.add_argument("--max", type=int, default=0, help="no máximo N posts nesta rodada")
+    pm = sub.add_parser("migrar-pages", help="baixa do bucket o que ainda está lá e gera fotos/divulgacao/; --aplicar troca no banco")
+    pm.add_argument("--max", type=int, default=0, help="no máximo N fotos nesta rodada")
+    pm.add_argument("--aplicar", action="store_true", help="aponta as ações para o Pages (exige fotos commitadas e enviadas)")
     pz = sub.add_parser("refazer")
     pz.add_argument("--max", type=int, default=0, help="no máximo N posts nesta rodada")
     args = p.parse_args(argv)
     mapa = carregar_mapa()
     try:
+        if args.cmd == "migrar-pages":
+            cods = no_bucket(mapa)
+            cods = cods[:args.max] if args.max else cods
+            print(f"{len(cods)} fotos ainda no bucket {BUCKET}")
+            base_chave = None
+            if args.aplicar:
+                pend = fotos_pendentes()
+                if pend:
+                    raise Falha(pend)
+                base_chave = destino_storage()
+            try:
+                geradas, trocadas, falhas = migrar_pages(mapa, codigos=cods, aplicar=args.aplicar, base_chave=base_chave)
+            finally:
+                if args.aplicar:
+                    gravar_mapa(mapa)
+            print(f"{geradas} geradas em fotos/divulgacao; {trocadas} ações apontadas para o Pages; {len(falhas)} falhas")
+            for cod, motivo in falhas:
+                print(f"  {cod}: {motivo}")
+            if not args.aplicar:
+                print("ensaio: nada mudou no banco. Faça commit + push de fotos/, espere o Pages e rode com --aplicar")
+            return 0
         if args.cmd == "refazer":
             cods = recortadas(mapa)
             cods = cods[:args.max] if args.max else cods
@@ -310,7 +425,7 @@ def main(argv=None):
             try:
                 novas, falhas = refazer(mapa, base, chave, codigos=cods)
             finally:
-                MAPA.write_text(json.dumps(mapa, ensure_ascii=False, indent=1), encoding="utf-8")
+                gravar_mapa(mapa)
             print(f"{novas} imagens trocadas pela arte inteira; {len(recortadas(mapa))} ainda recortadas; {len(falhas)} falhas")
             for cod, motivo in falhas:
                 print(f"  {cod}: {motivo}")
@@ -328,11 +443,11 @@ def main(argv=None):
             coleta = coletar(cods)
         else:
             coleta = json.loads(Path(args.arquivo).read_text(encoding="utf-8"))
-        base, chave = destino_storage()
-        novas, falhas = processar_coleta(coleta, mapa, base, chave)
-        MAPA.parent.mkdir(parents=True, exist_ok=True)
-        MAPA.write_text(json.dumps(mapa, ensure_ascii=False, indent=1), encoding="utf-8")
-        print(f"{novas} imagens novas no bucket {BUCKET}; {len(mapa)} no mapa; {len(falhas)} falhas")
+        novas, falhas = processar_coleta(coleta, mapa)
+        gravar_mapa(mapa)
+        print(f"{novas} imagens novas em fotos/divulgacao; {len(mapa)} no mapa; {len(falhas)} falhas")
+        if novas:
+            print("faça commit + push de fotos/ e espere o Pages antes de publicar no banco")
         for cod, motivo in falhas:
             print(f"  {cod}: {motivo}")
     except Falha as e:

@@ -236,10 +236,40 @@ def test_importar_acoes_grava_foto_da_divulgacao_e_nao_apaga_sem_foto(cenario):
     assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", foto=foto)]}, jwt=sb.SERVICE).status == 200
     a = sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo[0]
     assert (a["foto_url"], a["foto_credito"], a["foto_pagina"]) == (foto["url"], foto["credito"], foto["pagina"])
+    assert a["foto_mini_url"] is None  # foto do bucket, sem mini
     sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", foto=None)]}, jwt=sb.SERVICE)
     assert sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo[0]["foto_url"] == foto["url"]
     bucket = sb.admin("GET", "/storage/v1/bucket/divulgacao").corpo
     assert bucket["public"] is True
+
+
+def test_importar_acoes_grava_a_mini_do_pages_e_so_a_troca_junto_com_a_foto(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    base = "https://guipfranco.github.io/acoes-segundo-turno/fotos/divulgacao"
+    foto = {"url": f"{base}/X.jpg", "mini": f"{base}/X-mini.jpg", "credito": "Divulgação original no Instagram", "pagina": "https://www.instagram.com/p/x/"}
+    r = sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", foto=foto), _item("b", foto=dict(foto, mini="javascript:alert(1)"))]}, jwt=sb.SERVICE)
+    assert r.status == 200, r.corpo
+    pub = {x["titulo"]: x for x in sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo}
+    assert (pub["Importada a"]["foto_url"], pub["Importada a"]["foto_mini_url"]) == (foto["url"], foto["mini"])
+    assert pub["Importada b"]["foto_url"] == foto["url"] and pub["Importada b"]["foto_mini_url"] is None  # mini que não é https cai
+    # item sem foto não apaga nem a foto nem a mini
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", foto=None), _item("b")]}, jwt=sb.SERVICE)
+    a = sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}&titulo=eq.Importada%20a").corpo[0]
+    assert (a["foto_url"], a["foto_mini_url"]) == (foto["url"], foto["mini"])
+    # foto nova sobrescreve a mini (inclusive para null, se vier sem)
+    nova = {"url": f"{base}/Y.jpg", "credito": "x", "pagina": "https://www.instagram.com/p/y/"}
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", foto=nova), _item("b", foto=dict(nova, mini=f"{base}/Y-mini.jpg"))]}, jwt=sb.SERVICE)
+    pub = {x["titulo"]: x for x in sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo}
+    assert (pub["Importada a"]["foto_url"], pub["Importada a"]["foto_mini_url"]) == (nova["url"], None)
+    assert pub["Importada b"]["foto_mini_url"] == f"{base}/Y-mini.jpg"
+    # a mini também sai em Minhas inscrições e na ação completa (minhas_acoes / fila)
+    sb.criar_usuario(f"mini-{fonte}@t.local", "Mini")
+    jwt = sb.entrar(f"mini-{fonte}@t.local")
+    turno = sb.chamar("GET", f"/rest/v1/turno_publico?acao=eq.{pub['Importada b']['id']}").corpo[0]["id"]
+    assert sb.rpc("inscrever", {"turno_id": turno}, jwt=jwt).status == 200
+    assert sb.rpc("minhas_inscricoes", {}, jwt=jwt).corpo[0]["acao"]["foto_mini_url"] == f"{base}/Y-mini.jpg"
+    # a coluna nova só está na view pública e na tabela; criar_acao segue sem mini
+    assert sb.admin("GET", f"/rest/v1/acao?id=eq.{pub['Importada b']['id']}&select=foto_mini_url").corpo == [{"foto_mini_url": f"{base}/Y-mini.jpg"}]
 
 
 # imagem servida pelo próprio Storage da pilha local (a única que criar_acao aceita desde a migração 50)
