@@ -49,6 +49,12 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   (`acao.organizacao_link`, erro `link_post`). A moderação confere pelos dois na Fila. Imagem obrigatória no cadastro (passo 3 de 4): enviada do celular,
   reduzida no navegador e guardada no bucket `fotos-acoes` (migração 20261009000022), ou puxada do link do post pela
   função `supabase/functions/previa-instagram` (precisa de `supabase functions deploy previa-instagram` em produção). Editar ação, selo, bloquear seguem só no modo exemplo.
+  Canceladas não somem (migração 20261009000040, merge de 2026-10-09; aplicar em produção com
+  `python scripts/ir_ao_ar.py migrar`): "Encerrar" virou "Cancelar ação" (status segue `encerrada`); `acao.publicada_em`
+  (gatilho) marca a primeira ida ao ar, e só a cancelada que já esteve publicada abre pelo link para todos (sem dados
+  de contato); importada encerrada mostra "Saiu da agenda" ou "Já aconteceu"; desistência fica no histórico do Perfil
+  ("você desistiu") e quem organiza vê quem desistiu, só pelo nome. O formulário do "Eu vou!" abre onde a pessoa tocou
+  (topo no celular, coluna "Quando" no computador).
 - Spec em `docs/superpowers/specs/`, desenho visual em `docs/2026-10-08-design-mockup.md`, capturas em
   `docs/capturas/`.
 - Decisões do Gui: inscrição com nome e telefone desde a v1; moderação humana por voluntários no
