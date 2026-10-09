@@ -1,0 +1,33 @@
+/* Rascunho B, "imersão total": tudo do rascunho A, mais faixas de cor por seção e cards em blocos brancos,
+   com cara de material de campanha. */
+@import url("tema-forte.css");
+body{background:var(--amarelo)}
+/* faixa de largura total atrás de um bloco que fica no container central */
+.hero,.inicio-pg>section.bloco,#bloco-online .bloco{position:relative;box-shadow:0 0 0 100vmax var(--faixa);clip-path:inset(0 -100vmax);background:var(--faixa)}
+html,body{overflow-x:clip}.inicio-pg{padding-top:0}
+.hero{--faixa:var(--vermelho);max-width:none;margin:0 0 0;padding:28px 0 30px}
+.hero p,.hero-cta{color:#fff}.hero h1{box-shadow:6px 6px 0 var(--vinho)}
+.hero-cta .btn{background:var(--amarelo);color:var(--tinta);box-shadow:0 4px 0 var(--amarelo-3d)}
+.convite{background:#fff;border-color:#fff}
+.filtros{padding-top:16px}.filtro .rot{color:var(--tinta)}
+.filtro .pill{border-color:var(--tinta);background:transparent}.filtro .pill.ativo{background:var(--tinta);border-color:var(--tinta)}
+.inicio-pg>section.bloco,#bloco-online .bloco{--faixa:var(--verde);margin-top:28px;padding:26px 0 24px}
+#bloco-online .bloco{--faixa:var(--azul)}
+.inicio-pg>section.bloco:nth-of-type(3n+2){--faixa:var(--vermelho)}
+.inicio-pg>section.bloco:nth-of-type(3n+3){--faixa:var(--azul)}
+.inicio-pg>section.bloco:nth-of-type(3n+4){--faixa:var(--verde)}
+.inicio-pg>section.bloco:has(.vazio){--faixa:var(--amarelo)}
+.inicio-pg>section.bloco:last-of-type{margin-bottom:-24px}
+/* título do bloco: caixa amarela sobre a faixa */
+.bloco h2,#bloco-online .bloco h2,.inicio-pg>section.bloco:nth-of-type(n) h2{background:var(--amarelo);color:var(--tinta);box-shadow:4px 4px 0 var(--amarelo-3d)}
+.bloco .cab a,.bloco .sub,.vitrine-vazia{color:#fff}
+/* cards: bloco branco com degrau escuro */
+.evento{background:#fff;border-radius:10px;padding:8px 8px 12px;box-shadow:5px 5px 0 rgba(0,0,0,.28)}
+.evento .foto{border-radius:6px}.evento .tit{margin-top:10px}
+.ver-todas{background:#fff;border-color:#fff}
+/* páginas internas: folha branca sobre o amarelo */
+.pagina{background:#fff;min-height:100vh}
+@media (min-width:900px){
+  .pagina{margin-top:28px;margin-bottom:28px;border-radius:12px;box-shadow:8px 8px 0 var(--amarelo-3d);min-height:0}
+  .hero{padding:44px 0 46px}
+}

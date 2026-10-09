@@ -1,0 +1,65 @@
+/* Rascunho A, "marca forte, leitura limpa": barra, títulos e botões com as cores e as caixas inclinadas
+   da campanha Lula 2026; cards e listas seguem em fundo claro.
+   Paleta do manual: vermelho #fd0000, vinho #a20301, amarelo #ffd400, verde #00b923, verde-escuro #006820, azul #0034d2.
+   Fontes: Archivo condensado black (no lugar da Transducer Condensed Black) e Montserrat (no lugar da Gotham). */
+:root{--vermelho:#fd0000;--vinho:#a20301;--amarelo:#ffd400;--amarelo-3d:#d9b400;--verde:#00b923;--verde-3d:#006820;
+  --selo:#006820;--azul:#0034d2;--azul-3d:#001f80;--roxo:#320d59;--tinta:#141414;--nevoa:#f3f2f3;
+  --titulo:'Archivo','Montserrat',sans-serif;--texto:'Montserrat','Public Sans',system-ui,sans-serif}
+body{font-family:var(--texto)}
+.leaflet-container,.previa .leaflet-popup-content,.etiqueta{font-family:var(--texto)}
+h1,h2,nav .marca,.cabeca strong,.vazio p{font-family:var(--titulo);font-stretch:62%;font-weight:900;text-transform:uppercase;letter-spacing:-.005em}
+h1{line-height:.98}h2{font-size:22px}
+/* caixa inclinada com lateral em 3D, como os carimbos PRESIDENTE e "O Brasil pronto pra mais" */
+.caixa-3d,.hero h1,.bloco h2{display:inline-block;padding:.12em .32em .08em;transform:rotate(-2deg);transform-origin:left center}
+
+/* barra: vermelha */
+nav{background:var(--vermelho);border-color:var(--vermelho)}
+nav a{color:rgba(255,255,255,.82)}nav a.ativo{color:#fff}
+nav a.cta{background:var(--amarelo);color:var(--tinta)}nav a.cta.ativo{color:var(--tinta)}
+nav a.entrar{background:var(--tinta)}
+@media (max-width:899px){nav a.ativo span:last-child{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}}
+
+/* inicial */
+.hero h1{background:var(--amarelo);color:var(--verde-3d);font-size:36px;line-height:.95;box-shadow:5px 5px 0 var(--amarelo-3d);max-width:17ch;margin:10px auto 18px;padding:.14em .3em .1em;transform-origin:center}
+.hero p{color:#3c3c3c}
+.bloco h2{background:var(--vermelho);color:#fff;box-shadow:4px 4px 0 var(--vinho);font-size:24px}
+#bloco-online .bloco h2{background:var(--azul);box-shadow:4px 4px 0 var(--azul-3d)}
+.inicio-pg>section.bloco:nth-of-type(3n+2) h2{background:var(--verde);box-shadow:4px 4px 0 var(--verde-3d)}
+.inicio-pg>section.bloco:nth-of-type(3n+3) h2{background:var(--azul);box-shadow:4px 4px 0 var(--azul-3d)}
+.inicio-pg>section.bloco:nth-of-type(3n+4) h2{background:var(--amarelo);color:var(--tinta);box-shadow:4px 4px 0 var(--amarelo-3d)}
+.bloco .cab{margin-bottom:18px}.bloco .cab a{color:var(--vinho);font-weight:700}
+.cidade,.cidade:hover{color:inherit;text-decoration-color:currentColor;text-transform:inherit}
+.convite{background:#fff9d6;border-color:var(--amarelo)}
+
+/* botões: vermelho com degrau em vinho */
+.btn{font-weight:700;border-radius:8px;box-shadow:0 4px 0 var(--vinho);transition:transform .08s,box-shadow .08s}
+.btn:hover{background:var(--vermelho);filter:brightness(.94)}.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--vinho)}
+.btn.sec{box-shadow:0 4px 0 var(--tinta)}.btn.google{box-shadow:0 4px 0 #000}.btn[disabled]{box-shadow:none}
+.btn.vou{font-family:var(--titulo);font-stretch:62%;font-weight:900;text-transform:uppercase;font-size:24px;letter-spacing:.01em;padding:10px 28px 8px}
+.ver-todas{border-radius:8px;font-weight:700}
+
+/* cards: fundo claro, cantos mais retos, data em selo amarelo */
+.foto{border-radius:10px}.foto::after{display:none}
+.foto .data{background:var(--amarelo);color:var(--tinta);font-weight:800;border-radius:4px;transform:rotate(-3deg);box-shadow:2px 2px 0 var(--amarelo-3d)!important}
+.foto .online{background:var(--azul);border-radius:4px}
+.evento .tit{font-weight:700}
+.meta.vao,.selo{color:var(--selo)}.link,.agenda summary,.ver-pagina,.previa .ver,.link-ext{color:var(--vinho)}
+.filtro .pill.ativo,.pill.ativo{background:var(--azul);border-color:var(--azul);color:#fff;box-shadow:none}
+.chip.ativo{border-color:var(--azul);color:var(--azul)}
+/* fundos por tipo: cores cheias da campanha */
+.f-panfletagem,.f-bandeiraco{background:var(--vermelho)}.f-adesivaco,.f-ato{background:var(--amarelo)}
+.f-encontro,.f-porta{background:var(--azul)}.f-ligatona,.f-caminhada{background:var(--verde)}.f-cultural{background:#a237fb}.f-outro{background:var(--nevoa)}
+.t-panfletagem,.t-bandeiraco{background:#ffd6d1}.t-adesivaco,.t-ato{background:#fff0a8}.t-encontro,.t-porta{background:#d3ddff}
+.t-ligatona,.t-caminhada{background:#c9f2d2}.t-cultural{background:#ecd8ff}
+.card.sel{background:#ffe3df}.etiqueta.foco{background:var(--azul)}
+.perfil-topo .letra{background:var(--azul)}
+
+@media (min-width:900px){
+  nav{border-bottom:0}
+  nav .marca{color:#fff;font-size:26px}
+  nav .marca em{background:var(--amarelo);color:var(--tinta);padding:.04em .22em 0;margin-left:.25em;display:inline-block;transform:rotate(-3deg);box-shadow:3px 3px 0 var(--vinho)}
+  nav a:hover{background:rgba(255,255,255,.14)}nav a.ativo{background:#fff;color:var(--vermelho)}
+  nav a.cta:hover,nav a.cta.ativo{background:#fff;color:var(--vermelho)}
+  .hero h1{font-size:56px}
+  .bloco h2{font-size:30px}
+}
