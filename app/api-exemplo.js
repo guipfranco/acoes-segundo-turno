@@ -144,6 +144,25 @@
         const a = dados.acoes.find(x => x.id === id); if (!a || !['em análise', 'publicada'].includes(a.status)) throw erro('nao_pode');
         a.status = 'recusada'; a.motivoRecusa = String(motivo).trim();
       },
+      async suspender(id, motivo) {
+        if (!ehModerador()) throw erro('so_moderador');
+        const a = dados.acoes.find(x => x.id === id); if (!a || !['em análise', 'publicada'].includes(a.status)) throw erro('nao_pode');
+        a.status = 'rascunho'; a.motivoRecusa = String(motivo || '').trim() || null;
+      },
+      async reativar(id) {
+        if (!ehModerador()) throw erro('so_moderador');
+        const a = dados.acoes.find(x => x.id === id); if (!a || a.status !== 'rascunho') throw erro('nao_pode');
+        a.status = 'publicada'; a.motivoRecusa = null;
+      },
+      // apaga a ação com turnos e inscrições; importada não (a próxima importação traria de volta): suspende
+      async excluir(id) {
+        if (!ehModerador()) throw erro('so_moderador');
+        const a = dados.acoes.find(x => x.id === id); if (!a) throw erro('nao_pode');
+        if (a.fonte) throw erro('importada');
+        const tids = dados.turnos.filter(t => t.acao === id).map(t => t.id);
+        const tirar = (lista, fora) => { for (let k = lista.length - 1; k >= 0; k--) if (fora(lista[k])) lista.splice(k, 1); };
+        tirar(dados.inscricoes, i => tids.includes(i.turno)); tirar(dados.turnos, t => t.acao === id); tirar(dados.acoes, x => x.id === id);
+      },
     };
   }
   return { criar, formatarTelefone };

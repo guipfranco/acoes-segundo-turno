@@ -166,6 +166,24 @@ test('fila: só moderador; aprovar publica e recusar exige motivo', async () => 
   assert.ok((await api2.publico()).acoes.some(a => a.id === id));
 });
 
+test('moderação: suspender tira do ar, reativar volta, excluir apaga (importada não)', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const a = d.acoes.find(x => x.status === 'publicada' && !x.fonte && turnoFuturo(d, x));
+  await assert.rejects(api.suspender(a.id), { codigo: 'so_moderador' });
+  d.config.eu = d.pessoas.find(p => p.papel === 'moderador').id; const mod = ApiExemplo.criar(d);
+  await mod.suspender(a.id, 'endereço errado');
+  assert.ok(!(await mod.publico()).acoes.some(x => x.id === a.id));
+  assert.ok((await mod.fila('rascunho')).some(m => m.acao.id === a.id && m.acao.motivoRecusa === 'endereço errado'));
+  assert.equal((await mod.acao(a.id)).acao.status, 'rascunho');
+  await mod.reativar(a.id);
+  assert.ok((await mod.publico()).acoes.some(x => x.id === a.id));
+  await mod.excluir(a.id);
+  assert.equal(await mod.acao(a.id), null);
+  assert.ok(!d.turnos.some(t => t.acao === a.id));
+  const imp = d.acoes.find(x => x.fonte);
+  if (imp) await assert.rejects(mod.excluir(imp.id), { codigo: 'importada' });
+});
+
 test('eu vou em ação de divulgação não pede telefone', async () => {
   const d = dados(); const api = ApiExemplo.criar(d);
   const a = d.acoes.find(x => x.status === 'publicada' && turnoFuturo(d, x));

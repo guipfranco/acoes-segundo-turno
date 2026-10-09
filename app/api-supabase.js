@@ -65,8 +65,13 @@
           rpc('acao_para_mim', { acao_id: id }),
         ]);
         if (aR.error) throw erroDe(aR.error); if (tR.error) throw erroDe(tR.error);
-        if (!aR.data) return null;
-        return { acao: deAcao(aR.data), turnos: tR.data.map(deTurno), inscrita: (mim && mim.inscrita) || [], combinado: (mim && mim.combinado) || null };
+        const extra = { inscrita: (mim && mim.inscrita) || [], combinado: (mim && mim.combinado) || null };
+        if (aR.data) return Object.assign({ acao: deAcao(aR.data), turnos: tR.data.map(deTurno) }, extra);
+        // fora do ar (em análise, suspensa, recusada): só quem criou ou modera vê
+        const r = (await uid()) ? await rpc('acao_restrita', { acao_id: id }) : null;
+        if (!r) return null;
+        return Object.assign({ acao: Object.assign(deAcao(r.acao), { detalhe: r.acao.detalhe || null, contatoLink: r.acao.contato_link || null }),
+          turnos: (r.turnos || []).map(deTurno) }, extra);
       },
       async salvarTelefone(telefone) { return dePessoa(await rpc('salvar_telefone', { telefone })); },
       async inscrever(turnoId) { return rpc('inscrever', { turno_id: turnoId }); },
@@ -90,6 +95,9 @@
       async fila(situacao) { return (await rpc('fila_moderacao', { situacao: situacao || 'em análise' })).map(m => Object.assign(comInscritos(m), { organizador: m.organizador })); },
       async aprovar(id) { await rpc('aprovar_acao', { acao_id: id }); },
       async recusar(id, motivo) { await rpc('recusar_acao', { acao_id: id, motivo }); },
+      async suspender(id, motivo) { await rpc('suspender_acao', { acao_id: id, motivo: motivo || null }); },
+      async reativar(id) { await rpc('reativar_acao', { acao_id: id }); },
+      async excluir(id) { await rpc('excluir_acao', { acao_id: id }); },
       async minhasInscricoes() { return (await rpc('minhas_inscricoes')).map(m => ({ acao: deAcao(m.acao), turno: deTurno(m.turno) })); },
     };
   }

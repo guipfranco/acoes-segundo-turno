@@ -311,3 +311,27 @@ def test_foto_so_na_propria_pasta_do_bucket(cenario):
             return e.code
     assert enviar(f"{cenario['a']}/teste-{uuid.uuid4().hex[:6]}.jpg") == 200
     assert enviar(f"{cenario['b']}/teste-{uuid.uuid4().hex[:6]}.jpg") in (400, 403)
+
+
+def test_moderador_suspende_reativa_e_exclui(cenario):
+    r = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_org"])
+    novo = r.corpo["id"]
+    # quem não modera não suspende; a página da ação fora do ar só abre para quem criou ou modera
+    assert sb.rpc("suspender_acao", {"acao_id": novo}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    assert sb.rpc("suspender_acao", {"acao_id": novo, "motivo": "endereço errado"}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert sb.chamar("GET", f"/rest/v1/acao_publica?id=eq.{novo}").corpo == []
+    assert sb.rpc("acao_restrita", {"acao_id": novo}, jwt=cenario["jwt_b"]).corpo is None
+    vista = sb.rpc("acao_restrita", {"acao_id": novo}, jwt=cenario["jwt_a"]).corpo
+    assert vista["acao"]["status"] == "rascunho" and vista["acao"]["motivo_recusa"] == "endereço errado" and len(vista["turnos"]) == 1
+    assert sb.rpc("acao_restrita", {"acao_id": novo}, jwt=cenario["jwt_org"]).corpo["acao"]["id"] == novo
+    assert any(m["acao"]["id"] == novo for m in sb.rpc("fila_moderacao", {"situacao": "rascunho"}, jwt=cenario["jwt_a"]).corpo)
+    assert sb.rpc("reativar_acao", {"acao_id": novo}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert len(sb.chamar("GET", f"/rest/v1/acao_publica?id=eq.{novo}").corpo) == 1
+    assert sb.rpc("excluir_acao", {"acao_id": novo}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
+    assert sb.rpc("excluir_acao", {"acao_id": novo}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert sb.admin("GET", f"/rest/v1/acao?id=eq.{novo}").corpo == []
+    assert sb.admin("GET", f"/rest/v1/turno?acao=eq.{novo}").corpo == []
+    # importada não se exclui (voltaria na próxima importação): suspende
+    sb.admin("PATCH", f"/rest/v1/acao?id=eq.{cenario['acao']}", {"fonte": "bora-lula", "fonte_id": f"x-{novo}"})
+    assert sb.rpc("excluir_acao", {"acao_id": cenario["acao"]}, jwt=cenario["jwt_a"]).corpo["message"] == "importada"
