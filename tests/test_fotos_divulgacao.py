@@ -65,12 +65,12 @@ def test_processar_coleta_sobe_e_registra(tmp_path):
             raise OSError("404")
         return jpeg(1000, 1000)
 
-    coleta = [{"codigo": "AAA", "img": "https://cdn/a.jpg", "url": "https://www.instagram.com/ptdiadema/p/AAA/"},
+    coleta = [{"codigo": "AAA", "img": "https://cdn/a.jpg", "url": "https://www.instagram.com/ptdiadema/p/AAA/", "inteira": True},
               {"codigo": "BBB", "img": "https://cdn/quebrada.jpg", "url": ""}, {"codigo": "CCC", "img": None}]
     mapa = {}
     novas, falhas = fd.processar_coleta(coleta, mapa, "https://proj", "k", pasta=tmp_path, baixar=baixar, subir=subir)
     assert novas == 1 and [f[0] for f in falhas] == ["BBB", "CCC"]
-    assert mapa == {"AAA": {"url": "https://proj/storage/v1/object/public/divulgacao/AAA.jpg", "perfil": "ptdiadema"}}
+    assert mapa == {"AAA": {"url": "https://proj/storage/v1/object/public/divulgacao/AAA.jpg", "perfil": "ptdiadema", "inteira": True}}
     assert (tmp_path / "AAA.jpg").exists() and "AAA.jpg" in enviados
 
 
@@ -111,7 +111,7 @@ def test_buscar_fotos_so_le_o_que_falta(tmp_path, monkeypatch):
     itens = [{"link": "https://www.instagram.com/p/AAA/"}, {"link": "https://www.instagram.com/p/BBB/"}]
     mapa, novas, falhas = fd.buscar_fotos(itens, {"BBB": {"url": "u"}}, ler=ler, base_chave=("https://proj", "k"))
     assert lidos == ["AAA"] and novas == 1 and falhas == []
-    assert mapa["AAA"] == {"url": "https://proj/AAA.jpg", "perfil": "org"}
+    assert mapa["AAA"] == {"url": "https://proj/AAA.jpg", "perfil": "org", "inteira": False}
     assert json.loads((tmp_path / "mapa.json").read_text(encoding="utf-8"))["AAA"]["url"] == "https://proj/AAA.jpg"
     assert fd.buscar_fotos(itens, mapa, ler=ler, base_chave=("https://proj", "k"))[1] == 0 and lidos == ["AAA"]
 
@@ -119,3 +119,47 @@ def test_buscar_fotos_so_le_o_que_falta(tmp_path, monkeypatch):
 def test_publicar_busca_fotos_ao_aplicar():
     src = (RAIZ / "scripts" / "publicar_acoes.py").read_text(encoding="utf-8")
     assert "if args.aplicar and not args.sem_fotos:" in src and "fd.buscar_fotos(itens, mapa)" in src
+
+
+EMBED = ('<a class="Username" href="https://www.instagram.com/une/?utm_source=ig_embed"><span class="UsernameText">une</span></a>'
+         '<img class="EmbeddedMediaImage" alt="Instagram post shared by &#064;une" src="https://cdn/v/a.jpg?stp=dst-jpg_e35_tt6&amp;x=1" '
+         'srcset="https://cdn/v/a.jpg?stp=dst-jpg_e35_tt6&amp;x=1 1440w,https://cdn/v/a.jpg?stp=dst-jpg_e35_p1080x1080_tt6&amp;x=1 1080w,'
+         'https://cdn/v/a.jpg?stp=dst-jpg_e35_p640x640_tt6&amp;x=1 640w,https://cdn/v/a.jpg?stp=c0.180.1440.1440a_dst-jpg_e35_s1080x1080_tt6&amp;x=1 1080w" />')
+
+
+def test_embed_da_imagem_inteira_sem_recorte():
+    # o srcset traz versões recortadas em quadrado (stp=c...); fica a maior inteira até 1080 px
+    assert fd.do_embed(EMBED) == {"img": "https://cdn/v/a.jpg?stp=dst-jpg_e35_p1080x1080_tt6&x=1", "perfil": "une"}
+    so_grande = '<img class="EmbeddedMediaImage" srcset="https://cdn/b.jpg?stp=dst-jpg_tt6 1365w" src="https://cdn/b.jpg">'
+    assert fd.do_embed(so_grande)["img"] == "https://cdn/b.jpg?stp=dst-jpg_tt6"
+    so_recorte = '<img class="EmbeddedMediaImage" src="https://cdn/c.jpg?stp=c0.1.2.2a_s640x640" srcset="https://cdn/c.jpg?stp=c0.1.2.2a_s640x640 640w">'
+    assert fd.do_embed(so_recorte) == {"img": None, "perfil": None}
+    assert fd.do_embed("<html></html>") == {"img": None, "perfil": None}
+
+
+def test_previa_prefere_embed_e_cai_na_og(monkeypatch):
+    paginas = {"https://www.instagram.com/p/AAA/embed/captioned/": EMBED,
+               "https://www.instagram.com/p/BBB/embed/captioned/": "<html></html>",
+               "https://www.instagram.com/p/BBB/": '<meta property="og:image" content="https://cdn/q.jpg"><meta property="og:url" content="https://www.instagram.com/org/p/BBB/">'}
+    monkeypatch.setattr(fd, "ler_pagina", lambda url: paginas.get(url))
+    assert fd.previa("AAA") == {"codigo": "AAA", "img": "https://cdn/v/a.jpg?stp=dst-jpg_e35_p1080x1080_tt6&x=1", "perfil": "une",
+                                "url": None, "inteira": True}
+    assert fd.previa("BBB") == {"codigo": "BBB", "img": "https://cdn/q.jpg", "url": "https://www.instagram.com/org/p/BBB/", "inteira": False}
+
+
+def test_refazer_troca_so_as_recortadas_e_atualiza_as_acoes(tmp_path):
+    mapa = {"AAA": {"url": "https://proj/storage/v1/object/public/divulgacao/AAA.jpg", "perfil": "une"},
+            "BBB": {"url": "https://proj/storage/v1/object/public/divulgacao/BBB.jpg", "perfil": None, "inteira": True},
+            "CCC": {"url": "https://proj/storage/v1/object/public/divulgacao/CCC.jpg", "perfil": None}}
+    assert fd.recortadas(mapa) == ["AAA", "CCC"]
+    trocas = []
+
+    def ler(c):
+        return {"codigo": c, "img": "https://cdn/i.jpg", "perfil": "une", "inteira": c == "AAA"}
+    novas, falhas = fd.refazer(mapa, "https://proj", "k", ler=ler, pasta=tmp_path, baixar=lambda u: jpeg(1080, 1350),
+                               subir=lambda b, k, nome, d: f"{b}/storage/v1/object/public/divulgacao/{nome}",
+                               trocar=lambda b, k, velha, nova: trocas.append((velha, nova)) or 2, dormir=lambda s: None)
+    assert novas == 1 and falhas == [("CCC", "sem imagem inteira")]
+    assert mapa["AAA"] == {"url": "https://proj/storage/v1/object/public/divulgacao/AAA-inteira.jpg", "perfil": "une", "inteira": True}
+    assert mapa["CCC"] == {"url": "https://proj/storage/v1/object/public/divulgacao/CCC.jpg", "perfil": None}
+    assert trocas == [("https://proj/storage/v1/object/public/divulgacao/AAA.jpg", "https://proj/storage/v1/object/public/divulgacao/AAA-inteira.jpg")]

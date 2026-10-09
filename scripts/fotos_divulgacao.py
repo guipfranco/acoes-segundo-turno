@@ -1,13 +1,15 @@
 """Imagem da divulgação original (post do Instagram) como foto das ações importadas.
 
-A imagem vem da prévia de link do post (metas og:image e og:url), a mesma que o WhatsApp mostra ao colar o link:
-o Instagram a entrega sem login a quem se identifica como robô de prévia. Sem conta, sem navegador. Uma página a
-cada 3 s; se o Instagram devolver 429, o script para e guarda o que já coletou.
+A imagem vem da página de embed do post (/p/<código>/embed/captioned/), que o Instagram entrega sem login a quem se
+identifica como robô de prévia, com a arte inteira na proporção original (quase sempre 4:5). A prévia de link
+(og:image, a mesma que o WhatsApp mostra) é só o plano B: ela vem recortada em quadrado e corta o texto dos cartazes.
+Sem conta, sem navegador. Uma página a cada 3 s; se o Instagram devolver 429, o script para e guarda o que já coletou.
 
 Uso:
   python scripts/fotos_divulgacao.py pendentes             # códigos de post das ações a publicar ainda sem foto
   python scripts/fotos_divulgacao.py coletar               # lê a prévia de cada pendente, baixa, reduz e sobe
   python scripts/fotos_divulgacao.py coleta ARQ.json       # o mesmo a partir de [{"codigo", "img", "url"}] já lidos
+  python scripts/fotos_divulgacao.py refazer [--max N]     # troca as imagens recortadas (og:image) pela arte inteira
 
 As imagens vão para o bucket público `divulgacao` do Supabase Storage (migração 20261009000003), com o mesmo
 destino de scripts/publicar_acoes.py. O mapa código -> foto fica em levantamento/fotos-divulgacao.json (fora do
@@ -22,6 +24,7 @@ import os
 import re
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -68,16 +71,50 @@ def og_da_pagina(texto):
     return {"img": meta("image"), "url": meta("url")}
 
 
-def previa(codigo):
-    req = urllib.request.Request(f"https://www.instagram.com/p/{codigo}/", headers={"User-Agent": AGENTE_PREVIA})
+RE_MIDIA_EMBED = re.compile(r'<img[^>]*class="EmbeddedMediaImage"[^>]*>')
+RE_RECORTE = re.compile(r"stp=c\d")
+MAX_EMBED = 1080
+
+
+def do_embed(texto):
+    """{img, perfil} da página de embed. O srcset da mídia traz a arte inteira em vários tamanhos e também versões
+    recortadas em quadrado (stp=c...); fica a maior inteira de até 1080 px, ou a menor inteira se todas passarem."""
+    tag = RE_MIDIA_EMBED.search(texto or "")
+    if not tag:
+        return {"img": None, "perfil": None}
+    srcset = re.search(r'srcset="([^"]*)"', tag.group(0))
+    opcoes = []
+    for parte in re.split(r",\s*(?=https?://)", html.unescape(srcset.group(1)) if srcset else ""):
+        url, _, larg = parte.strip().rpartition(" ")
+        if url and larg.endswith("w") and larg[:-1].isdigit() and not RE_RECORTE.search(url):
+            opcoes.append((int(larg[:-1]), url))
+    if not opcoes:
+        return {"img": None, "perfil": None}
+    cabem = [o for o in opcoes if o[0] <= MAX_EMBED]
+    m = re.search(r'class="UsernameText">([A-Za-z0-9_.]+)<', texto)
+    return {"img": (max(cabem) if cabem else min(opcoes))[1], "perfil": m.group(1) if m else None}
+
+
+def ler_pagina(url):
+    """HTML da página pedida como robô de prévia; None se não existir. 429 vira Limite."""
+    req = urllib.request.Request(url, headers={"User-Agent": AGENTE_PREVIA})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
-            texto = r.read().decode("utf-8", "replace")
+            return r.read().decode("utf-8", "replace")
     except urllib.error.HTTPError as e:
         if e.code == 429:
             raise Limite()
-        return {"codigo": codigo, "img": None, "url": None}
-    return dict(og_da_pagina(texto), codigo=codigo)
+        return None
+
+
+def previa(codigo):
+    """Imagem do post: a arte inteira do embed; sem ela, o og:image recortado da página do post."""
+    emb = do_embed(ler_pagina(f"https://www.instagram.com/p/{codigo}/embed/captioned/"))
+    if emb["img"]:
+        return {"codigo": codigo, "img": emb["img"], "perfil": emb["perfil"], "url": None, "inteira": True}
+    texto = ler_pagina(f"https://www.instagram.com/p/{codigo}/")
+    og = og_da_pagina(texto) if texto else {"img": None, "url": None}
+    return dict(og, codigo=codigo, inteira=False)
 
 
 def coletar(codigos, ler=previa, pausa=PAUSA, dormir=time.sleep):
@@ -184,7 +221,52 @@ def processar_coleta(coleta, mapa, base, chave, pasta=None, baixar=None, subir=N
             continue
         (pasta / f"{cod}.jpg").write_bytes(dados)
         url = subir(base, chave, f"{cod}.jpg", dados)
-        mapa[cod] = {"url": url, "perfil": perfil_do_og(c.get("url"))}
+        mapa[cod] = {"url": url, "perfil": c.get("perfil") or perfil_do_og(c.get("url")), "inteira": bool(c.get("inteira"))}
+        novas += 1
+    return novas, falhas
+
+
+def recortadas(mapa):
+    """Códigos cuja imagem guardada ainda é o og:image recortado (de antes do embed)."""
+    return [c for c, f in mapa.items() if f.get("url") and not f.get("inteira")]
+
+
+def trocar_nas_acoes(base, chave, velha, nova):
+    """Aponta para a imagem nova toda ação que usava a velha; devolve quantas mudaram."""
+    req = urllib.request.Request(f"{base}/rest/v1/acao?foto_url=eq.{urllib.parse.quote(velha, safe='')}",
+                                 data=json.dumps({"foto_url": nova}).encode(), method="PATCH",
+                                 headers={"Authorization": "Bearer " + chave, "apikey": chave, "Content-Type": "application/json",
+                                          "Prefer": "return=representation"})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return len(json.loads(r.read() or b"[]"))
+    except urllib.error.HTTPError as e:
+        raise Falha(f"trocar foto nas ações: HTTP {e.code} {e.read().decode(errors='replace')[:200]}")
+
+
+def refazer(mapa, base, chave, codigos=None, ler=previa, pasta=None, baixar=None, subir=None, trocar=None,
+            pausa=PAUSA, dormir=time.sleep):
+    """Troca as imagens recortadas pela arte inteira do embed. Sobe com nome novo (<código>-inteira.jpg, para não
+    pegar a cópia antiga no cache de quem já abriu o app) e aponta as ações para ela. Devolve (novas, falhas);
+    post sem imagem inteira (apagado, privado, vídeo sem capa) fica com a que tem."""
+    mod = sys.modules[__name__]
+    pasta, baixar, subir, trocar = pasta or mod.PASTA_IMG, baixar or mod.baixar, subir or mod.subir, trocar or mod.trocar_nas_acoes
+    pasta.mkdir(parents=True, exist_ok=True)
+    novas, falhas = 0, []
+    for c in coletar(recortadas(mapa) if codigos is None else codigos, ler=ler, pausa=pausa, dormir=dormir):
+        cod = c["codigo"]
+        if not c.get("inteira") or not c.get("img"):
+            falhas.append((cod, "sem imagem inteira"))
+            continue
+        try:
+            dados = reduzir(baixar(c["img"]))
+        except Exception as e:  # noqa: BLE001 - link vencido: fica a antiga
+            falhas.append((cod, f"download: {e}"))
+            continue
+        (pasta / f"{cod}.jpg").write_bytes(dados)
+        url = subir(base, chave, f"{cod}-inteira.jpg", dados)
+        trocar(base, chave, mapa[cod]["url"], url)
+        mapa[cod] = dict(mapa[cod], url=url, perfil=mapa[cod].get("perfil") or c.get("perfil"), inteira=True)
         novas += 1
     return novas, falhas
 
@@ -215,9 +297,24 @@ def main(argv=None):
     pr = sub.add_parser("coletar")
     pr.add_argument("--itens", nargs="*", help="publicar-*.json (padrão: os mais recentes de cada fonte)")
     pr.add_argument("--max", type=int, default=0, help="no máximo N posts nesta rodada")
+    pz = sub.add_parser("refazer")
+    pz.add_argument("--max", type=int, default=0, help="no máximo N posts nesta rodada")
     args = p.parse_args(argv)
     mapa = carregar_mapa()
     try:
+        if args.cmd == "refazer":
+            cods = recortadas(mapa)
+            cods = cods[:args.max] if args.max else cods
+            print(f"{len(cods)} imagens recortadas para trocar (~{round(len(cods) * PAUSA / 60)} min)")
+            base, chave = destino_storage()
+            try:
+                novas, falhas = refazer(mapa, base, chave, codigos=cods)
+            finally:
+                MAPA.write_text(json.dumps(mapa, ensure_ascii=False, indent=1), encoding="utf-8")
+            print(f"{novas} imagens trocadas pela arte inteira; {len(recortadas(mapa))} ainda recortadas; {len(falhas)} falhas")
+            for cod, motivo in falhas:
+                print(f"  {cod}: {motivo}")
+            return 0
         if args.cmd in ("pendentes", "coletar"):
             arqs = args.itens or [str(sorted((RAIZ / "levantamento").glob(f"publicar-{f}-*.json"))[-1])
                                   for f in ("bora-lula", "redes") if list((RAIZ / "levantamento").glob(f"publicar-{f}-*.json"))]
