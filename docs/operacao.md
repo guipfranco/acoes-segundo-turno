@@ -108,6 +108,15 @@ antes de gravar (desde 2026-10-09; `--sem-fotos` pula), então não há passo se
 leva o @ do perfil só quando a ação tem organização pública; senão fica "Divulgação original no Instagram".
 Aplicado em produção em 2026-10-09 (migração + reimportação do feed e das redes); capturas em
 `docs/capturas/2026-10-09-acao-logo-ponto-exato.png` e `2026-10-09-vitrine-avatares.png`.
+Arte inteira (2026-10-09, branch cards-verticais): o og:image vem recortado em quadrado de 640 px com zoom e corta o
+texto dos cartazes. Agora a imagem sai da página de embed do post (`/p/<código>/embed/captioned/`, mesmo robô de
+prévia): a maior versão sem recorte (`stp` sem `c...`) de até 1080 px, quase sempre 4:5 (vídeo dá a capa 9:16). O
+og:image só fica como plano B. O mapa anota `"inteira": true`. Para trocar as já publicadas: `python
+scripts/fotos_divulgacao.py refazer [--max N]` (pasta principal, com `SUPABASE_ACCESS_TOKEN`): sobe como
+`<código>-inteira.jpg` (nome novo, para escapar do cache de uma semana) e aponta as ações (`acao.foto_url`) para a
+nova. A função `previa-instagram` faz o mesmo caminho para o cadastro pelo app (precisa de `supabase functions deploy
+previa-instagram`). O card da vitrine passou a 4:5 com a arte inteira e a sobra preenchida pela própria imagem
+desfocada; a capa da página da ação mostra a imagem na proporção dela.
 
 Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capturas em
 `docs/capturas/2026-10-09-acao-importada.png` e `2026-10-09-mapa-importadas.png`.

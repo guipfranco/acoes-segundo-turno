@@ -1,6 +1,7 @@
 // Puxa a arte de um post do Instagram para a imagem de uma ação cadastrada pelo app.
-// Mesmo caminho de scripts/fotos_divulgacao.py: a prévia de link do post (meta og:image), que o Instagram entrega
-// sem login a quem se identifica como robô de prévia. A imagem é copiada para o bucket `fotos-acoes`, na pasta de
+// Mesmo caminho de scripts/fotos_divulgacao.py: a página de embed do post, que o Instagram entrega sem login a quem
+// se identifica como robô de prévia, com a arte inteira (quase sempre 4:5). A prévia de link (og:image) é o plano B:
+// vem recortada em quadrado e corta o texto dos cartazes. A imagem é copiada para o bucket `fotos-acoes`, na pasta de
 // quem pediu (o link do CDN do Instagram expira), e a função devolve o endereço público.
 // Só quem entrou chama (o JWT é conferido pelo Supabase e aqui de novo, para saber a pasta).
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -17,6 +18,18 @@ const LIMITE = 2 * 1024 * 1024;
 const resposta = (corpo: unknown, status = 200) =>
   new Response(JSON.stringify(corpo), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 const erro = (codigo: string, status = 400) => resposta({ erro: codigo }, status);
+
+// srcset da mídia do embed: fica a maior versão inteira de até 1080 px (as com stp=c... são recortes em quadrado)
+function imagemDoEmbed(html: string): string | null {
+  const tag = html.match(/<img[^>]*class="EmbeddedMediaImage"[^>]*>/)?.[0];
+  const srcset = tag?.match(/srcset="([^"]*)"/)?.[1]?.replaceAll("&amp;", "&");
+  if (!srcset) return null;
+  const opcoes = srcset.split(/,\s*(?=https?:\/\/)/).map((p) => p.trim().match(/^(\S+)\s+(\d+)w$/))
+    .filter((m): m is RegExpMatchArray => !!m && !/stp=c\d/.test(m[1])).map((m) => ({ url: m[1], larg: Number(m[2]) }));
+  if (!opcoes.length) return null;
+  const cabem = opcoes.filter((o) => o.larg <= 1080).sort((x, y) => y.larg - x.larg);
+  return (cabem[0] ?? opcoes.sort((x, y) => x.larg - y.larg)[0]).url;
+}
 
 function ogImage(html: string): string | null {
   const m = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]*)"/) ||
@@ -39,9 +52,14 @@ Deno.serve(async (req) => {
   const codigo = link.match(RE_POST)?.[1];
   if (!codigo) return erro("link_instagram_invalido");
 
-  const pagina = await fetch(`https://www.instagram.com/p/${codigo}/`, { headers: { "User-Agent": AGENTE_PREVIA } });
-  if (pagina.status === 429) return erro("instagram_ocupado", 503);
-  const img = pagina.ok ? ogImage(await pagina.text()) : null;
+  const embed = await fetch(`https://www.instagram.com/p/${codigo}/embed/captioned/`, { headers: { "User-Agent": AGENTE_PREVIA } });
+  if (embed.status === 429) return erro("instagram_ocupado", 503);
+  let img = embed.ok ? imagemDoEmbed(await embed.text()) : null;
+  if (!img) {
+    const pagina = await fetch(`https://www.instagram.com/p/${codigo}/`, { headers: { "User-Agent": AGENTE_PREVIA } });
+    if (pagina.status === 429) return erro("instagram_ocupado", 503);
+    img = pagina.ok ? ogImage(await pagina.text()) : null;
+  }
   if (!img) return erro("instagram_sem_imagem", 404);
 
   const bruto = await fetch(img, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" } });

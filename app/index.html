@@ -102,13 +102,18 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
 .bloco .cab{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
 .bloco h2{margin:0;font-size:20px}.bloco .cab a{font-size:14px;font-weight:600;color:var(--vinho);white-space:nowrap}
 .bloco .sub{color:var(--cinza);font-size:14px;margin:-6px 0 10px}
-.trilho{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(248px,1fr);gap:18px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none}.trilho::-webkit-scrollbar{display:none}
+.trilho{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(208px,232px);gap:18px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none}.trilho::-webkit-scrollbar{display:none}
 .evento{scroll-snap-align:start;text-decoration:none;color:inherit;display:block;min-width:0}
-.foto{aspect-ratio:16/10;border-radius:16px;position:relative;display:grid;place-items:center;font-size:56px;overflow:hidden;background:var(--nevoa)}
+/* card vertical (4:5), o formato do post do Instagram: a arte aparece inteira; o que sobra (foto 3:4, quadrada,
+   horizontal) é preenchido com a própria imagem desfocada, sem cortar texto do cartaz */
+.foto{aspect-ratio:4/5;border-radius:16px;position:relative;display:grid;place-items:center;font-size:56px;overflow:hidden;background:var(--nevoa)}
 .foto::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 18% 12%,rgba(255,255,255,.6),transparent 55%)}
-.foto .img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;display:block}
+.foto .img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;display:block}
+.foto .fundo{position:absolute;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);object-fit:cover;filter:blur(20px) brightness(.9);z-index:1;display:block}
 .foto .img~.data,.foto .img~.online{z-index:2}.foto .img~.data{box-shadow:0 1px 6px rgba(23,23,26,.35)}
-.foto.capa{aspect-ratio:16/9;margin:0 0 14px;font-size:64px}.credito{color:var(--cinza);font-size:12px;margin:-8px 0 14px}.credito a{color:inherit}
+.foto.capa{aspect-ratio:16/9;margin:0 0 14px;font-size:64px}
+/* capa com foto: sem caixa fixa, a imagem na proporção dela (limitada à altura da tela) */
+.foto.capa.natural{aspect-ratio:auto;min-height:120px;display:block;font-size:0}.foto.capa.natural .img{position:relative;height:auto;max-height:78vh}.credito{color:var(--cinza);font-size:12px;margin:-8px 0 14px}.credito a{color:inherit}
 .cubo.com-foto{background-size:cover;background-position:center}
 .foto .data,.foto .online{position:absolute;top:10px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;z-index:1}
 .foto .data{left:10px;background:#fff;box-shadow:0 1px 5px rgba(23,23,26,.2)}.foto .online{right:10px;background:var(--tinta);color:#fff}
@@ -146,7 +151,7 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
 .previa .leaflet-popup-content{margin:0;width:260px!important;font-family:'Public Sans',sans-serif}
 .leaflet-container .previa a.leaflet-popup-close-button{z-index:2;background:#fff;color:var(--tinta);border-radius:50%;width:28px;height:28px;top:8px;right:8px;font:600 20px/26px 'Public Sans',sans-serif;text-align:center;box-shadow:0 1px 5px rgba(23,23,26,.3)}
 .previa a.corpo{display:block;text-decoration:none;color:var(--tinta)}
-.previa .foto{border-radius:0;aspect-ratio:16/9;font-size:44px}
+.previa .foto{border-radius:0;aspect-ratio:1/1;font-size:44px}
 .previa .txt{padding:10px 14px 12px}.previa .tit{font-weight:700;font-size:15px;line-height:1.25;margin-bottom:3px}
 .previa .meta{font-size:13px;color:var(--cinza);line-height:1.4}.previa .meta b{color:var(--tinta);font-weight:600}
 .previa .ver{display:inline-block;margin-top:6px;font-size:13px;font-weight:700;color:var(--vinho)}
@@ -382,7 +387,9 @@ const VITRINE=[['São Paulo','SP',-23.55,-46.63],['Recife','PE',-8.05,-34.9],['B
 const PADRAO={rotulo:'São Paulo',lat:-23.55,lon:-46.63,chute:true};
 function acoesPerto(c,raio=60){return acoesVisiveis().filter(x=>!ehOnline(x.a)&&distanciaKm(c,x.a.lugar)<=raio)}
 // foto da ação sobre um fundo com a cor do tipo e o ícone; se a imagem falhar, fica só o fundo
-const imgFoto=a=>a.foto&&a.foto.url?`<img class="img" src="${esc(a.foto.url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:'';
+const imgFoto=a=>a.foto&&a.foto.url?imgArte(a.foto.url,'loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"'):'';
+// arte inteira por cima da mesma imagem desfocada, que preenche a sobra do card
+const imgArte=(url,extra='')=>`<img class="fundo" src="${esc(url)}" alt="" aria-hidden="true" ${extra}><img class="img" src="${esc(url)}" alt="" ${extra}>`;
 function fotoEvento(x){const a=x.a,lg=logoCapa(a);return `<div class="foto f-${CLASSE[a.tipo].slice(2)}" role="img" aria-label="${esc(a.tipo)}">${ICONES[a.tipo]}${lg?imgLogo(lg):''}${imgFoto(a)}<span class="data">${fmtCurta(x.t.inicio)}</span>${ehOnline(a)?'<span class="online">Online</span>':''}</div>`}
 function creditoFoto(a){return a.foto&&a.foto.credito?`<p class="credito">Foto: ${a.foto.pagina?`<a href="${esc(a.foto.pagina)}" target="_blank" rel="noopener">${esc(a.foto.credito)}</a>`:esc(a.foto.credito)}</p>`:''}
 const cuboAcao=(a,extra='')=>a.foto&&a.foto.url?`<div class="cubo ${CLASSE[a.tipo]} com-foto" style="background-image:url('${esc(a.foto.url)}');${extra}"></div>`:`<div class="cubo ${CLASSE[a.tipo]}" style="${extra}">${ICONES[a.tipo]}</div>`;
@@ -608,7 +615,7 @@ function barraModerar(a){if(!estado.sessao||estado.sessao.papel!=='moderador')re
 function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const a=ab.acao,fechada=a.status!=='publicada';
   const ts=ab.turnos,futuros=ts.filter(t=>t.inicio.slice(0,10)>=PUB.config.hoje),ins=estado.inscrevendo;
   return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a>${barraModerar(a)}<div class="acao"><div class="acao-corpo">
-  ${a.foto&&a.foto.url?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a)}</div>${creditoFoto(a)}`:logoCapa(a)?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgLogo(logoCapa(a))}</div>${creditoLogo(logoCapa(a))}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
+  ${a.foto&&a.foto.url?`<div class="foto capa natural f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a)}</div>${creditoFoto(a)}`:logoCapa(a)?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgLogo(logoCapa(a))}</div>${creditoLogo(logoCapa(a))}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
   <h1>${esc(a.titulo)}</h1>
   <div class="sec" style="font-size:15px">${quemDivulga(a)}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div>
   ${fechada?`<p class="erro">${FORA_DO_AR[a.status]||`Esta ação não está aberta a inscrições (${esc(a.status)}).`}</p>`:futuros.length?ctaTopo(a,futuros):'<p class="erro">Esta ação já aconteceu.</p>'}
@@ -710,7 +717,7 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
    <p style="margin-top:18px"><button class="btn sec" onclick="estado.criar.passo=3;render()">Voltar</button> <button class="btn" onclick="publicarAcao()">${c.editando?'Salvar':verif?'Publicar':'Enviar para análise'}</button></p></div>`}
 // ---------- imagem da ação: enviada do celular (reduzida antes) ou puxada do post do Instagram ----------
 function previaCard(c){const t=turnosForm(c)[0]||{inicio:PUB.config.hoje+'T09:00'},l=c.online?LUGAR_ONLINE():c.lugar;
-  return `<div class="evento previa-card"><div class="foto f-${CLASSE[c.tipo].slice(2)}">${ICONES[c.tipo]}<img class="img" src="${esc(c.foto)}" alt=""><span class="data">${fmtCurta(t.inicio)}</span></div>
+  return `<div class="evento previa-card"><div class="foto f-${CLASSE[c.tipo].slice(2)}">${ICONES[c.tipo]}${imgArte(c.foto)}<span class="data">${fmtCurta(t.inicio)}</span></div>
    <div class="tit">${esc(c.titulo)}</div><div class="meta"><b>${fmtData(t.inicio)}</b></div><div class="meta">${esc(c.online?'Online':l.nome||lugarCurto(l))}</div></div>`}
 // lado maior até 1600 px, JPEG 85%: sobe rápido no 4G e cabe no limite do bucket
 function reduzirImagem(arq,lado=1600){return new Promise((ok,falha)=>{const url=URL.createObjectURL(arq),img=new Image();
