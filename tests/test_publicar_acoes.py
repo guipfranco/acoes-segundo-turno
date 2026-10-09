@@ -86,7 +86,7 @@ def test_itens_do_consolidado_filtra_e_deduplica_contra_o_feed():
         linha(),                                                     # parecida com a do feed (mesma data e cidade)
         linha(titulo="Plenária das mulheres", tipo="plenária", link="https://x/p"),
         linha(titulo="Plenária das mulheres", tipo="plenária", link="https://x/p"),   # repetida
-        linha(titulo="Outra", link="https://x/9"),                   # mesmo link do feed
+        linha(titulo="Outra", link="https://x/9", hora="09:00"),     # mesmo link e horário do feed
         linha(titulo="Do feed", texto_original="[fonte: agenda Bora Lula]"),
         linha(titulo="Sem Lula", lula_explicito="não"),
         linha(titulo="Fraca", confianca="baixa"),
@@ -179,20 +179,74 @@ def test_mesma_cidade_data_e_hora_com_algo_em_comum_e_o_mesmo_ato():
 
 def test_card_com_varias_acoes_no_mesmo_post_vira_uma_acao_por_linha():
     card = "https://www.instagram.com/p/card/"
+    rj = dict(cidade="Rio de Janeiro", uf="RJ", bairro="", link=card)
     linhas = [
-        linha(titulo="Camisetaço no Vidigal", cidade="Rio de Janeiro", uf="RJ", bairro="", hora="17:00", link=card),
-        linha(titulo="Bandeiraço no Vidigal", cidade="Rio de Janeiro", uf="RJ", bairro="", hora="17:30", link=card),
-        linha(titulo="Caminhada Macaé com Lula", cidade="Macaé", uf="RJ", bairro="", hora="17:00", link=card),
-        # mesma hora e cidade, outro lugar: outra ação
-        linha(titulo="Adesivaço na Prefeitura", cidade="Macaé", uf="RJ", bairro="", hora="17:00", link=card,
-              endereco="Sinal em frente à Prefeitura"),
-        # a mesma ação do card vista por outra frente, com outro título: continua repetida
-        linha(frente="x", titulo="Caminhada em Macaé", cidade="Macaé", uf="RJ", bairro="", hora="17:00", link=card),
-        linha(titulo="Plenária das mulheres", link="https://x/p"),
+        linha(titulo="Camisetaço no Vidigal", hora="17:00", **rj),
+        linha(titulo="Bandeiraço no Vidigal", hora="17:00", **rj),           # mesma hora, sem endereço: outra ação
+        linha(titulo="Bandeiraço na Rocinha", hora="17:00", **rj),
+        linha(titulo="Adesivaço no sinal (Prefeitura)", hora="17:00", endereco="Sinal da Prefeitura", **rj),
+        linha(titulo="Adesivaço no sinal (Bambuzinho)", hora="17:00", endereco="Sinal do Bambuzinho", **rj),
+        # o mesmo post lido por outra frente, com outro título e a hora escrita de outro jeito: repetida
+        linha(frente="x", titulo="Camisetaço Vidigal", hora="17h", cidade="Rio de Janeiro - RJ", uf="RJ", bairro="", link=card),
     ]
     itens, revisao = pa.itens_do_consolidado(linhas, LUGARES, hoje="2026-10-09")
-    assert [i["titulo"] for i in itens] == ["Camisetaço no Vidigal", "Bandeiraço no Vidigal", "Caminhada Macaé com Lula",
-                                            "Adesivaço na Prefeitura", "Plenária das mulheres"]
-    assert [m for _, _, m in revisao] == ["repetido no consolidado"]
-    # link de um post só: o id continua sendo o do link, como antes (não muda o que já está publicado)
-    assert itens[4]["fonte_id"] == pa.id_redes(linhas[5])
+    assert [i["titulo"] for i in itens] == [l["titulo"] for l in linhas[:5]]
+    assert [(t, m) for _, t, m in revisao] == [("Camisetaço Vidigal", "repetido no consolidado")]
+
+
+def test_id_depende_so_da_propria_linha():
+    l = linha(titulo="Caminhada", link="https://x/card")
+    sozinha, _ = pa.itens_do_consolidado([l], LUGARES, hoje="2026-10-09")
+    com_outras, _ = pa.itens_do_consolidado([linha(titulo="Outra", hora="10:00", link="https://x/card"),
+                                             linha(titulo="Passada", data="2026-10-01", link="https://x/card"), l],
+                                            LUGARES, hoje="2026-10-09")
+    assert sozinha[0]["fonte_id"] == com_outras[1]["fonte_id"]
+    # hora e cidade escritas de outro jeito dão o mesmo id
+    outra_grafia, _ = pa.itens_do_consolidado([linha(titulo="Caminhada", link="https://x/card", hora="15h", cidade="Recife - PE")],
+                                              LUGARES, hoje="2026-10-09")
+    assert outra_grafia[0]["fonte_id"] == sozinha[0]["fonte_id"]
+
+
+def test_mesmo_ato_em_frentes_e_links_diferentes_com_grafias_diferentes():
+    linhas = [linha(titulo="Caminhada com Lula no centro", hora="17:00", link="https://x/a"),
+              linha(frente="x", titulo="Caminhada com Lula no Centro do Recife", hora="17h", cidade="Recife - PE", link="https://x/b")]
+    # mesma hora e cidade, só o tipo de ação em comum: outra ação
+    linhas.append(linha(frente="rj", titulo="Plenária da Virada na Taquara", hora="17:00", endereco="Estrada do Tindiba, 2089",
+                        link="https://x/c"))
+    linhas.append(linha(frente="pe", titulo="Plenária da Virada do Campo Popular", hora="17:00", endereco="Sindicato dos Bancários",
+                        link="https://x/d"))
+    itens, revisao = pa.itens_do_consolidado(linhas, LUGARES, hoje="2026-10-09")
+    assert len(itens) == 3 and [m for _, _, m in revisao] == ["repetido no consolidado"]
+
+
+def test_link_do_feed_so_derruba_a_acao_do_mesmo_horario():
+    card = "https://www.instagram.com/p/card/"
+    feed_itens, _ = pa.itens_do_feed({"hoje": "2026-10-09", "acoes": [
+        feed_item(id=7, data="2026-10-11", hora="15h", hora_ord=15, cidade="Recife", uf="PE", atividade="Panfletaço", link=card)]}, LUGARES)
+    linhas = [linha(titulo="Panfletagem no Derby", hora="15:00", link=card),
+              linha(titulo="Plenária à noite", hora="19:00", link=card)]
+    itens, revisao = pa.itens_do_consolidado(linhas, LUGARES, feed_itens, hoje="2026-10-09")
+    assert [i["titulo"] for i in itens] == ["Plenária à noite"]
+    assert [m for _, _, m in revisao] == ["já está no feed Bora Lula (id 7)"]
+
+
+def test_trava_nao_encerra_acao_com_inscricao():
+    itens = [{"fonte_id": "a"}, {"fonte_id": "b"}]
+    assert pa.encerramentos_com_inscricao(itens, {"a", "c", "d"}) == ["c", "d"]
+    assert pa.encerramentos_com_inscricao(itens, set()) == []
+
+
+def test_mesmo_card_frentes_diferentes_acoes_diferentes_na_mesma_hora():
+    card = "https://www.instagram.com/p/card/"
+    linhas = [linha(frente="rj", titulo="Camisetaço no Vidigal", hora="17:00", cidade="Rio de Janeiro", uf="RJ", bairro="", link=card),
+              linha(frente="x", titulo="Bandeiraço na Rocinha", hora="17:00", cidade="Rio de Janeiro", uf="RJ", bairro="", link=card)]
+    itens, revisao = pa.itens_do_consolidado(linhas, LUGARES, hoje="2026-10-09")
+    assert len(itens) == 2 and revisao == []
+
+
+def test_trava_so_olha_turnos_de_hoje_em_diante(monkeypatch):
+    consultas = []
+    monkeypatch.setattr(pa, "consultar_sql", lambda sql, ref=None: consultas.append(sql) or [{"fonte_id": "a"}])
+    monkeypatch.setattr(pa, "destino", lambda: ("management", None, "tok"))
+    assert pa.ids_com_inscricao("redes", "2026-10-11") == {"a"}
+    assert "t.inicio >= '2026-10-11'" in consultas[0] and "a.fonte = 'redes'" in consultas[0]
