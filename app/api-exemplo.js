@@ -12,9 +12,13 @@
   }
   function criar(dados) {
     let sessao = dados.config.eu;
+    // quando a ação foi ao ar pela primeira vez (como publicada_em no banco): só a cancelada que já esteve no ar abre para todos
+    dados.acoes.forEach(a => { if (!a.publicadaEm && ['publicada', 'rascunho'].includes(a.status)) a.publicadaEm = a.criadaEm; });
+    const publicar = a => { a.status = 'publicada'; a.motivoRecusa = null; if (!a.publicadaEm) a.publicadaEm = dados.config.hoje; };
     const pessoa = id => dados.pessoas.find(p => p.id === id);
     const org = id => dados.organizacoes.find(o => o.id === id);
     const ativas = tid => dados.inscricoes.filter(i => i.turno === tid && !i.canceladaEm);
+    const canceladas = tid => dados.inscricoes.filter(i => i.turno === tid && i.canceladaEm).sort((p, q) => String(p.canceladaEm).localeCompare(String(q.canceladaEm)));
     const publica = a => ({
       id: a.id, titulo: a.titulo, tipo: a.tipo, descricao: a.descricao, organizador: a.organizador,
       organizadorNome: (pessoa(a.organizador) || { nome: '' }).nome, organizacao: a.organizacao,
@@ -35,7 +39,7 @@
       return Object.assign(publica(a), { motivoRecusa: a.motivoRecusa || null, detalhe: a.detalhe || null, contatoLink: a.contatoLink || null,
         organizacaoLink: a.organizacaoLink || null, organizacaoDados: o ? { nome: o.nome, verificada: !!o.verificada, link_oficial: o.linkOficial || null } : null }); };
     const comInscritos = aid => turnosDa(aid).map(t => Object.assign(t, { inscritos: ativas(t.id).map(i => { const q = pessoa(i.pessoa) || {}; return { nome: q.nome, telefone: q.telefone || null }; }),
-      desistiram: dados.inscricoes.filter(i => i.turno === t.id && i.canceladaEm).map(i => ({ nome: (pessoa(i.pessoa) || {}).nome })) }));
+      desistiram: canceladas(t.id).map(i => ({ nome: (pessoa(i.pessoa) || {}).nome })) }));
     const sessaoObj = () => { if (sessao == null) return null; const p = pessoa(sessao); return { id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, papel: p.papel, bloqueada: !!p.bloqueada, organizacao: p.organizacao || null }; };
     return {
       modo: 'exemplo',
@@ -52,7 +56,7 @@
       },
       async acao(id) {
         const a = dados.acoes.find(x => x.id === id);
-        if (!a || (a.status !== 'publicada' && a.status !== 'encerrada' && !(sessao != null && (a.organizador === sessao || (pessoa(sessao) || {}).papel === 'moderador')))) return null;
+        if (!a || (a.status !== 'publicada' && !(a.status === 'encerrada' && a.publicadaEm) && !(sessao != null && (a.organizador === sessao || (pessoa(sessao) || {}).papel === 'moderador')))) return null;
         return { acao: publica(a), turnos: turnosDa(a.id), inscrita: inscritaEm(a.id), combinado: podeVer(a) ? combinadoDe(a) : null };
       },
       async salvarTelefone(telefone) {
@@ -175,7 +179,7 @@
         dados.acoes.push({ id, titulo: d.titulo.trim(), tipo: d.tipo, descricao: d.descricao || '', organizador: sessao, organizacao: orgId, organizacaoLink: orgId ? orgLink : null,
           lugar, detalhe: d.detalhe || '', contatoTipo: grupo ? 'link_grupo' : 'organizador_chama', contatoLink: grupo || null,
           foto: { url: foto, credito: '' },
-          status, motivoRecusa: null, prioritaria: false, criadaEm: hoje });
+          status, motivoRecusa: null, prioritaria: false, criadaEm: hoje, publicadaEm: status === 'publicada' ? hoje : null });
         ts.forEach((t, i) => dados.turnos.push({ id: Date.now() + i, acao: id, inicio: t.inicio, fim: t.fim, lotacao: t.lotacao ? Number(t.lotacao) : null }));
         return { id, status };
       },
@@ -196,13 +200,13 @@
           .map(a => {
             const p = pessoa(a.organizador) || {}; const delas = dados.acoes.filter(x => x.organizador === p.id);
             return { acao: completa(a), turnos: comInscritos(a.id), organizador: { id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, bloqueada: !!p.bloqueada,
-              criadas: delas.length, aprovadas: delas.filter(x => x.status === 'publicada' || x.status === 'encerrada').length, recusadas: delas.filter(x => x.status === 'recusada').length } };
+              criadas: delas.length, aprovadas: delas.filter(x => (x.status === 'publicada' || x.status === 'encerrada') && x.publicadaEm).length, recusadas: delas.filter(x => x.status === 'recusada').length } };
           });
       },
       async aprovar(id) {
         if (!ehModerador()) throw erro('so_moderador');
         const a = dados.acoes.find(x => x.id === id); if (!a || a.status !== 'em análise') throw erro('nao_pode');
-        a.status = 'publicada'; a.motivoRecusa = null;
+        publicar(a);
       },
       async recusar(id, motivo) {
         if (!ehModerador()) throw erro('so_moderador');
@@ -219,7 +223,7 @@
         if (!ehModerador()) throw erro('so_moderador');
         const a = dados.acoes.find(x => x.id === id); if (!a || a.status !== 'rascunho') throw erro('nao_pode');
         if ((pessoa(a.organizador) || {}).bloqueada) throw erro('organizador_bloqueado');
-        a.status = 'publicada'; a.motivoRecusa = null;
+        publicar(a);
       },
       // não apaga: marca 'excluída' (some do site e da fila; turnos e inscrições ficam)
       async excluir(id) {

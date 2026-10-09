@@ -359,6 +359,20 @@ def test_so_se_suspende_acao_publicada(cenario):
     assert sb.rpc("suspender_acao", {"acao_id": r.corpo["id"]}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
 
 
+def test_cancelada_em_analise_nao_vira_publica_nem_conta_como_aprovada(cenario):
+    sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
+    r = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"])
+    assert r.corpo["status"] == "em análise"
+    assert sb.rpc("encerrar_acao", {"acao_id": r.corpo["id"]}, jwt=cenario["jwt_b"]).status in (200, 204)
+    # nunca passou pela moderação: o link não abre para quem não criou
+    assert sb.rpc("acao_restrita", {"acao_id": r.corpo["id"]}).corpo is None
+    assert sb.rpc("acao_restrita", {"acao_id": r.corpo["id"]}, jwt=cenario["jwt_b"]).corpo["acao"]["status"] == "encerrada"
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    outra = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"]).corpo["id"]
+    fila = sb.rpc("fila_moderacao", {"situacao": "em análise"}, jwt=cenario["jwt_a"]).corpo
+    assert next(m for m in fila if m["acao"]["id"] == outra)["organizador"]["aprovadas"] == 0
+
+
 def test_organizacao_nova_liga_existente_vira_pedido_e_selo_publica_direto(cenario):
     tag = uuid.uuid4().hex[:6]
     sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])

@@ -482,6 +482,7 @@ window.DADOS = {
    "motivoRecusa": null,
    "prioritaria": false,
    "criadaEm": "2026-10-04",
+   "publicadaEm": "2026-10-04",
    "foto": {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Bandeira%C3%A7o_13-09-2010_%284986814105%29.jpg?width=800",
     "credito": "Helio Costa, CC BY-SA 2.0, via Wikimedia Commons",

@@ -86,6 +86,18 @@ test('erros: precisa_entrar, sem_telefone, bloqueada, lotado, turno_passado, nao
   assert.equal(ab.acao.status, 'encerrada'); assert.equal(ab.combinado, null);
 });
 
+test('cancelada ainda em análise não abre pelo link nem conta como aprovada', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const a = d.acoes.find(x => x.status === 'em análise'); const dono = a.organizador;
+  d.config.eu = dono; await api.entrar(); await api.encerrarAcao(a.id);
+  assert.equal((await api.acao(a.id)).acao.status, 'encerrada'); // quem criou vê
+  await api.sair();
+  assert.equal(await api.acao(a.id), null); // os outros não
+  const mod = d.pessoas.find(p => p.papel === 'moderador'); d.config.eu = mod.id; await api.entrar();
+  const fila = await api.fila('em análise'); const dele = fila.find(m => m.organizador.id === dono);
+  if (dele) assert.equal(dele.organizador.aprovadas, d.acoes.filter(x => x.organizador === dono && x.publicadaEm && ['publicada', 'encerrada'].includes(x.status)).length);
+});
+
 test('salvarTelefone valida 11 dígitos e minhasInscricoes guarda a desistência', async () => {
   const d = dados(); const api = ApiExemplo.criar(d);
   await assert.rejects(api.salvarTelefone('123'), e => e.codigo === 'telefone_invalido');
