@@ -158,6 +158,8 @@ nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
   <a href="#/criar" data-rota="criar" data-so-exemplo onclick="novaCriacao()"><span>＋</span><span>Criar ação</span></a>
   <a href="#/minhas" data-rota="minhas" data-so-exemplo><span>👤</span><span>Minhas</span></a>
   <a href="#/fila" data-rota="fila" data-so-exemplo><span>✅</span><span>Fila</span></a>
+  <a href="#/inscricoes" data-rota="inscricoes"><span>🙋</span><span>Inscrições</span></a>
+  <a href="#" id="conta" onclick="return contaClique()"><span>👋</span><span id="conta-rotulo">Entrar</span></a>
   <a class="doar" id="doar" href="#" target="_blank">Doar</a>
 </div></nav>
 <script src="dados.js"></script>
@@ -348,6 +350,14 @@ function irParaLugar(l){estado.onde={rotulo:nomeLugar(l),lat:l[2],lon:l[3]};cons
   if(estado.gaveta==='baixa')abrirGaveta('meio')}
 function usarLocalizacao(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{irParaLugar(['Minha localização','',p.coords.latitude,p.coords.longitude,'g'])},()=>{})}
 // ---------- acao ----------
+async function entrar(){await API.entrar();await sincronizar()}
+async function sair(){await API.sair();localStorage.removeItem('vouPendente');estado.inscrevendo=null;await sincronizar()}
+function contaClique(){if(estado.sessao)sair();else entrar();return false}
+function telaInscricoes(){
+  if(!estado.sessao)return `<div class="pagina estreita"><h1>Minhas inscrições</h1><p>Entre para ver em que ações você disse que vai.</p><button class="btn" onclick="entrar()">Entrar com Google</button></div>`;
+  const lista=estado.minhasInscricoes||[];
+  return `<div class="pagina"><h1>Minhas inscrições</h1><p class="sec" style="font-size:15px">${esc(estado.sessao.nome)}${estado.sessao.telefone?`, ${esc(estado.sessao.telefone)}`:''}</p>
+  ${lista.length?`<div class="trilho">${lista.map(m=>cardEvento({a:m.acao,t:m.turno})).join('')}</div>`:'<div class="vazio"><p>Você ainda não se inscreveu em nenhuma ação.</p><a class="btn" href="#/inicio">Ver ações</a></div>'}</div>`}
 async function desistir(tid){await API.desistir(tid);await sincronizar()}
 async function iniciarVou(tid){
   if(!estado.sessao){localStorage.setItem('vouPendente',String(tid));await API.entrar();await continuarVouPendente();return}
@@ -493,13 +503,15 @@ async function render(){
   const h=location.hash||'#/inicio';const [,rota,arg]=h.split('/');
   if(rota!=='acao')estado.inscrevendo=null;if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}
   if(rota==='acao'){estado.acaoAberta=await API.acao(Number(arg));if(n!==renderN)return}
+  if(rota==='inscricoes'){estado.minhasInscricoes=await API.minhasInscricoes();if(n!==renderN)return}
   if(mapa){mapa.remove();mapa=null;marcadores=[]}
   const app=document.getElementById('app');
   const soExemplo=['criar','minhas','fila'].includes(rota)&&API.modo!=='exemplo';
   app.innerHTML=soExemplo?'<div class="pagina"><h1>Em breve</h1><p>Criar ação, Minhas ações e a Fila chegam na próxima etapa.</p></div>':
-    rota==='acao'?telaAcao():rota==='criar'?telaCriar():rota==='minhas'?telaMinhas():rota==='fila'?telaFila():rota==='mapa'?telaMapa():telaInicio();
+    rota==='acao'?telaAcao():rota==='inscricoes'?telaInscricoes():rota==='criar'?telaCriar():rota==='minhas'?telaMinhas():rota==='fila'?telaFila():rota==='mapa'?telaMapa():telaInicio();
   document.querySelectorAll('nav a[data-rota]').forEach(a=>a.classList.toggle('ativo',a.dataset.rota===(rota||'inicio')));
   document.querySelectorAll('nav a[data-so-exemplo]').forEach(a=>a.style.display=API.modo==='exemplo'?'':'none');
+  document.getElementById('conta-rotulo').textContent=estado.sessao?'Sair':'Entrar';
   document.getElementById('doar').href=PUB.config.vaquinha||'#';
   if(rota==='mapa')montarMapa();
   if((rota||'inicio')==='inicio')chutarCidade();

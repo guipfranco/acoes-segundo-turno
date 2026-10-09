@@ -318,3 +318,9 @@ def test_vou_pede_telefone_uma_vez_e_mostra_a_forma_de_contato():
         assert s in acao, s
     assert "function continuarVouPendente" in HTML and "vouPendente" in HTML
     assert ">Inscreva-se<" in HTML and "Inscrito ✓" in HTML and ">Vou<" not in HTML
+
+
+def test_entrar_sair_e_minhas_inscricoes():
+    for s in ["function telaInscricoes", "rota==='inscricoes'", 'data-rota="inscricoes"', "API.minhasInscricoes()",
+              "Entrar com Google", "function entrar", "function sair", "Você ainda não se inscreveu"]:
+        assert s in HTML, s
