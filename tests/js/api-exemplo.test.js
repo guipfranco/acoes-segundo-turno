@@ -77,13 +77,16 @@ test('erros: precisa_entrar, sem_telefone, bloqueada, lotado, turno_passado, nao
   const passado = { id: 99901, acao: a.id, inicio: '2020-01-01T10:00', fim: '2020-01-01T12:00', lotacao: null };
   d.turnos.push(passado);
   await assert.rejects(api.inscrever(passado.id), e => e.codigo === 'turno_passado');
-  const naoPub = d.acoes.find(x => x.status !== 'publicada'); const tn = d.turnos.find(x => x.acao === naoPub.id);
+  const naoPub = d.acoes.find(x => !['publicada', 'encerrada'].includes(x.status)); const tn = d.turnos.find(x => x.acao === naoPub.id);
   await assert.rejects(api.inscrever(tn.id), e => e.codigo === 'nao_publicada');
   await api.sair();
   assert.equal(await api.acao(naoPub.id), null); // deslogado não vê ação fora de publicada
+  const cancelada = d.acoes.find(x => x.status === 'encerrada');
+  const ab = await api.acao(cancelada.id); // cancelada continua abrindo pelo link, sem o combinado
+  assert.equal(ab.acao.status, 'encerrada'); assert.equal(ab.combinado, null);
 });
 
-test('salvarTelefone valida 11 dígitos e minhasInscricoes lista só as ativas', async () => {
+test('salvarTelefone valida 11 dígitos e minhasInscricoes guarda a desistência', async () => {
   const d = dados(); const api = ApiExemplo.criar(d);
   await assert.rejects(api.salvarTelefone('123'), e => e.codigo === 'telefone_invalido');
   const p = await api.salvarTelefone('11988887777');
@@ -94,7 +97,9 @@ test('salvarTelefone valida 11 dígitos e minhasInscricoes lista só as ativas',
   assert.ok(minhas.some(m => m.turno.id === t.id && m.acao.id === a.id));
   assert.ok(minhas.every(m => m.acao.detalhe === undefined));
   await api.desistir(t.id);
-  assert.ok(!(await api.minhasInscricoes()).some(m => m.turno.id === t.id));
+  const depois = (await api.minhasInscricoes()).find(m => m.turno.id === t.id);
+  assert.ok(depois && depois.desistiu); // desistir não some: fica no histórico
+  const minhas2 = await api.minhasAcoes(); assert.ok(minhas2.every(m => m.turnos.every(x => Array.isArray(x.desistiram))));
 });
 
 test('ação importada no modo exemplo: lugar aproximado e link de divulgação público, contato ainda escondido', async () => {

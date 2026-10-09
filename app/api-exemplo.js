@@ -34,7 +34,9 @@
     const completa = a => { const o = a.organizacao ? org(a.organizacao) : null;
       return Object.assign(publica(a), { motivoRecusa: a.motivoRecusa || null, detalhe: a.detalhe || null, contatoLink: a.contatoLink || null,
         organizacaoLink: a.organizacaoLink || null, organizacaoDados: o ? { nome: o.nome, verificada: !!o.verificada, link_oficial: o.linkOficial || null } : null }); };
-    const comInscritos = aid => turnosDa(aid).map(t => Object.assign(t, { inscritos: ativas(t.id).map(i => { const q = pessoa(i.pessoa) || {}; return { nome: q.nome, telefone: q.telefone || null }; }) }));
+    const contatoDe = i => { const q = pessoa(i.pessoa) || {}; return { nome: q.nome, telefone: q.telefone || null }; };
+    const comInscritos = aid => turnosDa(aid).map(t => Object.assign(t, { inscritos: ativas(t.id).map(contatoDe),
+      desistiram: dados.inscricoes.filter(i => i.turno === t.id && i.canceladaEm).map(contatoDe) }));
     const sessaoObj = () => { if (sessao == null) return null; const p = pessoa(sessao); return { id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, papel: p.papel, bloqueada: !!p.bloqueada, organizacao: p.organizacao || null }; };
     return {
       modo: 'exemplo',
@@ -51,7 +53,7 @@
       },
       async acao(id) {
         const a = dados.acoes.find(x => x.id === id);
-        if (!a || (a.status !== 'publicada' && !(sessao != null && (a.organizador === sessao || (pessoa(sessao) || {}).papel === 'moderador')))) return null;
+        if (!a || (a.status !== 'publicada' && a.status !== 'encerrada' && !(sessao != null && (a.organizador === sessao || (pessoa(sessao) || {}).papel === 'moderador')))) return null;
         return { acao: publica(a), turnos: turnosDa(a.id), inscrita: inscritaEm(a.id), combinado: podeVer(a) ? combinadoDe(a) : null };
       },
       async salvarTelefone(telefone) {
@@ -83,9 +85,9 @@
       },
       async minhasInscricoes() {
         if (sessao == null) return [];
-        return dados.inscricoes.filter(i => i.pessoa === sessao && !i.canceladaEm).map(i => {
+        return dados.inscricoes.filter(i => i.pessoa === sessao).map(i => {
           const t = dados.turnos.find(x => x.id === i.turno); const a = t && dados.acoes.find(x => x.id === t.acao);
-          return a ? { acao: publica(a), turno: turno(t) } : null;
+          return a ? { acao: publica(a), turno: turno(t), desistiu: !!i.canceladaEm } : null;
         }).filter(Boolean).sort((p, q) => p.turno.inicio.localeCompare(q.turno.inicio));
       },
       async minhaOrganizacao() {
