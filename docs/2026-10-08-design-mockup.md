@@ -70,7 +70,7 @@ Porto Alegre, Salvador e o bloco "Online, de qualquer lugar". O mapa continua ex
 Pedido do Gui: a barra de baixo é coisa de celular; no PC a experiência tem que ser pensada para PC. E as
 fotos dos cards devem ser imagens, não ícones.
 
-- A partir de 900 px a navegação vira cabeçalho fixo no topo: marca "Ações do 2º turno" à esquerda, itens
+- A partir de 900 px a navegação vira cabeçalho fixo no topo: marca "Eleja o Lula" à esquerda, itens
   em linha com ícone e texto, Doar como botão à direita. No celular continua a barra de baixo.
 - Páginas internas mais largas (760 px; criar ação em 620 px). A página da ação fica em duas colunas:
   conteúdo à esquerda e um cartão fixo à direita com os turnos e o botão "Vou", que acompanha a rolagem.
