@@ -5,3 +5,8 @@ __pycache__/
 
 # varredura de fontes com dados pessoais: nunca versionar
 levantamento/
+
+node_modules/
+supabase/.branches/
+supabase/.temp/
+.env
