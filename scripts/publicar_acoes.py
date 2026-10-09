@@ -128,18 +128,9 @@ def tipo_redes(tipo, titulo=""):
     return bl.tipo_pelo_titulo(titulo)
 
 
-def ato_do_card(r):
-    """O que separa uma ação da outra dentro de um mesmo card: data, hora, cidade e endereço."""
-    return (r.get("data"), (r.get("hora") or "").strip(), bl.sem_acento(r.get("cidade")), bl.sem_acento(r.get("endereco")))
-
-
-def id_redes(r, link_compartilhado=False):
-    """Hash do link. Card com várias ações no mesmo post (link_compartilhado): link + data, hora, cidade e endereço."""
-    link = (r.get("link") or "").strip()
-    if link and link_compartilhado:
-        base = "|".join([link, *ato_do_card(r)])
-    else:
-        base = link or f"{r.get('titulo')}|{r.get('data')}|{r.get('cidade')}"
+def id_redes(link, inicio, cidade, titulo):
+    """Id estável: só da própria linha (link, início normalizado, cidade resolvida, título), nunca das outras linhas."""
+    base = "|".join([link, inicio, bl.sem_acento(cidade or "online"), " ".join(sorted(tokens(titulo)))])
     return hashlib.sha1(base.encode("utf-8")).hexdigest()[:16]
 
 
@@ -168,7 +159,7 @@ def limpar_org(texto):
     return org[:120]
 
 
-def item_da_rede(r, lugares, geo=None, link_compartilhado=False):
+def item_da_rede(r, lugares, geo=None):
     if "bora lula" in bl.sem_acento(r.get("texto_original")):
         return None, "já vem do feed Bora Lula"
     if bl.sem_acento(r.get("lula_explicito")) != "sim":
@@ -177,13 +168,14 @@ def item_da_rede(r, lugares, geo=None, link_compartilhado=False):
         return None, "confiança baixa"
     online = bl.sem_acento(r.get("online")) == "sim"
     cidade, uf = (r.get("cidade") or "").strip(), (r.get("uf") or "").strip()
+    cidade = re.sub(r"\s*[-/,]\s*[A-Za-z]{2}$", "", cidade)  # "Recife - PE" -> "Recife"
     endereco, bairro = (r.get("endereco") or "").strip(), (r.get("bairro") or "").strip()
     hora = (r.get("hora") or "").strip()
     h_ini, h_fim = bl.faixa(hora, None) if hora else ("09:00", "11:00")
     data = r["data"]
     org = limpar_org(r.get("organizador"))
     item = {
-        "fonte_id": id_redes(r, link_compartilhado), "titulo": (r.get("titulo") or "Ação")[:120], "tipo": tipo_redes(r.get("tipo"), r.get("titulo")),
+        "fonte_id": None, "titulo": (r.get("titulo") or "Ação")[:120], "tipo": tipo_redes(r.get("tipo"), r.get("titulo")),
         "organizacao": org or None, "organizacao_tipo": bl.tipo_org(org) if org else None,
         "organizacao_foto": bl.logo_org(org) if org else None, "link": (r.get("link") or "").strip(), "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
     }
@@ -198,6 +190,7 @@ def item_da_rede(r, lugares, geo=None, link_compartilhado=False):
         item.update(online=False, lugar_nome=(endereco or bairro or bairro_df or cidade)[:120],
                     bairro=(bairro or bairro_df or bl.bairro_do_endereco(endereco, cidade)) or None,
                     cidade=cidade, lat=lat, lon=lon, lugar_aproximado=precisao == "cidade")
+    item["fonte_id"] = id_redes(item["link"], item["inicio"], item["cidade"], item["titulo"])
     item["descricao"] = descricao_de(r.get("titulo"), "", FONTE_REDES)
     return item, None
 
@@ -213,59 +206,69 @@ def parecidos(a, b):
 
 # palavras de campanha que todo ato tem e não distinguem um do outro
 COMUNS = {"lula", "com", "pela", "pelo", "para", "contra", "ato", "democracia", "frente", "concentracao", "praca", "rua",
-          "centro", "campanha", "turno", "todos", "nos", "das", "dos", "uma", "estudantes", "estudantil"}
+          "centro", "campanha", "turno", "todos", "nos", "das", "dos", "uma", "estudantes", "estudantil",
+          # tipo de ação também não distingue: duas plenárias da virada na mesma hora podem ser em lugares diferentes
+          "plenaria", "virada", "caminhada", "panfletagem", "panfletaco", "adesivaco", "bandeiraco", "carreata", "marcha",
+          "mobilizacao", "assembleia", "encontro", "reuniao", "passeata", "grande", "geral", "nacional", "dia"}
 
 
 def marcas(item):
-    """Palavras do título e do lugar que identificam o ato, sem o nome da cidade e sem as palavras comuns."""
-    fora = tokens(item.get("cidade") or "") | COMUNS
+    """Palavras do título e do lugar que identificam o ato, sem cidade, bairro e palavras comuns."""
+    fora = tokens(item.get("cidade") or "") | tokens(item.get("bairro") or "") | COMUNS
     return tokens(f'{item["titulo"]} {item.get("lugar_nome") or ""}') - fora
 
 
+def mesmo_ato(a, b, hora_explicita=True):
+    """Mesmo link no mesmo início e cidade; ou mesma data+cidade com título parecido; ou mesmo início+cidade com
+    título ou lugar em comum (só com hora explícita)."""
+    if a["inicio"][:10] != b["inicio"][:10] or bl.sem_acento(a["cidade"]) != bl.sem_acento(b["cidade"]):
+        return False
+    link = a["link"].rstrip("/")
+    if link and link == b["link"].rstrip("/") and a["inicio"] == b["inicio"]:
+        return True
+    if parecidos(a["titulo"], b["titulo"]):
+        return True
+    return hora_explicita and not (a["online"] or b["online"]) and a["inicio"] == b["inicio"] and bool(marcas(a) & marcas(b))
+
+
 def repetido_no_feed(item, itens_feed, hora_explicita=True):
-    """Mesmo link; ou mesma data+cidade com título parecido; ou mesma data+cidade+hora com título ou lugar em comum."""
-    link = item["link"].rstrip("/")
     for f in itens_feed:
-        if link and f["link"].rstrip("/") == link:
-            return f["fonte_id"]
-        if f["inicio"][:10] != item["inicio"][:10] or bl.sem_acento(f["cidade"]) != bl.sem_acento(item["cidade"]):
-            continue
-        if parecidos(f["titulo"], item["titulo"]):
-            return f["fonte_id"]
-        if hora_explicita and not (f["online"] or item["online"]) and f["inicio"] == item["inicio"] \
-                and marcas(f) & marcas(item):
+        if mesmo_ato(f, item, hora_explicita):
             return f["fonte_id"]
     return None
 
 
 def itens_do_consolidado(linhas, lugares, itens_feed=(), hoje=None, ate=ATE, geo=None):
     hoje = hoje or date.today().isoformat()
-    itens, revisao, vistos = [], [], set()
-    # link que aparece com mais de uma data/hora/cidade/endereço é card com várias ações
-    atos_por_link = {}
-    for r in linhas:
-        link = (r.get("link") or "").strip()
-        if link:
-            atos_por_link.setdefault(link, set()).add(ato_do_card(r))
+    itens, revisao, aceitas = [], [], []  # aceitas: (frente, item)
     for r in linhas:
         data = r.get("data") or ""
         if not (hoje <= data <= ate):
             continue
-        compartilhado = len(atos_por_link.get((r.get("link") or "").strip(), ())) > 1
-        item, motivo = item_da_rede(r, lugares, geo, compartilhado)
+        item, motivo = item_da_rede(r, lugares, geo)
         if not item:
             revisao.append((r.get("frente", ""), r.get("titulo", ""), motivo))
             continue
-        dup = repetido_no_feed(item, itens_feed, bool((r.get("hora") or "").strip()))
+        hora_explicita = bool((r.get("hora") or "").strip())
+        dup = repetido_no_feed(item, itens_feed, hora_explicita)
         if dup:
             revisao.append((r.get("frente", ""), r.get("titulo", ""), f"já está no feed Bora Lula (id {dup})"))
             continue
-        if item["fonte_id"] in vistos:
-            revisao.append((r.get("frente", ""), r.get("titulo", ""), "repetido no consolidado"))
+        frente = r.get("frente", "")
+        # linhas do mesmo post lidas pela mesma frente são ações diferentes do card; só o id igual repete
+        if any(o["fonte_id"] == item["fonte_id"]
+               or (not (f == frente and o["link"] and o["link"] == item["link"]) and mesmo_ato(o, item, hora_explicita))
+               for f, o in aceitas):
+            revisao.append((frente, r.get("titulo", ""), "repetido no consolidado"))
             continue
-        vistos.add(item["fonte_id"])
+        aceitas.append((frente, item))
         itens.append(item)
     return itens, revisao
+
+
+def encerramentos_com_inscricao(itens, com_inscricao):
+    """Ids com inscrição ativa que a importação encerraria por não estarem mais na lista."""
+    return sorted(set(com_inscricao) - {i["fonte_id"] for i in itens})
 
 
 # ---- destino ----
@@ -301,6 +304,23 @@ def destino():
     if token:
         return "management", None, token
     raise Falha("defina SUPABASE_URL + SUPABASE_SERVICE_KEY (local) ou SUPABASE_ACCESS_TOKEN (produção)")
+
+
+def ids_com_inscricao(fonte, ref=None):
+    """fonte_ids publicados com inscrição ativa ("Eu vou"). None quando não dá para consultar (pilha local via REST)."""
+    modo, _, chave = destino()
+    if modo == "rest":
+        return None
+    import ir_ao_ar
+    ref = ref or (ir_ao_ar.ARQ_REF.read_text().strip() if ir_ao_ar.ARQ_REF.exists() else None)
+    if not ref:
+        raise Falha("não sei o ref do projeto: passe --ref")
+    sql = ("select distinct a.fonte_id from acao a join turno t on t.acao = a.id join inscricao i on i.turno = t.id "
+           f"where a.fonte = '{fonte}' and a.status = 'publicada' and i.cancelada_em is null")
+    st, resp = _http("POST", f"{ir_ao_ar.API}/projects/{ref}/database/query", {"query": sql}, {"Authorization": "Bearer " + chave})
+    if not 200 <= st < 300:
+        raise Falha(f"consulta de inscrições: HTTP {st} {resp}")
+    return {x["fonte_id"] for x in resp}
 
 
 def publicar(fonte, itens, encerrar=True, ref=None):
@@ -376,6 +396,7 @@ def main(argv=None):
     p.add_argument("--ref", help="ref do projeto (Management API)")
     p.add_argument("--sem-geocodificar", action="store_true", help="não consulta o Nominatim: tudo no centro da cidade")
     p.add_argument("--sem-fotos", action="store_true", help="não busca a imagem dos posts novos (usa só as já coletadas)")
+    p.add_argument("--forcar", action="store_true", help="encerra mesmo ação com inscrição ativa (quem marcou Eu vou perde)")
     args = p.parse_args(argv)
     lugares = bl.carregar_lugares()
     geo = None if args.sem_geocodificar else bl.Geocodificador()
@@ -414,6 +435,14 @@ def main(argv=None):
         if not args.aplicar:
             print("ensaio: nada gravado (use --aplicar)")
             return 0
+        if not args.sem_encerrar:
+            inscritas = ids_com_inscricao(args.fonte, args.ref)
+            if inscritas is None:
+                print("AVISO: pilha local, sem checar inscrições antes de encerrar", file=sys.stderr)
+            elif encerramentos_com_inscricao(itens, inscritas) and not args.forcar:
+                perdidas = encerramentos_com_inscricao(itens, inscritas)
+                raise Falha(f"{len(perdidas)} ações com inscrição ativa seriam encerradas ({', '.join(perdidas[:10])}); "
+                            "nada gravado. Confira o consolidado ou use --sem-encerrar; --forcar encerra assim mesmo")
         r = publicar(args.fonte, itens, encerrar=not args.sem_encerrar, ref=args.ref)
         print(f"gravado: {r}")
     except Falha as e:
