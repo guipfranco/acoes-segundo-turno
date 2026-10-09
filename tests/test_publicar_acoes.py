@@ -112,6 +112,8 @@ def test_sql_importar_cita_o_json_sem_escapar():
 
 
 def test_destino_exige_variaveis(monkeypatch):
+    import ir_ao_ar
+    monkeypatch.setattr(ir_ao_ar, "ARQ_ENV", RAIZ / "nao-existe.env")
     for v in ["SUPABASE_URL", "SUPABASE_SERVICE_KEY", "SUPABASE_ACCESS_TOKEN"]:
         monkeypatch.delenv(v, raising=False)
     import pytest
@@ -122,3 +124,18 @@ def test_destino_exige_variaveis(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "http://x")
     monkeypatch.setenv("SUPABASE_SERVICE_KEY", "s")
     assert pa.destino() == ("rest", "http://x", "s")
+
+
+def test_limpar_org_so_deixa_organizacao_publica():
+    assert pa.limpar_org("Juventude PT Recife (página)") == "Juventude PT Recife"
+    assert pa.limpar_org("PT São Bernardo do Campo; DCE UFABC") == "PT São Bernardo do Campo"
+    assert pa.limpar_org("Ribeirão Preto com Lula (@ribeiraopretocomlula), divulgado por Fulana") is None  # tem @
+    assert pa.limpar_org("Mariana Conti (PSOL, vereadora)") == "Mariana Conti (PSOL, vereadora)"
+    assert pa.limpar_org("Campanha Lula (site oficial)") == "Campanha Lula"
+    assert pa.limpar_org("PT São Paulo (com Juliana Cardoso e Luna Zarattini)") == "PT São Paulo"
+    assert pa.limpar_org("Sambistas do Rio (Teresa Cristina, Neguinho da Beija-Flor)") == "Sambistas do Rio"
+    assert pa.limpar_org("PT Rio Preto (PT SJRP)") == "PT Rio Preto (PT SJRP)"
+    assert pa.limpar_org("União Estadual dos Estudantes do RN (UEE-RN), entidades estudantis e sindicais") == "União Estadual dos Estudantes do RN (UEE-RN)"
+    for ruim in ["não identificado", "perfil local (criador de conteúdo)", "Fulano de Tal", "Fulano (governador), Beltrano e Sicrano",
+                 "Moradores do Catete e criador de conteúdo", "", None]:
+        assert pa.limpar_org(ruim) is None, ruim

@@ -78,7 +78,7 @@ def bairro_do_endereco(endereco, cidade=""):
 
 
 PARTIDOS = ("pt ", "pt-", "psol", "pcdob", "pdt", "psb", "rede ", "pv ", "pco", "up ", "pstu", "partido ")
-MANDATOS = ("mandato", "vereador", "deputad", "senador", "gabinete")
+MANDATOS = ("mandato", "vereador", "deputad", "dep.", "senador", "governador", "prefeit", "gabinete")
 MOVIMENTOS = ("movimento", "mst", "mtst", "une ", "ubes", "cut ", "ctb", "sindicato", "frente", "central", "levante", "juventude")
 
 

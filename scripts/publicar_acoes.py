@@ -127,6 +127,31 @@ def id_redes(r):
     return hashlib.sha1(base.encode("utf-8")).hexdigest()[:16]
 
 
+ORG_RUIM = ("nao identificado", "perfil", "criador de conteudo", "@", "moradores", "grupo)", "divulga")
+ORG_BOA = ("comite", "coletivo", "frente", "uje", "ujs", "une", "uee", "dce", "campanha", "pedalula", "judias", "retomada",
+           "revista", "sambistas", "entidades", "mstc", "com lula", "jpt", "pretas", "linha de frente", "ocupacao")
+
+
+def limpar_org(texto):
+    """Só organização pública reconhecível vira organização; pessoa comum, perfil ou "não identificado" fica de fora."""
+    org = (texto or "").split(";")[0]
+    org = re.split(r",?\s*divulgad[oa] por", org, flags=re.I)[0]
+    org = re.sub(r"\s*\((página|perfil|canal|site oficial)[^)]*\)\s*$", "", org, flags=re.I).strip(" ,")
+    org = re.sub(r"\)\s*,.*$", ")", org)  # "Sigla (X), entidades e tal" -> "Sigla (X)"
+    n = bl.sem_acento(org)
+    if not org or any(k in n for k in ORG_RUIM):
+        return None
+    tipo = bl.tipo_org(org)
+    if tipo == "coletivo" and not any(k in n for k in ORG_BOA):
+        return None
+    fora = re.sub(r"\(.*?\)", "", org)
+    if tipo == "mandato" and re.search(r",| e ", fora):
+        return None  # lista de pessoas, não um mandato
+    if tipo != "mandato":  # parêntese final só fica se for sigla; "(com Fulana e Beltrano)" cai
+        org = re.sub(r"\s*\((?=[^)]*[a-z]{2})[^)]*\)\s*$", "", org).strip(" ,")
+    return org[:120]
+
+
 def item_da_rede(r, lugares):
     if "bora lula" in bl.sem_acento(r.get("texto_original")):
         return None, "já vem do feed Bora Lula"
@@ -140,8 +165,7 @@ def item_da_rede(r, lugares):
     hora = (r.get("hora") or "").strip()
     h_ini, h_fim = bl.faixa(hora, None) if hora else ("09:00", "11:00")
     data = r["data"]
-    org = (r.get("organizador") or "").strip()
-    org = re.sub(r"\s*\((página|perfil|canal)\)\s*$", "", org, flags=re.I)
+    org = limpar_org(r.get("organizador"))
     item = {
         "fonte_id": id_redes(r), "titulo": (r.get("titulo") or "Ação")[:120], "tipo": tipo_redes(r.get("tipo")),
         "organizacao": org or None, "organizacao_tipo": bl.tipo_org(org) if org else None,
