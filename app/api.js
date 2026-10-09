@@ -3,6 +3,8 @@
 (function () {
   const forcaExemplo = new URLSearchParams(location.search).get('modo') === 'exemplo';
   const cfg = window.CONFIG && window.CONFIG.supabase;
-  if (cfg && !forcaExemplo && window.ApiSupabase) window.API = window.ApiSupabase.criar(cfg);
+  const temLib = !!(window.supabase && window.ApiSupabase);
+  if (cfg && !forcaExemplo && !temLib) console.warn('Supabase indisponível; usando dados de exemplo');
+  if (cfg && !forcaExemplo && temLib) window.API = window.ApiSupabase.criar(cfg);
   else window.API = window.ApiExemplo.criar(window.DADOS);
 })();

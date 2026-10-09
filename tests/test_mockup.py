@@ -325,3 +325,17 @@ def test_entrar_sair_e_minhas_inscricoes():
     for s in ["function telaInscricoes", "rota==='inscricoes'", 'data-rota="inscricoes"', "API.minhasInscricoes()",
               "Entrar com Google", "function entrar", "function sair", "Você ainda não se inscreveu"]:
         assert s in HTML, s
+
+
+def test_inscricoes_separa_passadas_e_permite_desistir():
+    corpo = HTML.split("function telaInscricoes", 1)[1].split("async function desistir", 1)[0]
+    for s in ["Próximas", "Passadas ou encerradas", "já aconteceu", "ação encerrada", "desistir(", "Você ainda não se inscreveu"]:
+        assert s in corpo, s
+
+
+def test_carregamento_inicial_tem_estado_e_erro():
+    assert '<main id="app"><p class="sec" style="padding:24px">Carregando…</p></main>' in HTML
+    sinc = HTML.split("async function sincronizar", 1)[1].split("</script>", 1)[0]
+    assert "catch" in sinc and "Não foi possível carregar" in sinc and "data-so-exemplo" in sinc
+    api = (RAIZ / "app" / "api.js").read_text(encoding="utf-8")
+    assert "window.supabase" in api and "Supabase indisponível; usando dados de exemplo" in api

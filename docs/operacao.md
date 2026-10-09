@@ -70,7 +70,10 @@ Passos do dono do repo (nada disso está feito; `app/config.js` segue com `supab
 
 - [ ] Criar o projeto no https://supabase.com/dashboard: nome `acoes-segundo-turno`, região South America
       (São Paulo), plano Free. Guardar a senha do banco fora do repo.
-- [ ] `npx supabase login`, `npx supabase link --project-ref <ref>` e `npx supabase db push`.
+- [ ] `npx supabase login`, `npx supabase link --project-ref <ref>` e aplicar as migrações (inclui
+      `20261008000003_endurecimento.sql`) com `npx supabase db push`.
+- [ ] Depois do push, conferir com a chave anon que `PATCH /rest/v1/configuracao_publica?chave=eq.vaquinha`
+      responde 401/403 (views públicas só leitura).
 - [ ] Em Authentication > Providers > Email, desligar "Enable Email provider" (só login social).
 - [ ] Google Cloud Console: criar projeto; Tela de permissão OAuth, tipo Externo, nome "Ações do 2º turno",
       e-mail de suporte, domínio autorizado `supabase.co`, escopos só `email`, `profile`, `openid`; publicar
