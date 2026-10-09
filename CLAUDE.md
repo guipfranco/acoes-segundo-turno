@@ -17,8 +17,8 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   Roteiro e2e do Inscreva-se em `tests/e2e/vou.spec.mjs` (precisa de `playwright`, fora do package.json).
 - Sem dado pessoal real no repo. Como o repo é público, pessoas e organizações de exemplo são inventadas
   (nada de mandato, partido ou movimento real nos dados).
-- Estado em 2026-10-08: app navegável (modo exemplo completo; Supabase + login Google na v1 etapas 1-2,
-  a ligar em produção).
+- Estado em 2026-10-08: app navegável (modo exemplo completo; Supabase + login Google na v1 etapas 1-2).
+- Produção ligada em 2026-10-09: Supabase ref `ommitzndniqnmsjsjghb` e login Google; estado em `docs/operacao.md`.
 - Telas: inicial sem mapa (estilo Meetup): busca por cidade que chuta a cidade pela geolocalização, filtro
   "Quando" (em breve, hoje, amanhã, esta semana, fim de semana, próxima semana, escolher datas), formato
   presencial ou online, vitrine por cidade (SP, Recife, BH, Porto Alegre, Salvador) com foto por ação e bloco

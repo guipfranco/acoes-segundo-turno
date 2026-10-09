@@ -64,9 +64,23 @@ insert into turno (acao, inicio, fim) select id, (hoje_brasilia() + 2)::timestam
 
 Sem dado real de terceiros: o organizador é o próprio dono do projeto.
 
+## Estado da produção (2026-10-09)
+
+- Supabase: projeto `acoes-segundo-turno`, ref `ommitzndniqnmsjsjghb`, São Paulo, plano Free. As três
+  migrações foram aplicadas pelo SQL Editor, com o histórico gravado em `supabase_migrations.schema_migrations`
+  (um `db push` futuro só aplica as novas). A senha do banco foi gerada pelo painel e não foi guardada:
+  redefina em Project Settings > Database se precisar do CLI.
+- Login: só Google (e-mail desligado). Site URL e Redirect URLs como abaixo. Google Cloud: projeto
+  `acoes-segundo-turno`, app "Ações do 2º turno" em Produção, cliente "Cliente Web 1" com origem
+  `https://guipfranco.github.io` e callback `https://ommitzndniqnmsjsjghb.supabase.co/auth/v1/callback`.
+  Domínios autorizados: `guipfranco.github.io` e `ommitzndniqnmsjsjghb.supabase.co` (o Google recusa `supabase.co`).
+- `app/config.js` usa a chave `sb_publishable_...` (pública, equivalente à anon).
+- Política de privacidade em `app/privacidade.html`, exigida pelo Google para publicar o login.
+- Vaquinha: `configuracao.vaquinha` = `https://doelula.com.br/`.
+
 ## O que falta para ir ao ar
 
-Nada disso está feito; `app/config.js` segue com `supabase: null`. A parte do Supabase sai pelo
+Roteiro original; os passos 1 a 3 já foram feitos pelo painel (veja acima). A parte do Supabase sai pelo
 `scripts/ir_ao_ar.py` (Management API e CLI); só o Google Cloud é manual. No Git Bash, na raiz do repo:
 
 1. Em https://supabase.com/dashboard, entrar (ou criar a conta) e gerar um token pessoal em
