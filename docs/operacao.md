@@ -66,32 +66,49 @@ Sem dado real de terceiros: o organizador é o próprio dono do projeto.
 
 ## O que falta para ir ao ar
 
-Passos do dono do repo (nada disso está feito; `app/config.js` segue com `supabase: null`):
+Nada disso está feito; `app/config.js` segue com `supabase: null`. A parte do Supabase sai pelo
+`scripts/ir_ao_ar.py` (Management API e CLI); só o Google Cloud é manual. No Git Bash, na raiz do repo:
 
-- [ ] Criar o projeto no https://supabase.com/dashboard: nome `acoes-segundo-turno`, região South America
-      (São Paulo), plano Free. Guardar a senha do banco fora do repo.
-- [ ] `npx supabase login`, `npx supabase link --project-ref <ref>` e aplicar as migrações (inclui
-      `20261008000003_endurecimento.sql`) com `npx supabase db push`.
-- [ ] Depois do push, conferir com a chave anon que `PATCH /rest/v1/configuracao_publica?chave=eq.vaquinha`
-      responde 401/403 (views públicas só leitura).
-- [ ] Em Authentication > Providers > Email, desligar "Enable Email provider" (só login social).
-- [ ] Google Cloud Console: criar projeto; Tela de permissão OAuth, tipo Externo, nome "Ações do 2º turno",
-      e-mail de suporte, domínio autorizado `supabase.co`, escopos só `email`, `profile`, `openid`; publicar
-      o app (modo Produção; escopos básicos não pedem verificação).
-- [ ] Credenciais > ID do cliente OAuth, tipo Aplicativo da Web: origem JavaScript
-      `https://guipfranco.github.io` e URI de redirecionamento `https://<ref>.supabase.co/auth/v1/callback`.
-      Copiar ID e segredo.
-- [ ] No Supabase, Authentication > Providers > Google: ativar e colar ID e segredo.
-- [ ] Authentication > URL Configuration: Site URL `https://guipfranco.github.io/acoes-segundo-turno/`;
-      Redirect URLs `https://guipfranco.github.io/acoes-segundo-turno/**` e `http://localhost:8000/**`.
-- [ ] Em Settings > API, copiar `Project URL` e `anon public` e preencher `app/config.js`:
+1. Em https://supabase.com/dashboard, entrar (ou criar a conta) e gerar um token pessoal em
+   https://supabase.com/dashboard/account/tokens. Escolher uma senha forte para o banco e guardar no
+   gerenciador de senhas.
 
-      ```js
-      window.CONFIG = { supabase: { url: 'https://<ref>.supabase.co', anonKey: '<anon public>' } };
-      ```
+   ```bash
+   export SUPABASE_ACCESS_TOKEN=<token> SUPABASE_DB_PASSWORD='<senha do banco>'
+   python scripts/ir_ao_ar.py criar    # projeto acoes-segundo-turno em São Paulo (sa-east-1), org Free
+   python scripts/ir_ao_ar.py migrar   # link, db push e confere que as views públicas são só leitura
+   python scripts/ir_ao_ar.py auth     # desliga login por e-mail, Site URL e Redirect URLs; mostra a URI de callback
+   ```
 
-      Commit e push (`git add app/config.js`); o Pages publica sozinho.
-- [ ] Entrar uma vez pelo site e semear a primeira ação pelo SQL Editor (seção acima).
-- [ ] Conferir no site publicado: a ação de teste aparece; Entrar leva ao Google e volta; Inscreva-se pede
-      telefone e mostra "vai entrar em contato"; Minhas inscrições lista; desistir some; `?modo=exemplo` abre
-      os dados fictícios.
+   Se a conta tiver mais de uma organização, `criar` lista as opções e pede `--org <id>` (use a do plano Free).
+2. Google Cloud Console (https://console.cloud.google.com): criar projeto; Tela de permissão OAuth, tipo
+   Externo, nome "Ações do 2º turno", e-mail de suporte, domínio autorizado `supabase.co`, escopos só
+   `email`, `profile`, `openid`; publicar o app (modo Produção; escopos básicos não pedem verificação).
+   Depois, Credenciais > ID do cliente OAuth, tipo Aplicativo da Web: origem JavaScript
+   `https://guipfranco.github.io` e a URI de redirecionamento que o passo `auth` mostrou
+   (`https://<ref>.supabase.co/auth/v1/callback`). Copiar ID e segredo.
+3. Ligar o Google e preencher o app:
+
+   ```bash
+   export GOOGLE_CLIENT_ID=<id> GOOGLE_CLIENT_SECRET=<segredo>
+   python scripts/ir_ao_ar.py auth     # agora com o Google ligado
+   python scripts/ir_ao_ar.py config   # escreve URL e chave anon em app/config.js
+   git add app/config.js && git commit -m "Ligar Supabase de produção" && git push
+   ```
+
+   O Pages publica sozinho em alguns minutos.
+4. Entrar uma vez pelo site com o Google (isso cria a linha em `pessoa`) e semear a primeira ação:
+
+   ```bash
+   python scripts/ir_ao_ar.py semear --telefone "(11) 9xxxx-xxxx"
+   ```
+
+   Faz o mesmo que o SQL da seção acima, sem repetir a ação se rodar duas vezes.
+5. Conferir no site publicado: a ação de teste aparece; Entrar leva ao Google e volta; Inscreva-se pede
+   telefone e mostra "vai entrar em contato"; Minhas inscrições lista; desistir some; `?modo=exemplo` abre
+   os dados fictícios.
+
+Tudo pelo painel, sem o script, continua valendo: Authentication > Providers (Email desligado, Google com
+ID e segredo), Authentication > URL Configuration (Site URL `https://guipfranco.github.io/acoes-segundo-turno/`,
+Redirect URLs `https://guipfranco.github.io/acoes-segundo-turno/**` e `http://localhost:8000/**`) e
+Settings > API (`Project URL` e `anon public` em `app/config.js`). O token pessoal pode ser revogado depois.
