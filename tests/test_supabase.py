@@ -1,5 +1,6 @@
 """Regras do banco: só rodam com SUPABASE_URL, SUPABASE_ANON_KEY e SUPABASE_SERVICE_KEY no ambiente
 (banco local do `npx supabase start`). Cada teste cria seus próprios usuários e ação."""
+import urllib.parse
 import uuid
 import pytest
 
@@ -165,7 +166,7 @@ def test_importar_acoes_e_idempotente_e_encerra_o_que_sumiu(cenario):
     assert b["online"] is True and b["contato_tipo"] == "organizador_chama" and b["link_divulgacao"] is None
     assert "contato_link" not in a
     org = sb.chamar("GET", "/rest/v1/organizacao_publica?nome=eq.Org%20Importada%20Teste").corpo
-    assert len(org) == 1 and org[0]["tipo"] == "movimento" and org[0]["verificada"] is False
+    assert len(org) == 1 and org[0]["tipo"] == "movimento" and org[0]["verificada"] is False and org[0]["foto_url"] is None
     turnos = sb.chamar("GET", f"/rest/v1/turno_publico?acao=eq.{a['id']}").corpo
     assert [t["inicio"] for t in turnos] == ["2099-02-01T09:00:00"]
 
@@ -198,3 +199,21 @@ def test_importar_acoes_so_pela_chave_de_servico_e_divulgacao_nao_tem_inscricao(
     turno = sb.chamar("GET", f"/rest/v1/turno_publico?acao=eq.{acao}").corpo[0]["id"]
     sb.rpc("salvar_telefone", {"telefone": "11988887777"}, jwt=cenario["jwt_a"])
     assert sb.rpc("inscrever", {"turno_id": turno}, jwt=cenario["jwt_a"]).corpo["message"] == "sem_inscricao"
+
+
+def test_importar_acoes_grava_logo_da_organizacao_sem_apagar_o_que_ja_tem(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    nome = "Org Logo " + fonte
+    logo = {"url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/X.svg?width=400", "credito": "X, via Wikimedia Commons",
+            "pagina": "https://commons.wikimedia.org/wiki/File:X.svg"}
+    r = sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", organizacao=nome, organizacao_foto=logo, lugar_aproximado=False)]}, jwt=sb.SERVICE)
+    assert r.status == 200, r.corpo
+    org = sb.chamar("GET", f"/rest/v1/organizacao_publica?nome=eq.{urllib.parse.quote(nome)}").corpo[0]
+    assert org["foto_url"] == logo["url"] and org["foto_credito"] == logo["credito"] and org["foto_pagina"] == logo["pagina"]
+    acao = sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo[0]
+    assert acao["lugar_aproximado"] is False
+    # reimportar sem logo (ou com outro) não apaga nem troca o que já está gravado
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", organizacao=nome, organizacao_foto=None)]}, jwt=sb.SERVICE)
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", organizacao=nome, organizacao_foto=dict(logo, url="https://outro"))]}, jwt=sb.SERVICE)
+    org = sb.chamar("GET", f"/rest/v1/organizacao_publica?nome=eq.{urllib.parse.quote(nome)}").corpo[0]
+    assert org["foto_url"] == logo["url"]

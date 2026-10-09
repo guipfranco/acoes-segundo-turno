@@ -346,3 +346,15 @@ def test_acao_importada_tem_divulgacao_e_lugar_aproximado_na_tela():
     assert "sem_inscricao:" in HTML  # mensagem da função SQL inscrever
     assert "lugarAproximadoNota(a.lugar)" in HTML and "function espalhar" in HTML
     assert "Ponto aproximado" in HTML
+
+
+def test_quem_divulga_tem_avatar_e_logo_da_organizacao_vira_capa():
+    for trecho in ["function quemDivulga", "function fotoQuem", "function logoCapa", 'class="avatar"', 'class="logo"',
+                   "const FONTES=", "'bora-lula':{nome:'Agenda Bora Lula'", "function creditoLogo", "Logo: "]:
+        assert trecho in HTML, trecho
+    # card e página usam quem divulga (avatar + nome); capa cai no logo quando não há foto própria
+    assert "${quemDivulga(a)}, ${quantosVao(vaoNa(a.id))}" in HTML
+    assert "logoCapa(a)?`<div class=\"foto capa" in HTML
+    assert ".foto .logo{" in HTML and ".avatar{" in HTML
+    api_sb = (RAIZ / "app" / "api-supabase.js").read_text(encoding="utf-8")
+    assert "foto_url,foto_credito,foto_pagina" in api_sb and "orgR.data.map(deOrg)" in api_sb

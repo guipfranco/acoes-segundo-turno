@@ -20,6 +20,8 @@
       fonte: r.fonte || null, linkDivulgacao: r.link_divulgacao || null,
     };
   }
+  const deOrg = o => ({ id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada,
+    foto: o.foto_url ? { url: o.foto_url, credito: o.foto_credito || '', pagina: o.foto_pagina || null } : null });
   const deTurno = r => ({ id: r.id, acao: r.acao, inicio: semSeg(r.inicio), fim: semSeg(r.fim), lotacao: r.lotacao == null ? null : r.lotacao, vao: r.vao || 0 });
   const dePessoa = p => ({ id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, papel: p.papel, bloqueada: !!p.bloqueada });
   function erroDe(e) { const x = new Error(e.message || 'erro'); x.codigo = (e.message || '').trim(); x.original = e; return x; }
@@ -44,14 +46,14 @@
       async publico() {
         const [cfgR, orgR, acR, tR] = await Promise.all([
           sb.from('configuracao_publica').select('chave,valor'),
-          sb.from('organizacao_publica').select('id,nome,tipo,verificada'),
+          sb.from('organizacao_publica').select('id,nome,tipo,verificada,foto_url,foto_credito,foto_pagina'),
           sb.from('acao_publica').select('*'),
           sb.from('turno_publico').select('*').gte('inicio', hojeBrasilia() + 'T00:00:00'),
         ]);
         for (const r of [cfgR, orgR, acR, tR]) if (r.error) throw erroDe(r.error);
         const config = { hoje: hojeBrasilia(), frase: '', vaquinha: '#' };
         for (const c of cfgR.data) config[c.chave] = c.valor;
-        return { config, organizacoes: orgR.data, acoes: acR.data.map(deAcao), turnos: tR.data.map(deTurno) };
+        return { config, organizacoes: orgR.data.map(deOrg), acoes: acR.data.map(deAcao), turnos: tR.data.map(deTurno) };
       },
       async acao(id) {
         const [aR, tR, mim] = await Promise.all([
@@ -69,5 +71,5 @@
       async minhasInscricoes() { return (await rpc('minhas_inscricoes')).map(m => ({ acao: deAcao(m.acao), turno: deTurno(m.turno) })); },
     };
   }
-  return { criar, deAcao, deTurno, dePessoa, hojeBrasilia };
+  return { criar, deAcao, deTurno, dePessoa, deOrg, hojeBrasilia };
 });
