@@ -125,6 +125,10 @@ Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capt
 - `app/config.js` usa a chave `sb_publishable_...` (pública, equivalente à anon).
 - Política de privacidade em `app/privacidade.html`, exigida pelo Google para publicar o login.
 - Vaquinha: `configuracao.vaquinha` = `https://doelula.com.br/`.
+- Em 2026-10-09 (tarde): migrações 20261009000020 (Eu vou na divulgação), 21 (cadastro de ação e moderação) e 22
+  (bucket `fotos-acoes`, imagem obrigatória) aplicadas com `python scripts/ir_ao_ar.py migrar`; função
+  `previa-instagram` publicada com `npx supabase functions deploy previa-instagram --project-ref ommitzndniqnmsjsjghb`
+  (token do `.env`); o dono passou a `moderador`.
 
 ## O que falta para ir ao ar
 

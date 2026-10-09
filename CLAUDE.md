@@ -33,8 +33,8 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   caminhada, cultural, bandeiraço, adesivaço, porta a porta, ligatona, outro. Ação online: `lugar.online: true`, sem
   pino nem minimapa. Desktop (≥ 900 px) com cabeçalho no topo e página da ação em duas colunas. Fotos das ações
   vêm do Wikimedia Commons (campo `foto` com crédito).
-- Conta e cadastro de ação (na master desde 2026-10-09; migrações 20261009000020 a 22 e a função previa-instagram
-  ainda precisam ir para produção): logado, o botão da conta vira "Perfil" (`#/perfil`: WhatsApp,
+- Conta e cadastro de ação (em produção desde 2026-10-09: migrações 20261009000020 a 22 aplicadas, função
+  previa-instagram publicada, Gui com papel moderador): logado, o botão da conta vira "Perfil" (`#/perfil`: WhatsApp,
   resumo do "Eu vou", ações que criei com situação e motivo da recusa, Sair no fim); deslogado, "Entrar" escuro e
   convite na inicial. "Eu vou!" em toda ação; na de divulgação (importada) só marca presença, sem telefone (migração
   20261009000020). Qualquer pessoa logada cadastra ação ("Cadastrar ação", botão vermelho da barra e da inicial): nasce "em análise", exceto verificado (papel organizador ou
