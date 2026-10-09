@@ -83,6 +83,8 @@
           return a ? { acao: publica(a), turno: turno(t) } : null;
         }).filter(Boolean).sort((p, q) => p.turno.inicio.localeCompare(q.turno.inicio));
       },
+      async enviarFoto(blob) { if (sessao == null) throw erro('precisa_entrar'); return URL.createObjectURL(blob); },
+      async fotoDoInstagram() { throw erro('so_no_site'); },
       // criar ação: nasce em análise, a não ser que quem cria seja verificado (papel ou organização verificada)
       async criarAcao(d) {
         if (sessao == null) throw erro('precisa_entrar');
@@ -93,6 +95,8 @@
         if (minhas.filter(a => a.criadaEm === hoje).length >= 10) throw erro('limite_diario');
         if (minhas.filter(a => a.status === 'em análise').length >= 10) throw erro('limite_em_analise');
         if (!String(d.titulo || '').trim()) throw erro('sem_titulo');
+        const foto = String(d.foto || '').trim();
+        if (!/^(https:|blob:)/.test(foto)) throw erro('sem_foto');
         if (!d.online && (!String(d.lugar_nome || '').trim() || d.lat == null || d.lon == null)) throw erro('sem_lugar');
         const ts = d.turnos || [];
         if (!ts.length || ts.some(t => !t.inicio || !t.fim || t.fim <= t.inicio || t.inicio.slice(0, 10) < hoje)) throw erro('turno_invalido');
@@ -103,10 +107,9 @@
         const id = Math.max(0, ...dados.acoes.map(a => a.id)) + 1;
         const lugar = d.online ? { nome: 'Online', bairro: 'Online', cidade: 'Online', lat: null, lon: null, online: true }
           : { nome: d.lugar_nome, bairro: d.bairro || '', cidade: d.cidade || '', lat: d.lat, lon: d.lon };
-        const foto = String(d.foto || '').trim();
         dados.acoes.push({ id, titulo: d.titulo.trim(), tipo: d.tipo, descricao: d.descricao || '', organizador: sessao, organizacao: d.organizacao || null,
           lugar, detalhe: d.detalhe || '', contatoTipo: grupo ? 'link_grupo' : 'organizador_chama', contatoLink: grupo || null,
-          foto: /^https:\/\//.test(foto) ? { url: foto, credito: '' } : null,
+          foto: { url: foto, credito: '' },
           status, motivoRecusa: null, prioritaria: false, criadaEm: hoje });
         ts.forEach((t, i) => dados.turnos.push({ id: Date.now() + i, acao: id, inicio: t.inicio, fim: t.fim, lotacao: t.lotacao ? Number(t.lotacao) : null }));
         return { id, status };

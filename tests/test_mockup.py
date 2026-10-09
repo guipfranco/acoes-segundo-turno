@@ -291,9 +291,10 @@ def test_acoes_de_exemplo_tem_foto_livre_com_credito():
         assert "via Wikimedia Commons" in a["foto"]["credito"]
 
 
-def test_foto_tem_reserva_e_credito_e_campo_no_criar():
+def test_foto_tem_reserva_e_credito_e_imagem_obrigatoria_no_cadastro():
     for s in ["const imgFoto", 'onerror="this.remove()"', "function creditoFoto", "const cuboAcao",
-              "Foto da ação (link, opcional)", "foto:c.foto.trim()", 'class="foto capa']:
+              "Passo 3 de 4. Imagem da ação.", "function reduzirImagem", "API.enviarFoto(", "API.fotoDoInstagram(",
+              'accept="image/*"', "function validarFoto", "sem_foto:", 'class="foto capa']:
         assert s in HTML, s
 
 

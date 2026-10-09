@@ -45,6 +45,7 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
 .convite{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff5f5;border:1.5px solid #f6c9cc;border-radius:16px;padding:14px 16px;margin:18px auto 0;max-width:640px;text-align:left}
 .convite p{margin:0;flex:1 1 220px;font-size:15px}.convite p b{display:block;font-size:16px}
 .btn.google{background:var(--tinta)}.btn.google:hover{background:#34343b}.btn.google .g{background:#fff;color:#d6232e;border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center;font-weight:800;font-size:14px}
+.enviar-foto{margin-top:14px;cursor:pointer}.previa-card{max-width:300px;pointer-events:none}
 .btn.vou{font-size:18px;padding:14px 26px;font-weight:800}.cta-topo{margin:14px 0 6px}@media (min-width:900px){.cta-topo{display:none}}
 /* perfil */
 .perfil-topo{display:flex;align-items:center;gap:14px;margin-bottom:6px}.perfil-topo .letra{width:56px;height:56px;border-radius:50%;background:var(--vermelho);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:800;flex:none}
@@ -524,7 +525,12 @@ async function abrirVou(tid){const [,rota,arg]=(location.hash||'').split('/');
 const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_inscricao:'Esta ação não tem inscrição: siga a divulgação original.',sem_telefone:'Informe seu WhatsApp.',telefone_invalido:'Telefone no formato (11) 9xxxx-xxxx.',bloqueada:'Sua conta está bloqueada.',lotado:'Esse horário lotou.',turno_passado:'Esse horário já passou.',nao_publicada:'Esta ação não está aberta a inscrições.',
   limite_diario:'Você já criou 10 ações hoje. Tente de novo amanhã.',limite_em_analise:'Você tem 10 ações esperando a moderação. Espere a análise antes de criar mais.',
   sem_titulo:'Dê um título.',sem_lugar:'Marque o lugar da ação.',turno_invalido:'Confira os horários: início antes do fim e nada no passado.',
-  grupo_invalido:'O link do grupo precisa começar com https://chat.whatsapp.com/',sem_motivo:'Escreva o motivo.',so_moderador:'Só moderadores fazem isso.',nao_pode:'Não deu: a ação mudou de situação. Recarregue a página.'};
+  grupo_invalido:'O link do grupo precisa começar com https://chat.whatsapp.com/',
+  sem_foto:'A ação precisa de uma imagem: a arte da divulgação ou uma foto.',imagem_invalida:'Escolha um arquivo de imagem (foto ou arte).',
+  imagem_grande:'Essa imagem é grande demais. Tente outra.',falha_envio:'Não deu para enviar a imagem. Tente de novo.',
+  link_instagram_invalido:'Esse link não parece de um post do Instagram.',instagram_sem_imagem:'Não achamos a imagem desse post. Ele é público?',
+  instagram_ocupado:'O Instagram pediu para esperar um pouco. Tente de novo em instantes ou envie do celular.',
+  so_no_site:'No modo exemplo não dá para puxar do Instagram: escolha uma imagem do celular.',sem_motivo:'Escreva o motivo.',so_moderador:'Só moderadores fazem isso.',nao_pode:'Não deu: a ação mudou de situação. Recarregue a página.'};
 async function confirmarVou(tid){const ins=estado.inscrevendo;const tel=(document.getElementById('vtel')||{}).value||'';
   try{if(tel!==(estado.sessao.telefone||''))estado.sessao=await API.salvarTelefone(tel);await API.inscrever(tid)}
   catch(e){ins.erro=MENSAGEM[e.codigo]||'Não deu. Tente de novo.';ins.telefone=tel;render();return}
@@ -605,7 +611,7 @@ const MODELOS={
  'bandeiraço':{titulo:'Bandeiraço na avenida',descricao:'Bandeiras e faixas do Lula na hora do rush. Traga bandeira se tiver.',dica:'Hora do rush, calçada larga, longe da faixa de pedestres.'},
  'outro':{titulo:'',descricao:'',dica:'Descreva o que vai acontecer e o que a pessoa precisa levar.'}};
 const LUGAR_ONLINE=()=>({nome:'Online',bairro:'Online',cidade:'Online',lat:null,lon:null,online:true});
-function novoCriar(){return {passo:1,editando:null,tipo:null,online:false,titulo:'',descricao:'',foto:'',lugar:{nome:'',bairro:'',cidade:'',lat:null,lon:null},buscaLugar:'',turnos:[{inicio:'',fim:'',lotacao:''}],detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
+function novoCriar(){return {passo:1,editando:null,tipo:null,online:false,titulo:'',descricao:'',foto:'',linkIg:'',enviandoFoto:false,lugar:{nome:'',bairro:'',cidade:'',lat:null,lon:null},buscaLugar:'',turnos:[{inicio:'',fim:'',lotacao:''}],detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
 estado.criar=novoCriar();
 function cv(campo,valor){estado.criar[campo]=valor}
 function escolherTipo(t){const c=estado.criar;c.tipo=t;if(!c.editando){c.titulo=MODELOS[t].titulo;c.descricao=MODELOS[t].descricao}c.erros={};c.passo=2;render()}
@@ -620,18 +626,17 @@ function telValido(t){return /^\(\d{2}\) 9[\dx]{4}-[\dx]{4}$/.test(t)||/^\d{11}$
 function validarPasso2(){const c=estado.criar,e={};if(!c.titulo.trim())e.titulo='Dê um título.';
   if(!c.online){if(!c.lugar.nome.trim())e.lugarNome='Diga o nome do ponto de encontro.';if(c.lugar.lat==null)e.lugar='Marque o lugar no mapa.'}
   const ts=c.turnos.filter(t=>t.inicio||t.fim);if(!ts.length)e.turnos='Informe pelo menos um turno.';else if(ts.some(t=>!t.inicio||!t.fim||t.fim<=t.inicio))e.turnos='Cada turno precisa de início e fim, e o fim depois do início.';else if(ts.some(t=>t.inicio.slice(0,10)<PUB.config.hoje))e.turnos='Turno no passado.';
-  c.erros=e;if(!Object.keys(e).length){c.passo=3;if(!c.telefone&&estado.sessao)c.telefone=estado.sessao.telefone||''}render()}
+  c.erros=e;if(!Object.keys(e).length)c.passo=3;render()}
 function atualizarTurnos(c,acaoId){const atuais=turnosDaExemplo(acaoId);const form=c.turnos.filter(t=>t.inicio&&t.fim);
   form.forEach((t,i)=>{const lot=t.lotacao?Number(t.lotacao):null;if(atuais[i])Object.assign(atuais[i],{inicio:t.inicio,fim:t.fim,lotacao:lot});else DADOS.turnos.push({id:Date.now()+i,acao:acaoId,inicio:t.inicio,fim:t.fim,lotacao:lot})});
   const sobra=atuais.slice(form.length).map(t=>t.id);DADOS.turnos=DADOS.turnos.filter(t=>!sobra.includes(t.id))}
 function turnosDoFormulario(c,acaoId){return c.turnos.filter(t=>t.inicio&&t.fim).map((t,i)=>({id:Date.now()+i,acao:acaoId,inicio:t.inicio,fim:t.fim,lotacao:t.lotacao?Number(t.lotacao):null}))}
 function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c.erros[k]}</div>`:'';const titulo=c.editando?'Editar ação':'Cadastrar ação';
   if(!estado.sessao)return `<div class="pagina estreita"><h1>Cadastrar ação</h1><p>Qualquer pessoa pode cadastrar uma ação: panfletagem, encontro, ato, caminhada. Entre com o Google para começar.</p><p class="sec" style="font-size:15px">Toda ação nova passa por uma revisão rápida da moderação antes de aparecer.</p>${botaoEntrar()}</div>`;
-  if(c.passo===1)return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 1 de 3. Que tipo de ação?</p>${TIPOS.map(t=>`<a class="card" href="#" onclick="escolherTipo('${t}');return false"><div class="cubo ${CLASSE[t]}">${ICONES[t]}</div><div><div class="tit">${t}</div><div class="meta">${MODELOS[t].dica}</div></div></a>`).join('')}</div>`;
-  if(c.passo===2)return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 2 de 3. Onde e quando. ${ICONES[c.tipo]} ${c.tipo}</p>
+  if(c.passo===1)return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 1 de 4. Que tipo de ação?</p>${TIPOS.map(t=>`<a class="card" href="#" onclick="escolherTipo('${t}');return false"><div class="cubo ${CLASSE[t]}">${ICONES[t]}</div><div><div class="tit">${t}</div><div class="meta">${MODELOS[t].dica}</div></div></a>`).join('')}</div>`;
+  if(c.passo===2)return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 2 de 4. Onde e quando. ${ICONES[c.tipo]} ${c.tipo}</p>
    <label>Título</label><input value="${esc(c.titulo)}" oninput="cv('titulo',this.value)">${E('titulo')}
    <label>Descrição</label><textarea rows="3" oninput="cv('descricao',this.value)">${esc(c.descricao)}</textarea>
-   <label>Foto da ação (link, opcional)</label><input type="url" placeholder="https://..." value="${esc(c.foto)}" oninput="cv('foto',this.value)"><p class="sec" style="margin-top:4px">Uma foto do lugar ou de uma ação anterior. Sem foto, entra a cor do tipo.</p>
    <label style="display:flex;gap:8px;align-items:center;margin-top:18px"><input type="checkbox" style="width:auto" ${c.online?'checked':''} onchange="estado.criar.online=this.checked;render()"> Ação online (ligatona, mutirão de mensagens): a pessoa participa de casa</label>
    ${c.online?'<p class="sec">O link da chamada vai no detalhe do encontro, que só quem se inscreve vê.</p>':`<label>Nome do ponto de encontro</label><input placeholder="ex.: Estação Grajaú, saída 2" value="${esc(c.lugar.nome)}" oninput="estado.criar.lugar.nome=this.value">${E('lugarNome')}
    <label>Cidade ou bairro</label><div style="position:relative"><input id="busca-criar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(c.buscaLugar)}" oninput="sugerirCriar(this.value)"><div id="sug-criar" style="position:absolute;left:0;right:0;top:48px;background:#fff;border-radius:12px;box-shadow:0 8px 28px rgba(23,23,26,.2);z-index:5;display:none"></div></div>
@@ -641,14 +646,43 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
    <label>Detalhe do encontro, só para inscritos</label><input placeholder="ex.: perto do ponto de ônibus, camisa vermelha" value="${esc(c.detalhe)}" oninput="cv('detalhe',this.value)">
    <label>Link do grupo de WhatsApp</label><input placeholder="https://chat.whatsapp.com/..." value="${esc(c.grupo)}" oninput="cv('grupo',this.value)">
    <p style="margin-top:18px">${c.editando?'<button class="btn sec" onclick="cancelarEdicao()">Cancelar</button>':'<button class="btn sec" onclick="estado.criar.passo=1;render()">Voltar</button>'} <button class="btn" onclick="validarPasso2()">Continuar</button></p></div>`;
+  if(c.passo===3)return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 3 de 4. Imagem da ação.</p>
+   <p>Use a arte da divulgação ou uma foto do lugar. É ela que chama gente na vitrine.</p>
+   ${c.foto?`<p class="sec" style="margin:14px 0 6px">Assim fica o card na vitrine:</p>${previaCard(c)}`:''}
+   <label class="btn ${c.foto?'sec':''} enviar-foto">📷 ${c.foto?'Trocar imagem':'Escolher imagem do celular'}<input type="file" accept="image/*" hidden onchange="escolherFoto(this.files[0])"></label>
+   <label>Ou cole o link do post do Instagram</label><div style="display:flex;gap:8px"><input id="link-ig" inputmode="url" placeholder="https://www.instagram.com/p/..." value="${esc(c.linkIg)}" oninput="cv('linkIg',this.value)"><button class="btn sec" onclick="puxarInstagram()">Buscar</button></div>
+   ${c.enviandoFoto?'<p class="sec" style="margin-top:8px">Enviando a imagem…</p>':''}${E('foto')}
+   <p class="sec" style="margin-top:12px">Use uma imagem que você pode divulgar.</p>
+   <p style="margin-top:18px"><button class="btn sec" onclick="estado.criar.passo=2;render()">Voltar</button> <button class="btn" onclick="validarFoto()" ${c.enviandoFoto?'disabled':''}>Continuar</button></p></div>`;
   const verif=souVerificado();
-  return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 3 de 3. Quem organiza.</p>
+  return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 4 de 4. Quem organiza.</p>
    <label>Seu nome</label><div>${esc(estado.sessao.nome)}</div>
    <label>Seu WhatsApp</label><input placeholder="(11) 9xxxx-xxxx" inputmode="tel" value="${esc(c.telefone)}" oninput="cv('telefone',this.value)">${E('telefone')}
    <p class="sec" style="margin-top:4px">A moderação usa para falar com você. Quem disser "Eu vou!" aparece no seu Perfil, com nome e telefone.</p>
    <label>Em nome de uma organização? (opcional)</label><select onchange="estado.criar.organizacao=this.value?Number(this.value):null"><option value="">Sou eu mesmo(a)</option>${PUB.organizacoes.slice().sort((x,y)=>x.nome.localeCompare(y.nome)).map(x=>`<option value="${x.id}" ${c.organizacao===x.id?'selected':''}>${esc(x.nome)}</option>`).join('')}</select>
    <div class="aviso" style="margin-top:16px">${verif?'✓ Você é verificado: sua ação aparece na hora.':'Sua ação passa por uma revisão rápida da moderação antes de aparecer. Você acompanha a situação no seu Perfil.'}</div>${E('geral')}
-   <p style="margin-top:18px"><button class="btn sec" onclick="estado.criar.passo=2;render()">Voltar</button> <button class="btn" onclick="publicarAcao()">${c.editando?'Salvar':verif?'Publicar':'Enviar para análise'}</button></p></div>`}
+   <p style="margin-top:18px"><button class="btn sec" onclick="estado.criar.passo=3;render()">Voltar</button> <button class="btn" onclick="publicarAcao()">${c.editando?'Salvar':verif?'Publicar':'Enviar para análise'}</button></p></div>`}
+// ---------- imagem da ação: enviada do celular (reduzida antes) ou puxada do post do Instagram ----------
+function previaCard(c){const t=c.turnos.find(x=>x.inicio)||{inicio:PUB.config.hoje+'T09:00'},l=c.online?LUGAR_ONLINE():c.lugar;
+  return `<div class="evento previa-card"><div class="foto f-${CLASSE[c.tipo].slice(2)}">${ICONES[c.tipo]}<img class="img" src="${esc(c.foto)}" alt=""><span class="data">${fmtCurta(t.inicio)}</span></div>
+   <div class="tit">${esc(c.titulo)}</div><div class="meta"><b>${fmtData(t.inicio)}</b></div><div class="meta">${esc(c.online?'Online':l.nome||lugarCurto(l))}</div></div>`}
+// lado maior até 1600 px, JPEG 85%: sobe rápido no 4G e cabe no limite do bucket
+function reduzirImagem(arq,lado=1600){return new Promise((ok,falha)=>{const url=URL.createObjectURL(arq),img=new Image();
+  img.onload=()=>{const k=Math.min(1,lado/Math.max(img.naturalWidth,img.naturalHeight)),cv=document.createElement('canvas');cv.width=Math.round(img.naturalWidth*k);cv.height=Math.round(img.naturalHeight*k);
+    const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,cv.width,cv.height);g.drawImage(img,0,0,cv.width,cv.height);URL.revokeObjectURL(url);
+    cv.toBlob(b=>b?ok(b):falha(Object.assign(new Error('imagem'),{codigo:'imagem_invalida'})),'image/jpeg',.85)};
+  img.onerror=()=>{URL.revokeObjectURL(url);falha(Object.assign(new Error('imagem'),{codigo:'imagem_invalida'}))};img.src=url})}
+async function escolherFoto(arq){const c=estado.criar;if(!arq)return;
+  if(!/^image\//.test(arq.type)){c.erros={foto:MENSAGEM.imagem_invalida};render();return}
+  c.enviandoFoto=true;c.erros={};render();
+  try{c.foto=await API.enviarFoto(await reduzirImagem(arq))}catch(e){c.erros={foto:MENSAGEM[e.codigo]||'Não deu para enviar a imagem. Tente outra.'}}
+  c.enviandoFoto=false;render()}
+async function puxarInstagram(){const c=estado.criar;if(!c.linkIg.trim()){c.erros={foto:'Cole o link do post.'};render();return}
+  c.enviandoFoto=true;c.erros={};render();
+  try{c.foto=await API.fotoDoInstagram(c.linkIg.trim())}catch(e){c.erros={foto:MENSAGEM[e.codigo]||'Não deu para puxar a imagem do post. Tente enviar do celular.'}}
+  c.enviandoFoto=false;render()}
+function validarFoto(){const c=estado.criar;if(!c.foto){c.erros={foto:MENSAGEM.sem_foto};render();return}
+  c.erros={};c.passo=4;if(!c.telefone&&estado.sessao)c.telefone=estado.sessao.telefone||'';render()}
 // verificado publica direto: papel organizador ou moderador, ou membro de organização verificada (a regra vale no banco)
 function souVerificado(){const s=estado.sessao;if(!s)return false;if(s.papel==='organizador'||s.papel==='moderador')return true;const o=s.organizacao?org(s.organizacao):null;return !!(o&&o.verificada)}
 async function publicarAcao(){const c=estado.criar,e={};if(!telValido(c.telefone))e.telefone='Telefone no formato (11) 9xxxx-xxxx.';c.erros=e;if(Object.keys(e).length){render();return}

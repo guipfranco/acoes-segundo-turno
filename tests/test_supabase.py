@@ -241,7 +241,7 @@ def test_importar_acoes_grava_foto_da_divulgacao_e_nao_apaga_sem_foto(cenario):
 
 def _nova(**extra):
     base = {"titulo": "Criada pelo app", "tipo": "panfletagem", "descricao": "teste", "online": False, "lugar_nome": "Praça",
-            "bairro": "Centro", "cidade": "São Paulo", "lat": -23.5, "lon": -46.6,
+            "bairro": "Centro", "cidade": "São Paulo", "lat": -23.5, "lon": -46.6, "foto": "https://exemplo.org/arte.jpg",
             "turnos": [{"inicio": "2099-03-01T09:00", "fim": "2099-03-01T11:00"}]}
     base.update(extra)
     return base
@@ -252,6 +252,8 @@ def test_criar_acao_nasce_em_analise_e_so_moderador_aprova(cenario):
     assert sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"]).corpo["message"] == "sem_telefone"
     sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
     assert sb.rpc("criar_acao", {"dados": _nova(grupo="https://golpe.com")}, jwt=cenario["jwt_b"]).corpo["message"] == "grupo_invalido"
+    assert sb.rpc("criar_acao", {"dados": _nova(foto="")}, jwt=cenario["jwt_b"]).corpo["message"] == "sem_foto"
+    assert sb.rpc("criar_acao", {"dados": _nova(foto="javascript:alert(1)")}, jwt=cenario["jwt_b"]).corpo["message"] == "sem_foto"
     assert sb.rpc("criar_acao", {"dados": _nova(turnos=[{"inicio": "2000-01-01T09:00", "fim": "2000-01-01T10:00"}])},
                   jwt=cenario["jwt_b"]).corpo["message"] == "turno_invalido"
     r = sb.rpc("criar_acao", {"dados": _nova(grupo="https://chat.whatsapp.com/abc")}, jwt=cenario["jwt_b"])
@@ -294,3 +296,18 @@ def test_organizador_ve_quem_vai_e_encerra(cenario):
     assert t["inscritos"] == [{"nome": "Pessoa A", "telefone": "(11) 98888-7777"}]
     assert sb.rpc("encerrar_acao", {"acao_id": novo}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
     assert sb.rpc("encerrar_acao", {"acao_id": novo}, jwt=cenario["jwt_org"]).status in (200, 204)
+
+
+def test_foto_so_na_propria_pasta_do_bucket(cenario):
+    jpeg = bytes.fromhex("ffd8ffe000104a46494600010100000100010000ffd9")
+    def enviar(caminho):
+        import urllib.request, urllib.error
+        req = urllib.request.Request(f"{sb.URL}/storage/v1/object/fotos-acoes/{caminho}", data=jpeg, method="POST",
+                                     headers={"apikey": sb.ANON, "Authorization": f"Bearer {cenario['jwt_a']}", "Content-Type": "image/jpeg"})
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status
+        except urllib.error.HTTPError as e:
+            return e.code
+    assert enviar(f"{cenario['a']}/teste-{uuid.uuid4().hex[:6]}.jpg") == 200
+    assert enviar(f"{cenario['b']}/teste-{uuid.uuid4().hex[:6]}.jpg") in (400, 403)

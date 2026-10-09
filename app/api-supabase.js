@@ -71,6 +71,19 @@
       async salvarTelefone(telefone) { return dePessoa(await rpc('salvar_telefone', { telefone })); },
       async inscrever(turnoId) { return rpc('inscrever', { turno_id: turnoId }); },
       async desistir(turnoId) { await rpc('desistir', { turno_id: turnoId }); },
+      // imagem da ação: cada pessoa envia só para a própria pasta do bucket fotos-acoes
+      async enviarFoto(blob) {
+        const id = await uid(); if (!id) throw erroDe({ message: 'precisa_entrar' });
+        const nome = `${id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+        const { error } = await sb.storage.from('fotos-acoes').upload(nome, blob, { contentType: blob.type || 'image/jpeg', cacheControl: '604800' });
+        if (error) throw erroDe({ message: 'falha_envio' });
+        return sb.storage.from('fotos-acoes').getPublicUrl(nome).data.publicUrl;
+      },
+      async fotoDoInstagram(link) {
+        const { data, error } = await sb.functions.invoke('previa-instagram', { body: { link } });
+        if (error) { let c = 'falha_envio'; try { c = (await error.context.json()).erro || c; } catch (e) { /* sem corpo */ } throw erroDe({ message: c }); }
+        return data.url;
+      },
       async criarAcao(dados) { return rpc('criar_acao', { dados }); },
       async minhasAcoes() { return (await rpc('minhas_acoes')).map(comInscritos); },
       async encerrarAcao(id) { await rpc('encerrar_acao', { acao_id: id }); },

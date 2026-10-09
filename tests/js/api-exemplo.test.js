@@ -120,7 +120,7 @@ test('organização com logo no modo exemplo sai com foto; sem logo, foto null',
 });
 
 // ação nova vinda do formulário, com turno amanhã
-const novaAcao = (d, extra) => Object.assign({ titulo: 'Panfletagem teste', tipo: 'panfletagem', descricao: 'x', online: false,
+const novaAcao = (d, extra) => Object.assign({ titulo: 'Panfletagem teste', tipo: 'panfletagem', descricao: 'x', online: false, foto: 'https://exemplo.org/arte.jpg',
   lugar_nome: 'Praça', bairro: 'Centro', cidade: 'São Paulo', lat: -23.5, lon: -46.6,
   turnos: [{ inicio: d.config.hoje.slice(0, 10) + 'T23:00', fim: d.config.hoje.slice(0, 10) + 'T23:30' }] }, extra || {});
 
@@ -145,6 +145,7 @@ test('criar ação: exige telefone, limita 10 por dia e valida grupo e turnos', 
   eu.telefone = '(11) 98888-7777';
   await assert.rejects(api.criarAcao(novaAcao(d, { grupo: 'https://golpe.com' })), { codigo: 'grupo_invalido' });
   await assert.rejects(api.criarAcao(novaAcao(d, { turnos: [] })), { codigo: 'turno_invalido' });
+  await assert.rejects(api.criarAcao(novaAcao(d, { foto: '' })), { codigo: 'sem_foto' });
   eu.papel = 'organizador'; // publica direto: não esbarra no limite de 10 em análise
   const ja = d.acoes.filter(a => a.organizador === eu.id && a.criadaEm === d.config.hoje).length;
   for (let i = ja; i < 10; i++) await api.criarAcao(novaAcao(d));
