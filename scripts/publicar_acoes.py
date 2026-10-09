@@ -343,6 +343,7 @@ def main(argv=None):
     p.add_argument("--sem-encerrar", action="store_true", help="não encerra o que sumiu da fonte")
     p.add_argument("--ref", help="ref do projeto (Management API)")
     p.add_argument("--sem-geocodificar", action="store_true", help="não consulta o Nominatim: tudo no centro da cidade")
+    p.add_argument("--sem-fotos", action="store_true", help="não busca a imagem dos posts novos (usa só as já coletadas)")
     args = p.parse_args(argv)
     lugares = bl.carregar_lugares()
     geo = None if args.sem_geocodificar else bl.Geocodificador()
@@ -367,7 +368,14 @@ def main(argv=None):
         if geo:
             geo.salvar()
             print(f"geocodificação: {geo.consultas} consultas novas ao Nominatim, cache em {bl.GEOCACHE}")
-        com_foto(itens, fd.carregar_mapa())
+        mapa = fd.carregar_mapa()
+        if args.aplicar and not args.sem_fotos:
+            try:
+                mapa, novas, falhas = fd.buscar_fotos(itens, mapa)
+                print(f"fotos: {novas} imagens novas, {len(falhas)} posts sem imagem (apagados ou privados)")
+            except (fd.Falha, OSError) as e:  # sem foto não impede publicar
+                print(f"AVISO: busca de fotos falhou ({e}); publicando com as imagens já coletadas", file=sys.stderr)
+        com_foto(itens, mapa)
         print(resumo(itens, revisao))
         arq_itens, arq_rev = gravar_ensaio(args.fonte, itens, revisao)
         print(f"itens: {arq_itens}\nrevisão: {arq_rev}")

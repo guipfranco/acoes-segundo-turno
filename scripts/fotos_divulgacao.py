@@ -166,8 +166,10 @@ def subir(base, chave, nome, dados):
     return f"{base}/storage/v1/object/public/{BUCKET}/{nome}"
 
 
-def processar_coleta(coleta, mapa, base, chave, pasta=PASTA_IMG, baixar=baixar, subir=subir):
+def processar_coleta(coleta, mapa, base, chave, pasta=None, baixar=None, subir=None):
     """Baixa, reduz e sobe cada imagem coletada; devolve (novas, falhas). Atualiza `mapa` no lugar."""
+    mod = sys.modules[__name__]
+    pasta, baixar, subir = pasta or mod.PASTA_IMG, baixar or mod.baixar, subir or mod.subir
     pasta.mkdir(parents=True, exist_ok=True)
     novas, falhas = 0, []
     for c in coleta:
@@ -185,6 +187,22 @@ def processar_coleta(coleta, mapa, base, chave, pasta=PASTA_IMG, baixar=baixar, 
         mapa[cod] = {"url": url, "perfil": perfil_do_og(c.get("url"))}
         novas += 1
     return novas, falhas
+
+
+def buscar_fotos(itens, mapa=None, ler=previa, base_chave=None):
+    """Tenta a imagem de todo post ainda sem foto entre os itens e grava o mapa. Devolve (mapa, novas, falhas).
+    Chamado pelo publicar_acoes.py antes de publicar; post apagado ou privado só fica de fora."""
+    mapa = carregar_mapa() if mapa is None else mapa
+    cods = pendentes(itens, mapa)
+    if not cods:
+        return mapa, 0, []
+    print(f"fotos: {len(cods)} posts sem imagem, lendo a prévia (~{round(len(cods) * PAUSA / 60)} min)")
+    coleta = coletar(cods, ler=ler)
+    base, chave = base_chave or destino_storage()
+    novas, falhas = processar_coleta(coleta, mapa, base, chave)
+    MAPA.parent.mkdir(parents=True, exist_ok=True)
+    MAPA.write_text(json.dumps(mapa, ensure_ascii=False, indent=1), encoding="utf-8")
+    return mapa, novas, falhas
 
 
 def main(argv=None):

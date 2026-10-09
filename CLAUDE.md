@@ -50,7 +50,8 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   contato `divulgacao` sem inscrição; migração 20261009000002: logo da organização). O endereço vira ponto exato pelo
   Nominatim (cache em `levantamento/geocache.json`); organização reconhecível ganha logo do Commons (`LOGOS` em
   `scripts/bora_lula.py`). Imagem do post do Instagram como foto da ação: `python scripts/fotos_divulgacao.py coletar`
-  (prévia de link, sem login; bucket `divulgacao`, migração 20261009000003) antes do `publicar_acoes.py`.
+  (prévia de link, sem login; bucket `divulgacao`, migração 20261009000003); o `publicar_acoes.py --aplicar` já
+  faz essa busca sozinho para os posts novos.
   Como rodar em `docs/operacao.md`; checklist resolvido em
   `docs/2026-10-08-plano-expansao-varredura.md`, seção "Publicar". Testes em `tests/test_bora_lula.py`,
   `tests/test_publicar_acoes.py` e `tests/test_supabase.py` (pilha local).

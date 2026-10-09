@@ -93,3 +93,29 @@ def test_og_da_pagina_e_coletar_para_no_429():
         return {"codigo": c, "img": "i", "url": "u"}
     assert [x["codigo"] for x in fd.coletar(["AAA", "BBB", "CCC", "DDD"], ler=ler, pausa=3, dormir=pausas.append)] == ["AAA", "BBB"]
     assert pausas == [3, 3]
+
+
+def test_buscar_fotos_so_le_o_que_falta(tmp_path, monkeypatch):
+    from PIL import Image
+    monkeypatch.setattr(fd, "MAPA", tmp_path / "mapa.json")
+    monkeypatch.setattr(fd, "PASTA_IMG", tmp_path / "img")
+    monkeypatch.setattr(fd, "PAUSA", 0)
+    monkeypatch.setattr(fd, "baixar", lambda url: jpeg(800, 800))
+    monkeypatch.setattr(fd, "subir", lambda base, chave, nome, dados: f"{base}/{nome}")
+    monkeypatch.setattr(fd.time, "sleep", lambda s: None)
+    lidos = []
+
+    def ler(c):
+        lidos.append(c)
+        return {"codigo": c, "img": "https://cdn/x.jpg", "url": f"https://www.instagram.com/org/p/{c}/"}
+    itens = [{"link": "https://www.instagram.com/p/AAA/"}, {"link": "https://www.instagram.com/p/BBB/"}]
+    mapa, novas, falhas = fd.buscar_fotos(itens, {"BBB": {"url": "u"}}, ler=ler, base_chave=("https://proj", "k"))
+    assert lidos == ["AAA"] and novas == 1 and falhas == []
+    assert mapa["AAA"] == {"url": "https://proj/AAA.jpg", "perfil": "org"}
+    assert json.loads((tmp_path / "mapa.json").read_text(encoding="utf-8"))["AAA"]["url"] == "https://proj/AAA.jpg"
+    assert fd.buscar_fotos(itens, mapa, ler=ler, base_chave=("https://proj", "k"))[1] == 0 and lidos == ["AAA"]
+
+
+def test_publicar_busca_fotos_ao_aplicar():
+    src = (RAIZ / "scripts" / "publicar_acoes.py").read_text(encoding="utf-8")
+    assert "if args.aplicar and not args.sem_fotos:" in src and "fd.buscar_fotos(itens, mapa)" in src
