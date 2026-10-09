@@ -59,6 +59,7 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
 .cartao{background:#f3f4f6;border-radius:18px;padding:16px;margin:12px 0}.cartao-topo{display:flex;align-items:center;gap:8px}
 .turno-meu{background:#fff;border-radius:14px;padding:12px 14px;margin-top:12px}
 .turno-meu .pessoa{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px 12px;font-size:15px;padding:8px 0 0;border-top:1px solid var(--nevoa);margin-top:8px}
+.turno-meu .desistiram{font-size:14px;padding-top:8px;border-top:1px solid var(--nevoa);margin-top:8px}
 .btn-whats{display:inline-flex;align-items:center;gap:7px;background:var(--selo);color:#fff;border-radius:999px;padding:8px 14px;font-size:15px;font-weight:600;text-decoration:none;white-space:nowrap;font-variant-numeric:tabular-nums}
 .btn-whats:hover{background:#17602f}.btn-whats svg{width:17px;height:17px;flex:none}
 .moderar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--nevoa);border-radius:12px;padding:10px 12px;margin:0 0 14px;font-size:15px}
@@ -70,6 +71,8 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
 .mais .opcoes{position:absolute;right:0;top:calc(100% + 4px);background:#fff;border-radius:12px;box-shadow:0 8px 28px rgba(23,23,26,.2);padding:6px;z-index:60;min-width:170px}
 .mais .opcoes button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 12px;border-radius:8px;font-size:14px;cursor:pointer;color:var(--tinta)}
 .mais .opcoes button:hover{background:var(--nevoa)}.mais .opcoes button.perigo{color:var(--vinho)}
+/* menu aberto perto da borda: vira para dentro da tela (ver ajeitarMenu) */
+.mais .opcoes.esq,.agenda .opcoes.esq,.insc-acoes .agenda .opcoes.esq{left:0;right:auto}.mais .opcoes.dir,.agenda .opcoes.dir,.insc-acoes .agenda .opcoes.dir{left:auto;right:0}
 .vai{display:flex;align-items:center;gap:6px}
 .passadas{margin-top:12px}.passadas summary{cursor:pointer;color:var(--cinza);font-size:14px;font-weight:600;padding:6px 0}
 #recado{position:fixed;left:50%;bottom:calc(var(--nav) + 16px);transform:translate(-50%,20px);background:var(--tinta);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:.2s;z-index:2000}
@@ -174,7 +177,8 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
 #gaveta{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;box-shadow:var(--sombra);transition:transform .28s ease;z-index:800;display:flex;flex-direction:column;height:calc(100% - 150px);transform:translateY(calc(100% - 132px))}
 #gaveta.meio{transform:translateY(42%)}#gaveta.cheia{transform:translateY(0)}
 @media (prefers-reduced-motion:reduce){#gaveta{transition:none}}
-.alca{width:44px;height:5px;border-radius:3px;background:#cfd2d8;margin:10px auto 6px;cursor:grab}
+.puxa{touch-action:pan-x}.alca{display:block;width:100%;border:0;background:none;padding:10px 0 8px;cursor:grab}
+.alca span{display:block;width:44px;height:5px;border-radius:3px;background:#cfd2d8;margin:0 auto}#contagem{cursor:pointer}
 .cabeca{padding:0 16px 8px;display:flex;flex-direction:column;gap:6px}.quando{align-self:flex-start}
 .cabeca .topo-gaveta{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .cabeca strong{font-size:17px;letter-spacing:-.01em}.cabeca .filtros{margin:0}.cabeca .filtro .rot{display:none}.cabeca .datas{margin-left:0}
@@ -452,8 +456,9 @@ function telaMapa(){
   <div id="topo"><div class="busca"><span>🔍</span><input id="busca-lugar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(estado.onde?estado.onde.rotulo:'')}" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
     <button class="ico" title="Usar minha localização" onclick="usarLocalizacao()">📍</button></div><div id="sugestoes"></div>
    ${tiposHtml()}</div>
-  <div id="gaveta" class="${estado.gaveta==='meio'?'meio':estado.gaveta==='cheia'?'cheia':''}"><div class="alca" onclick="alternarGaveta()" ontouchstart="arrastar(event)"></div>
-   <div class="cabeca"><div class="topo-gaveta"><strong id="contagem"></strong></div>${filtrosHtml()}</div>
+  <div id="gaveta" class="${estado.gaveta==='meio'?'meio':estado.gaveta==='cheia'?'cheia':''}"><div class="puxa" ontouchstart="arrastar(event)">
+   <button class="alca" onclick="alternarGaveta()" aria-label="Abrir ou fechar a lista"><span></span></button>
+   <div class="cabeca"><div class="topo-gaveta"><strong id="contagem" onclick="alternarGaveta()"></strong></div>${filtrosHtml()}</div></div>
    <div id="lista"></div></div></div>`}
 function montarMapa(){
   const el=document.getElementById('mapa');if(!el)return;
@@ -499,8 +504,18 @@ function atualizarLista(){
 function focar(id){estado.foco=id;document.querySelectorAll('.card').forEach(c=>c.classList.toggle('foco',c.id==='card-'+id));
   marcadores.forEach(m=>{const el=m.getElement();const e=el&&el.querySelector('.etiqueta');if(e)e.classList.toggle('foco',m._acao===id)})}
 function alternarGaveta(){abrirGaveta(estado.gaveta==='baixa'?'meio':estado.gaveta==='meio'?'cheia':'baixa')}
-function arrastar(ev){const y0=ev.touches[0].clientY;const fim=e=>{document.removeEventListener('touchend',fim);const dy=e.changedTouches[0].clientY-y0;if(Math.abs(dy)<30)return;
-  const ordem=['baixa','meio','cheia'];let i=ordem.indexOf(estado.gaveta)+(dy<0?1:-1);abrirGaveta(ordem[Math.max(0,Math.min(2,i))])};document.addEventListener('touchend',fim)}
+// a gaveta acompanha o dedo em qualquer ponto do topo dela (alça, contagem, filtros); arrasto de lado é dos filtros
+let arrastando=false;
+function arrastar(ev){const g=document.getElementById('gaveta');if(!g||ehDesktop()||arrastando||ev.touches.length>1)return;arrastando=true;
+  const x0=ev.touches[0].clientX,y0=ev.touches[0].clientY,ty0=new DOMMatrix(getComputedStyle(g).transform).m42;let eixo=null,dy=0;
+  const mover=e=>{const dx=e.touches[0].clientX-x0;dy=e.touches[0].clientY-y0;
+    if(!eixo){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;eixo=Math.abs(dy)>Math.abs(dx)?'y':'x'}
+    if(eixo==='y'){g.style.transition='none';g.style.transform=`translateY(${Math.max(0,Math.min(g.offsetHeight-132,ty0+dy))}px)`}};
+  const fim=()=>{arrastando=false;document.removeEventListener('touchmove',mover);document.removeEventListener('touchend',fim);document.removeEventListener('touchcancel',fim);
+    g.style.transition='';g.style.transform='';if(eixo!=='y'||Math.abs(dy)<30)return;
+    const ordem=['baixa','meio','cheia'];let i=ordem.indexOf(estado.gaveta)+(dy<0?1:-1);if(Math.abs(dy)>window.innerHeight*.45)i+=dy<0?1:-1;
+    abrirGaveta(ordem[Math.max(0,Math.min(2,i))])};
+  document.addEventListener('touchmove',mover,{passive:true});document.addEventListener('touchend',fim);document.addEventListener('touchcancel',fim)}
 // duas caixas usam as mesmas sugestões: a busca principal (leva ao mapa) e a troca de cidade da inicial
 const SUG={busca:{box:'sugestoes',ao:l=>{document.getElementById('busca-lugar').value=nomeLugar(l);irParaLugar(l)}},
   cidade:{box:'sug-cidade',ao:l=>escolherCidade(l)}};
@@ -527,17 +542,21 @@ const linkDoar=()=>`<a class="btn sec" href="${esc(PUB.config.vaquinha||'#')}" t
 const menuMais=itens=>`<details class="mais"><summary aria-label="Mais opções" title="Mais opções">⋯</summary><div class="opcoes">${itens}</div></details>`;
 const botaoEntrar=()=>`<button class="btn google" onclick="entrar()"><span class="g" aria-hidden="true">G</span> Entrar com Google</button>`;
 // minhas inscrições: uma ação por linha; desistir fica no menu ⋯
-const inscProxima=m=>m.acao.status==='publicada'&&m.turno.inicio.slice(0,10)>=PUB.config.hoje;
+const inscProxima=m=>!m.desistiu&&m.acao.status==='publicada'&&m.turno.inicio.slice(0,10)>=PUB.config.hoje;
+// por que a inscrição saiu da lista de próximas: nada some, fica no histórico com o motivo
+const SITUACAO_INSC={rascunho:'ação fora do ar','excluída':'ação excluída',recusada:'ação recusada','em análise':'ação em análise'};
+const situacaoInsc=m=>m.desistiu?'você desistiu':m.acao.status==='publicada'?'já aconteceu':m.acao.status==='encerrada'?ENCERRADA[encerramento(m.acao)].insc:SITUACAO_INSC[m.acao.status]||'ação encerrada';
 function linhaInscricao(m){const prox=inscProxima(m);
   return `<div class="insc"><a class="insc-link" href="#/acao/${m.acao.id}">${cuboAcao(m.acao,'width:56px;height:56px;font-size:24px;border-radius:12px')}
     <div style="min-width:0"><div class="tit">${esc(m.acao.titulo)}</div><div class="meta"><b>${fmtData(m.turno.inicio)}</b> · ${esc(lugarCurto(m.acao.lugar))}</div></div></a>
-    <div class="insc-acoes">${prox?`${botaoAgenda(m.acao,m.turno)}${menuMais(`<button class="perigo" onclick="desistir(${m.turno.id})">Desistir de ir</button>`)}`:`<span class="sec">${m.acao.status==='publicada'?'já aconteceu':'ação encerrada'}</span>`}</div></div>`}
+    <div class="insc-acoes">${prox?`${botaoAgenda(m.acao,m.turno)}${menuMais(`<button class="perigo" onclick="desistir(${m.turno.id})">Desistir de ir</button>`)}`:`<span class="sec">${situacaoInsc(m)}</span>`}</div></div>`}
 function secaoInscricoes(){const lista=estado.minhasInscricoes||[],prox=lista.filter(inscProxima),pass=lista.filter(m=>!inscProxima(m));
   return `<section id="inscricoes"><h2>Onde eu vou</h2>${prox.length?`<div class="lista-insc">${prox.map(linhaInscricao).join('')}</div>`:
     '<p class="sec" style="font-size:15px">Você ainda não disse "Eu vou!" em nenhuma ação. <a href="#/inicio" style="color:var(--vinho);font-weight:600">Ver ações</a></p>'}
-   ${pass.length?`<details class="passadas"><summary>Passadas ou encerradas (${pass.length})</summary><div class="lista-insc">${pass.map(linhaInscricao).join('')}</div></details>`:''}</section>`}
+   ${pass.length?`<details class="passadas"><summary>Passadas, canceladas ou desistências (${pass.length})</summary><div class="lista-insc">${pass.map(linhaInscricao).join('')}</div></details>`:''}</section>`}
 async function desistir(tid){await API.desistir(tid);await sincronizar()}
-async function iniciarVou(tid){
+// onde: 'topo' (botão logo abaixo do título, no celular) ou 'lado' (coluna "Quando"); o formulário abre ali
+async function iniciarVou(tid,onde){estado.vouOnde=onde||null;
   if(!estado.sessao){localStorage.setItem('vouPendente',String(tid));await API.entrar();await continuarVouPendente();return}
   await abrirVou(tid)}
 async function continuarVouPendente(){const tid=Number(localStorage.getItem('vouPendente'));if(!tid)return;
@@ -594,16 +613,32 @@ function botaoAgenda(a,t){if(t.inicio.slice(0,10)<PUB.config.hoje)return '';cons
    <a href="${esc(linkGoogleAgenda(a,t))}" target="_blank" rel="noopener">Google Agenda</a>
    <button onclick="baixarIcs('${k}')">Apple ou Outlook (arquivo .ics)</button></div></details>`}
 function compartilhar(){const u=location.href;if(navigator.share)navigator.share({url:u});else{navigator.clipboard&&navigator.clipboard.writeText(u);alert('Link copiado')}}
-function botaoTurno(a,t){const n=vaoNo(t);
+function botaoTurno(a,t,onde='lado'){const n=vaoNo(t);
   if(t.inicio.slice(0,10)<PUB.config.hoje)return `<button class="btn" disabled>horário encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
   const div=semInscricao(a)&&a.linkDivulgacao?`<div style="margin-top:8px">${botaoDivulgacao(a)}</div>`:'';
   if(estouInscrito(t.id))return `<div class="vai"><span class="selo">✓ Você vai</span>${menuMais(`<button class="perigo" onclick="desistir(${t.id})">Desistir de ir</button>`)}</div>${div}`;
   if(t.lotacao&&n>=t.lotacao)return `<button class="btn" disabled>lotado</button>${div}`;
-  return `<button class="btn vou" onclick="iniciarVou(${t.id})">Eu vou!</button>${div}`}
+  return `<button class="btn vou" onclick="iniciarVou(${t.id},'${onde}')">Eu vou!</button>${div}`}
 // no celular o "Eu vou!" aparece logo abaixo do título (os horários ficam depois do mapa); com vários horários, leva até eles
-function ctaTopo(a,futuros){return `<div class="cta-topo">${futuros.length===1?botaoTurno(a,futuros[0]):`<a class="btn vou" href="#" onclick="document.querySelector('.acao-lado').scrollIntoView({behavior:'smooth'});return false">Eu vou!</a> <span class="sec">escolha o horário</span>`}</div>`}
+// o que aparece embaixo do botão depois de tocar nele: confirmação, erro ou o formulário do WhatsApp.
+// Sai num lugar só: no computador, na coluna "Quando" (o topo fica escondido); no celular, onde a pessoa tocou
+// (sem toque registrado, como na volta do login: no topo se a ação tem um horário só)
+function lugarDoVou(futuros){return ehDesktop()?'lado':estado.vouOnde||(futuros.length===1?'topo':'lado')}
+function depoisDoBotao(t,onde,futuros){if(onde!==lugarDoVou(futuros))return '';const ins=estado.inscrevendo;
+  return `${estado.vouOk===t.id?'<div class="selo" style="margin-top:8px">Pronto! A ação está no seu <a href="#/inscricoes">Perfil</a>.</div>':''}
+    ${ins&&ins.turno===t.id&&ins.semFormulario&&ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}
+    ${ins&&ins.turno===t.id&&!ins.semFormulario?`<div class="form-vou"><div class="sec" style="margin-top:8px">Você: <strong>${esc(estado.sessao.nome)}</strong></div><label for="vtel">Seu WhatsApp</label><input id="vtel" value="${esc(ins.telefone)}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p>${ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}<div style="margin-top:8px"><button class="btn" onclick="confirmarVou(${t.id})">Confirmar</button> <button class="btn sec mini" onclick="estado.inscrevendo=null;render()">Cancelar</button></div></div>`:''}`}
+function ctaTopo(a,futuros){return `<div class="cta-topo">${futuros.length===1?botaoTurno(a,futuros[0],'topo')+depoisDoBotao(futuros[0],'topo',futuros):`<a class="btn vou" href="#" onclick="document.querySelector('.acao-lado').scrollIntoView({behavior:'smooth'});return false">Eu vou!</a> <span class="sec">escolha o horário</span>`}</div>`}
+// ação 'encerrada': quem criou cancelou; ou a importada saiu da agenda de origem, porque já passou ou por outro motivo
+// (já passou = o último horário da ação ficou para trás; a lista "Onde eu vou" recebe esse último horário pronto)
+function encerramento(a,turnos){if(!a.fonte)return 'cancelada';
+  const ultimo=a.ultimoInicio||(turnos||[]).map(t=>t.inicio).sort().pop();return ultimo&&ultimo.slice(0,10)<PUB.config.hoje?'passou':'saiu'}
+const ENCERRADA={cancelada:{aviso:'Esta ação foi cancelada.',rotulo:['Cancelada','recusada'],insc:'ação cancelada'},
+  saiu:{aviso:'Esta ação saiu da agenda de origem: foi cancelada ou mudou.',rotulo:['Saiu da agenda',''],insc:'saiu da agenda de origem'},
+  passou:{aviso:'Esta ação já aconteceu.',rotulo:['Já aconteceu',''],insc:'já aconteceu'}};
 const FORA_DO_AR={'em análise':'Esta ação está em análise: só aparece para todo mundo depois que a moderação aprovar.',
-  rascunho:'Esta ação foi suspensa pela moderação e está fora do ar.',recusada:'Esta ação foi recusada pela moderação.','excluída':'Esta ação foi excluída pela moderação.',encerrada:'Esta ação foi encerrada.'};
+  rascunho:'Esta ação foi suspensa pela moderação e está fora do ar.',recusada:'Esta ação foi recusada pela moderação.','excluída':'Esta ação foi excluída pela moderação.',};
+const avisoFora=(a,turnos)=>a.status==='encerrada'?ENCERRADA[encerramento(a,turnos)].aviso:FORA_DO_AR[a.status]||`Esta ação não está aberta a inscrições (${esc(a.status)}).`;
 // o que a moderação faz em cada status: em análise aprova ou recusa; publicada suspende; suspensa reativa;
 // qualquer uma se exclui (fica marcada 'excluída', não se apaga)
 function botoesModerar(a,naFila){const st=a.status;
@@ -612,23 +647,21 @@ function botoesModerar(a,naFila){const st=a.status;
     +(st==='rascunho'?`<button class="btn mini" onclick="reativar(${a.id})">Reativar</button>`:'')
     +(st==='excluída'?'':` <button class="btn sec mini perigo" onclick="excluir(${a.id})">Excluir</button>`)}
 function barraModerar(a){if(!estado.sessao||estado.sessao.papel!=='moderador')return '';
-  return `<div class="moderar"><strong>Moderação · ${esc((ROTULO_STATUS[a.status]||[a.status])[0])}</strong>${botoesModerar(a,false)}</div>`}
+  return `<div class="moderar"><strong>Moderação · ${esc(rotuloStatus(a,(estado.acaoAberta||{}).turnos)[0])}</strong>${botoesModerar(a,false)}</div>`}
 function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const a=ab.acao,fechada=a.status!=='publicada';
-  const ts=ab.turnos,futuros=ts.filter(t=>t.inicio.slice(0,10)>=PUB.config.hoje),ins=estado.inscrevendo;
+  const ts=ab.turnos,futuros=ts.filter(t=>t.inicio.slice(0,10)>=PUB.config.hoje);
   return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a>${barraModerar(a)}<div class="acao"><div class="acao-corpo">
   ${a.foto&&a.foto.url?`<div class="foto capa natural f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a)}</div>${creditoFoto(a)}`:logoCapa(a)?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgLogo(logoCapa(a))}</div>${creditoLogo(logoCapa(a))}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
   <h1>${esc(a.titulo)}</h1>
   <div class="sec" style="font-size:15px">${quemDivulga(a)}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div>
-  ${fechada?`<p class="erro">${FORA_DO_AR[a.status]||`Esta ação não está aberta a inscrições (${esc(a.status)}).`}</p>`:futuros.length?ctaTopo(a,futuros):'<p class="erro">Esta ação já aconteceu.</p>'}
+  ${fechada?`<p class="erro">${avisoFora(a,ts)}</p>`:futuros.length?ctaTopo(a,futuros):'<p class="erro">Esta ação já aconteceu.</p>'}
   <p style="margin-top:12px;white-space:pre-line">${esc(a.descricao)}</p>
   <h2>Onde</h2>${ehOnline(a)?`<div><strong>Online</strong></div><div class="sec" style="font-size:15px">Você participa de casa. O link da chamada vai para quem se inscreve.</div>`:
   `<div><strong>${esc(a.lugar.nome)}</strong></div><div class="sec" style="font-size:15px">${esc(lugarCurto(a.lugar))}</div>${lugarAproximadoNota(a.lugar)}
   <div id="minimapa" style="height:200px;border-radius:14px;margin:10px 0"></div>`}</div>
   <aside class="acao-lado"><h2>Quando</h2>
-  ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${vaoNo(t)?quantosVao(vaoNo(t)):'Ninguém disse que vai ainda. Seja a primeira pessoa!'}${t.lotacao?` (${t.lotacao} vagas)`:''}</div><div style="margin-top:10px">${fechada?'':botaoTurno(a,t)}</div>
-    ${estado.vouOk===t.id?'<div class="selo" style="margin-top:8px">Pronto! A ação está no seu <a href="#/inscricoes">Perfil</a>.</div>':''}
-    ${ins&&ins.turno===t.id&&ins.semFormulario&&ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}${fechada?'':botaoAgenda(a,t)}
-    ${ins&&ins.turno===t.id&&!ins.semFormulario?`<div class="sec" style="margin-top:8px">Você: <strong>${esc(estado.sessao.nome)}</strong></div><label>Seu WhatsApp</label><input id="vtel" value="${esc(ins.telefone)}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p>${ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}<div style="margin-top:8px"><button class="btn" onclick="confirmarVou(${t.id})">Confirmar</button> <button class="btn sec mini" onclick="estado.inscrevendo=null;render()">Cancelar</button></div>`:''}</div>`).join('')}</aside>
+  ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${fechada?'':`${vaoNo(t)?quantosVao(vaoNo(t)):'Ninguém disse que vai ainda. Seja a primeira pessoa!'}${t.lotacao?` (${t.lotacao} vagas)`:''}`}</div><div style="margin-top:10px">${fechada?'':botaoTurno(a,t,'lado')}</div>
+    ${depoisDoBotao(t,'lado',futuros)}${fechada?'':botaoAgenda(a,t)}</div>`).join('')}</aside>
   <div class="acao-resto">${ab.combinado&&!semInscricao(a)?blocoCombinado(a,ab.combinado):''}
   <h2>Quem organiza</h2><div class="sec" style="font-size:15px">${quemDivulga(a)}</div></div></div></div>`}
 function blocoCombinado(a,c){const ct=c.contato;const tel=ct.whatsapp?ct.whatsapp.replace(/\D/g,''):'';
@@ -802,23 +835,25 @@ const linkWhats=tel=>'https://wa.me/55'+String(tel||'').replace(/\D/g,'');
 async function encerrar(id){try{await API.encerrarAcao(id)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}await sincronizar()}
 function editar(id){const a=acaoExemplo(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,online:ehOnline(a),titulo:a.titulo,foto:a.foto&&a.foto.url||'',descricao:a.descricao,lugar:Object.assign({},a.lugar),buscaLugar:lugarCurto(a.lugar),detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,quem:!a.organizacao?'eu':minhaOrg()&&minhaOrg().id===a.organizacao?'minha':'outra',orgNome:a.organizacao&&org(a.organizacao)?org(a.organizacao).nome:'',telefone:pessoa(a.organizador).telefone,quando:quandoDe(turnosDaExemplo(id)[0])});estado.criar=c;location.hash='#/criar'}
 // ---------- perfil: a conta, o WhatsApp, onde vou, as ações que criei (com a situação) e o Sair ----------
-const ROTULO_STATUS={'em análise':['Em análise','analise'],'publicada':['Publicada','publicada'],'recusada':['Recusada','recusada'],'encerrada':['Encerrada',''],'rascunho':['Suspensa','recusada'],'excluída':['Excluída','recusada']};
+const ROTULO_STATUS={'em análise':['Em análise','analise'],'publicada':['Publicada','publicada'],'recusada':['Recusada','recusada'],'rascunho':['Suspensa','recusada'],'excluída':['Excluída','recusada']};
+const rotuloStatus=(a,turnos)=>a.status==='encerrada'?ENCERRADA[encerramento(a,turnos)].rotulo:ROTULO_STATUS[a.status]||[a.status,''];
 async function salvarTelPerfil(){const v=(document.getElementById('ptel')||{}).value||'';
   try{estado.sessao=await API.salvarTelefone(v);estado.perfil={ok:true}}catch(e){estado.perfil={erro:MENSAGEM[e.codigo]||'Não deu. Tente de novo.'}}render()}
 // um horário da minha ação: quem vai, cada pessoa com o número num botão que abre a conversa no WhatsApp
 const ICONE_WHATS='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>';
 function turnoMeu(a,t){
   return `<div class="turno-meu"><div><strong>${fmtData(t.inicio)}</strong> <span class="sec">${t.inscritos.length?quantosVao(t.inscritos.length):'ninguém disse que vai ainda'}</span></div>
-   ${t.inscritos.map(i=>`<div class="pessoa"><span>${esc(i.nome)}</span>${i.telefone?`<a class="btn-whats" href="${linkWhats(i.telefone)}" target="_blank" rel="noopener" title="Abrir conversa no WhatsApp" aria-label="Abrir conversa no WhatsApp com ${esc(i.nome)}, ${esc(i.telefone)}">${ICONE_WHATS}${esc(i.telefone)}</a>`:'<span class="sec">sem telefone</span>'}</div>`).join('')}</div>`}
-function itemMinha(m){const a=m.acao,[rot,cl]=ROTULO_STATUS[a.status]||[a.status,''],aberta=estado.minhasAberta===a.id,n=m.turnos.reduce((k,t)=>k+t.inscritos.length,0);
-  const opcoes=(API.modo==='exemplo'?`<button onclick="editar(${a.id})">Editar</button>`:'')+(['em análise','publicada'].includes(a.status)?`<button class="perigo" onclick="encerrar(${a.id})">Encerrar ação</button>`:'');
+   ${t.inscritos.map(i=>`<div class="pessoa"><span>${esc(i.nome)}</span>${i.telefone?`<a class="btn-whats" href="${linkWhats(i.telefone)}" target="_blank" rel="noopener" title="Abrir conversa no WhatsApp" aria-label="Abrir conversa no WhatsApp com ${esc(i.nome)}, ${esc(i.telefone)}">${ICONE_WHATS}${esc(i.telefone)}</a>`:'<span class="sec">sem telefone</span>'}</div>`).join('')}
+   ${(t.desistiram||[]).length?`<div class="sec desistiram">Desistiu: ${t.desistiram.map(i=>esc(i.nome)).join(', ')}</div>`:''}</div>`}
+function itemMinha(m){const a=m.acao,[rot,cl]=rotuloStatus(a,m.turnos),aberta=estado.minhasAberta===a.id,n=m.turnos.reduce((k,t)=>k+t.inscritos.length,0);
+  const opcoes=(API.modo==='exemplo'?`<button onclick="editar(${a.id})">Editar</button>`:'')+(['em análise','publicada'].includes(a.status)?`<button class="perigo" onclick="encerrar(${a.id})">Cancelar ação</button>`:'');
   return `<div class="cartao"><div class="cartao-topo"><div onclick="estado.minhasAberta=${aberta?'null':a.id};render()" style="cursor:pointer;display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;flex:1;min-width:0">${cuboAcao(a,'width:48px;height:48px;font-size:22px;border-radius:12px')}
    <div style="min-width:0"><div style="font-weight:700;line-height:1.3">${esc(a.titulo)}</div><div class="sec" style="margin-top:5px"><span class="status ${cl}">${rot}</span> ${m.turnos[0]?fmtData(m.turnos[0].inicio):''}${a.status==='publicada'?` · ${quantosVao(n)}`:''}</div></div></div>
    ${opcoes?menuMais(opcoes):''}</div>
   ${a.status==='em análise'?'<p class="sec" style="margin:10px 0 0">Esperando a moderação. Assim que aprovarem, ela aparece para todo mundo.</p>':''}
   ${a.status==='recusada'&&a.motivoRecusa?`<p class="erro" style="margin:10px 0 0">Motivo da recusa: ${esc(a.motivoRecusa)}</p>`:''}
   ${a.status==='rascunho'?`<p class="erro" style="margin:10px 0 0">A moderação tirou esta ação do ar.${a.motivoRecusa?` Motivo: ${esc(a.motivoRecusa)}`:''}</p>`:''}
-  ${aberta?m.turnos.map(t=>turnoMeu(a,t)).join('')+(a.status==='publicada'?`<a class="ver-pagina" href="#/acao/${a.id}">Ver a página da ação →</a>`:''):
+  ${aberta?m.turnos.map(t=>turnoMeu(a,t)).join('')+(['publicada','encerrada'].includes(a.status)?`<a class="ver-pagina" href="#/acao/${a.id}">Ver a página da ação →</a>`:''):
     `<button class="link" style="margin-top:8px" onclick="estado.minhasAberta=${a.id};render()">${a.status==='publicada'?`Ver quem vai →`:'Ver detalhes →'}</button>`}</div>`}
 function telaPerfil(){const s=estado.sessao;
   if(!s)return `<div class="pagina estreita"><h1>Perfil</h1><p>Entre com sua conta Google para dizer "Eu vou!" nas ações, cadastrar ações e acompanhar tudo por aqui.</p>${botaoEntrar()}</div>`;
@@ -887,7 +922,7 @@ let renderN=0;
 async function render(){
   const n=++renderN;
   const h=location.hash||'#/inicio';const [,rota,arg]=h.split('/');
-  if(rota!=='acao'){estado.inscrevendo=null;estado.vouOk=null}if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}if(rota!=='perfil')estado.perfil=null
+  if(rota!=='acao'){estado.inscrevendo=null;estado.vouOk=null;estado.vouOnde=null}if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}if(rota!=='perfil')estado.perfil=null
   try{
     if(rota==='acao'){const r=await API.acao(Number(arg));if(n!==renderN)return;if(r)normalizarTipos([r.acao]);estado.acaoAberta=r}
     if((rota==='perfil'||rota==='minhas'||rota==='inscricoes'||rota==='criar')&&estado.sessao){const mo=await API.minhaOrganizacao();if(n!==renderN)return;estado.minhaOrg=mo}
@@ -935,6 +970,12 @@ async function sincronizar(){
 document.addEventListener('click',e=>{if(!e.target.closest('#topo,.caixa')){const s=document.getElementById('sugestoes');if(s)s.style.display='none'}
   if(!e.target.closest('.cab-cidade'))fecharCidade();
   document.querySelectorAll('details.agenda[open],details.mais[open]').forEach(d=>{if(!d.contains(e.target))d.open=false})});
+// o menu ⋯ abre para a esquerda e o da agenda para a direita; se isso cortar na borda da tela, vira para o outro lado
+function ajeitarMenu(d){const o=d.querySelector('.opcoes');if(!o)return;o.classList.remove('esq','dir');
+  const r=o.getBoundingClientRect();if(r.left<8)o.classList.add('esq');else if(r.right>innerWidth-8)o.classList.add('dir')}
+window.matchMedia('(min-width:900px)').addEventListener('change',()=>{const ins=estado.inscrevendo;
+  if(!(ins||estado.vouOk)||!(location.hash||'').startsWith('#/acao/'))return;const e=document.getElementById('vtel');if(ins&&e)ins.telefone=e.value;render()});
+document.addEventListener('toggle',e=>{const d=e.target;if(d.open&&d.matches&&d.matches('details.mais,details.agenda'))ajeitarMenu(d)},true);
 window.addEventListener('hashchange',render);
 window.addEventListener('DOMContentLoaded',sincronizar);
 </script>

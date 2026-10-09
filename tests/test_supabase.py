@@ -77,6 +77,9 @@ def test_inscrever_exige_entrar_e_telefone_e_devolve_combinado(cenario):
     assert sb.rpc("desistir", {"turno_id": t}, jwt=cenario["jwt_a"]).status in (200, 204)
     assert sb.chamar("GET", f"/rest/v1/turno_publico?id=eq.{t}").corpo[0]["vao"] == 0
     assert sb.rpc("acao_para_mim", {"acao_id": cenario["acao"]}, jwt=cenario["jwt_a"]).corpo["combinado"] is None
+    # a desistência não some: fica no histórico, marcada
+    minhas = sb.rpc("minhas_inscricoes", {}, jwt=cenario["jwt_a"]).corpo
+    assert [m["desistiu"] for m in minhas if m["turno"]["id"] == t] == [True]
     assert sb.rpc("inscrever", {"turno_id": t}, jwt=cenario["jwt_a"]).status == 200
     assert sb.chamar("GET", f"/rest/v1/turno_publico?id=eq.{t}").corpo[0]["vao"] == 1
 
@@ -296,6 +299,11 @@ def test_organizador_ve_quem_vai_e_encerra(cenario):
     assert t["inscritos"] == [{"nome": "Pessoa A", "telefone": "(11) 98888-7777"}]
     assert sb.rpc("encerrar_acao", {"acao_id": novo}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
     assert sb.rpc("encerrar_acao", {"acao_id": novo}, jwt=cenario["jwt_org"]).status in (200, 204)
+    # cancelada continua abrindo pelo link, até para quem não entrou, sem o link do grupo nem o combinado
+    vista = sb.rpc("acao_restrita", {"acao_id": novo}).corpo
+    assert vista["acao"]["status"] == "encerrada" and "contato_link" not in vista["acao"] and "detalhe" not in vista["acao"]
+    turno_novo = next(m for m in sb.rpc("minhas_acoes", {}, jwt=cenario["jwt_org"]).corpo if m["acao"]["id"] == novo)["turnos"][0]
+    assert turno_novo["desistiram"] == []
 
 
 def test_foto_so_na_propria_pasta_do_bucket(cenario):
@@ -349,6 +357,20 @@ def test_so_se_suspende_acao_publicada(cenario):
     sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
     assert r.corpo["status"] == "em análise"
     assert sb.rpc("suspender_acao", {"acao_id": r.corpo["id"]}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
+
+
+def test_cancelada_em_analise_nao_vira_publica_nem_conta_como_aprovada(cenario):
+    sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
+    r = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"])
+    assert r.corpo["status"] == "em análise"
+    assert sb.rpc("encerrar_acao", {"acao_id": r.corpo["id"]}, jwt=cenario["jwt_b"]).status in (200, 204)
+    # nunca passou pela moderação: o link não abre para quem não criou
+    assert sb.rpc("acao_restrita", {"acao_id": r.corpo["id"]}).corpo is None
+    assert sb.rpc("acao_restrita", {"acao_id": r.corpo["id"]}, jwt=cenario["jwt_b"]).corpo["acao"]["status"] == "encerrada"
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    outra = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"]).corpo["id"]
+    fila = sb.rpc("fila_moderacao", {"situacao": "em análise"}, jwt=cenario["jwt_a"]).corpo
+    assert next(m for m in fila if m["acao"]["id"] == outra)["organizador"]["aprovadas"] == 0
 
 
 def test_organizacao_nova_liga_existente_vira_pedido_e_selo_publica_direto(cenario):

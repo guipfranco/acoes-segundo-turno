@@ -18,6 +18,7 @@
       prioritaria: !!r.prioritaria, status: r.status, contatoTipo: r.contato_tipo || 'organizador_chama',
       criadaEm: r.criada_em ? String(r.criada_em).slice(0, 10) : null,
       fonte: r.fonte || null, linkDivulgacao: r.link_divulgacao || null, motivoRecusa: r.motivo_recusa || null,
+      ultimoInicio: semSeg(r.ultimo_inicio) || null,
     };
   }
   const deOrg = o => ({ id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada,
@@ -27,7 +28,7 @@
   // ação de quem organiza (ou da fila): turnos com a lista de quem vai
   const comInscritos = m => ({ acao: Object.assign(deAcao(m.acao), { detalhe: m.acao.detalhe || null, contatoLink: m.acao.contato_link || null,
       organizacaoLink: m.acao.organizacao_link || null, organizacaoDados: m.acao.organizacao_dados || null }),
-    turnos: (m.turnos || []).map(t => Object.assign(deTurno(t), { inscritos: t.inscritos || [] })) });
+    turnos: (m.turnos || []).map(t => Object.assign(deTurno(t), { inscritos: t.inscritos || [], desistiram: t.desistiram || [] })) });
   function erroDe(e) { const x = new Error(e.message || 'erro'); x.codigo = (e.message || '').trim(); x.original = e; return x; }
 
   function criar(cfg) {
@@ -68,8 +69,9 @@
         if (aR.error) throw erroDe(aR.error); if (tR.error) throw erroDe(tR.error);
         const extra = { inscrita: (mim && mim.inscrita) || [], combinado: (mim && mim.combinado) || null };
         if (aR.data) return Object.assign({ acao: deAcao(aR.data), turnos: tR.data.map(deTurno) }, extra);
-        // fora do ar (em análise, suspensa, recusada): só quem criou ou modera vê
-        const r = (await uid()) ? await rpc('acao_restrita', { acao_id: id }) : null;
+        // fora do ar (em análise, suspensa, recusada): só quem criou ou modera vê; cancelada abre para todos
+        let r = null;
+        try { r = await rpc('acao_restrita', { acao_id: id }); } catch (e) { if (await uid()) throw e; console.warn('acao_restrita sem sessão falhou; a página mostra "não encontrada"', e); }
         if (!r) return null;
         return Object.assign({ acao: Object.assign(deAcao(r.acao), { detalhe: r.acao.detalhe || null, contatoLink: r.acao.contato_link || null }),
           turnos: (r.turnos || []).map(deTurno) }, extra);
@@ -114,7 +116,7 @@
       async suspender(id, motivo) { await rpc('suspender_acao', { acao_id: id, motivo: motivo || null }); },
       async reativar(id) { await rpc('reativar_acao', { acao_id: id }); },
       async excluir(id) { await rpc('excluir_acao', { acao_id: id }); },
-      async minhasInscricoes() { return (await rpc('minhas_inscricoes')).map(m => ({ acao: deAcao(m.acao), turno: deTurno(m.turno) })); },
+      async minhasInscricoes() { return (await rpc('minhas_inscricoes')).map(m => ({ acao: deAcao(m.acao), turno: deTurno(m.turno), desistiu: !!m.desistiu })); },
     };
   }
   return { criar, deAcao, deTurno, dePessoa, deOrg, hojeBrasilia };

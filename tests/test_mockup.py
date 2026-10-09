@@ -116,7 +116,7 @@ def test_validacao_dos_campos_obrigatorios():
 
 def test_perfil_e_fila():
     for s in ["function telaPerfil", "function telaFila", "btn-whats", "Suspender", "Reativar", "Excluir", "Suspensas", "function barraModerar", "Ações que cadastrei",
-              "Encerrar ação", "Editar", "Aprovar", "Recusar", "Dar selo à organização", "Sair da conta",
+              "Cancelar ação", "Editar", "Aprovar", "Recusar", "Dar selo à organização", "Sair da conta",
               "Bloquear organizador", "Recuse se:", "Já criou", "API.minhasAcoes()", "API.fila(", "Motivo da recusa"]:
         assert s in HTML, s
 
@@ -321,7 +321,7 @@ def test_publicar_recarrega_antes_de_ir_para_o_perfil_sem_render_duplo():
 
 
 def test_vou_pede_telefone_uma_vez_e_mostra_a_forma_de_contato():
-    acao = HTML[HTML.index("function telaAcao"):HTML.index("function montarMiniMapa")]
+    acao = HTML[HTML.index("function depoisDoBotao"):HTML.index("function montarMiniMapa")]
     assert "Receber código" not in HTML and "Código que chegou" not in HTML
     for s in ["Seu nome e telefone vão para quem organiza esta ação", "vai entrar em contato", "Chamar no WhatsApp",
               "Entrar no grupo do WhatsApp", "wa.me/55", "organizador_chama", "'whatsapp'", "link_grupo"]:
@@ -338,7 +338,7 @@ def test_entrar_sair_e_inscricoes_no_perfil():
 
 def test_inscricoes_separa_passadas_e_desistir_fica_no_menu():
     corpo = HTML.split("const inscProxima", 1)[1].split("async function desistir", 1)[0]
-    for s in ["Onde eu vou", "Passadas ou encerradas", "já aconteceu", "ação encerrada", "menuMais(", "desistir("]:
+    for s in ["Onde eu vou", "Passadas, canceladas ou desistências", "já aconteceu", "ação encerrada", "menuMais(", "desistir("]:
         assert s in corpo, s
 
 
