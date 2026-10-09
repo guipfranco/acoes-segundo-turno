@@ -3,6 +3,24 @@
 Referências pedidas pelo Gui: Airbnb (busca por lugar, lista que acompanha o mapa, etiquetas nos pinos) e
 Meetup (cards com cara de evento).
 
+## Identidade da campanha (2026-10-09)
+
+Pedido do Gui: mais cor e mais perto da identidade da campanha do Lula. Fonte: manual "Guia simplificado
+design" Lula 2026 (PDF no Drive da campanha, pasta Lula-Haddad-Tebet). Entre três rascunhos (só um toque de
+cor, marca forte com leitura limpa, imersão total), o Gui escolheu **marca forte**. Mora em `app/marca.css`,
+que vem depois do `<style>` do `index.html` e substitui os tokens e princípios abaixo onde eles conflitam:
+
+- Paleta do manual: vermelho `#FD0000` (caixas grandes), vinho `#A20301` (links, degrau 3D dos botões),
+  amarelo `#FFD400`, verde `#00B923`, verde-escuro `#006820` (selo, texto na caixa amarela), azul `#0034D2`.
+  Onde há letra branca pequena (barra, botões) ou texto vermelho, o vermelho é `#E60000` (4,8:1 com o branco).
+- Tipo: Archivo condensado black em caixa alta nos títulos (no lugar da Transducer Condensed Black) e
+  Montserrat no texto (no lugar da Gotham); as do manual são do Adobe Fonts, pagas.
+- Barra vermelha; "2º turno" num selo amarelo inclinado; Cadastrar ação em amarelo.
+- Frase da inicial numa caixa amarela inclinada com letra verde-escura, como "O Brasil pronto pra mais".
+- Título de cada bloco da inicial numa caixa inclinada com lateral 3D, alternando vermelho, verde, azul e
+  amarelo; Online em azul. Hora da foto em selo amarelo; botões com degrau em vinho.
+- Cards e listas seguem em fundo branco para ler bem. Nada do logo oficial: o site não é da campanha.
+
 ## Tokens
 
 - Cores: papel `#FFFFFF`; asfalto (texto) `#17171A`; vermelho da campanha `#D6232E` (só em ações e no Doar);

@@ -451,3 +451,13 @@ def test_minha_organizacao_no_perfil_e_quem_organiza_no_cadastro():
             assert s in HTML, s
     assert "estado.filaAba='org'" in HTML and "API.filaOrganizacoes()" in HTML and "API.darSelo(oid)" in HTML
     assert "Link do perfil oficial" in HTML and "organizacao_link:precisaPost(c)" in HTML and "Link do post da organização anunciando esta ação" in HTML and "const precisaPost=" in HTML
+
+
+def test_identidade_visual_da_campanha():
+    # paleta e tipografia do manual Lula 2026 (Archivo condensado e Montserrat no lugar de Transducer e Gotham)
+    marca = (RAIZ / "app" / "marca.css").read_text(encoding="utf-8")
+    assert HTML.index('href="marca.css"') > HTML.index("</style>")  # vem depois do estilo base e manda nele
+    assert "family=Archivo:wdth,wght@62..125" in HTML and "family=Montserrat" in HTML
+    for cor in ["#fd0000", "#a20301", "#ffd400", "#00b923", "#006820", "#0034d2"]:
+        assert cor in marca, cor
+    assert "?tema=" not in HTML and not list((RAIZ / "app").glob("tema-*.css"))
