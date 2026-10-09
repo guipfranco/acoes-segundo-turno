@@ -3,7 +3,8 @@ window.DADOS = {
   "vaquinha": "https://exemplo.vaquinha.oficial/lula",
   "frase": "O que você pode fazer hoje para eleger o Lula",
   "hoje": "2026-10-09",
-  "eu": 2
+  "eu": 2,
+  "agora": "2026-10-09T15:00"
  },
  "organizacoes": [
   {
@@ -1023,9 +1024,10 @@ window.DADOS = {
   {
    "id": 25,
    "acao": 21,
-   "inicio": "2026-10-10T16:00",
-   "fim": "2026-10-10T18:30",
-   "lotacao": null
+   "inicio": "2026-10-10T19:00",
+   "fim": "2026-10-10T23:00",
+   "lotacao": null,
+   "horaAproximada": true
   },
   {
    "id": 26,
@@ -1240,6 +1242,30 @@ window.DADOS = {
    "criadaEm": "2026-10-08",
    "canceladaEm": null,
    "presenca": null
+  }
+ ],
+ "feedbacks": [
+  {
+   "id": 1,
+   "pessoa": null,
+   "texto": "A panfletagem de hoje de manhã já terminou e continua aparecendo no mapa.",
+   "contato": null,
+   "tela": "#/acao/3",
+   "acao": 3,
+   "navegador": "iPhone Safari",
+   "criadoEm": "2026-10-09T14:20",
+   "tratadoEm": null
+  },
+  {
+   "id": 2,
+   "pessoa": 4,
+   "texto": "Ideia: dava para mostrar as ações online numa lista, em vez de fotos enormes.",
+   "contato": "(11) 9xxxx-xxxx",
+   "tela": "#/inicio",
+   "acao": null,
+   "navegador": "Android Chrome",
+   "criadoEm": "2026-10-08T21:05",
+   "tratadoEm": "2026-10-09T09:00"
   }
  ],
  "areasPrioritarias": [

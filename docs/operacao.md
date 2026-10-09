@@ -151,6 +151,13 @@ Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capt
 - Em 2026-10-09 (noite): merge da branch `cards-verticais` (card 4:5 com a arte inteira); `refazer` trocou 224
   imagens recortadas pela arte inteira do embed (343 das 356 ações com foto de divulgação; ficaram 3 vídeos que não
   deixam incorporar: DeMS8kWi0jE, DePGosYRM0X, DePeocbkbRR); `previa-instagram` republicada com o embed.
+- Pendente (branch `feedback-1009`, depois do merge): aplicar a migração 20261009000050 (`turno.hora_aproximada`,
+  `turno_publico` com a coluna nova, `importar_acoes` que a grava; tabela `feedback` e funções `enviar_feedback`,
+  `feedbacks`, `tratar_feedback`) com `python scripts/ir_ao_ar.py migrar`, e em seguida reimportar as redes
+  (`python scripts/publicar_acoes.py redes --de levantamento/acoes-consolidado-2026-10-08.csv --feed levantamento/bora-lula/<data>.json --aplicar`)
+  para que as linhas sem hora (ex.: "Noite - Giro nos Bares", que estava como 9h às 11h) passem a "à noite" com
+  `hora_aproximada`. A hora muda o `fonte_id` dessas linhas: a ação antiga é encerrada e nasce outra, pela regra de sempre.
+  As mensagens do "Fale com a gente" chegam na aba Mensagens da Fila (`#/fila`, só moderador).
 
 ## O que falta para ir ao ar
 

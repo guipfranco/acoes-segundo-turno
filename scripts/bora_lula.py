@@ -101,6 +101,30 @@ def faixa(hora, hora_ord):
     return inicio, ("23:59" if h_fim >= 24 else f"{h_fim:02d}:{m:02d}")
 
 
+# Divulgação sem hora, só o período ("Noite - Giro nos Bares", "à tarde"): faixa aproximada, marcada como tal
+# (turno.hora_aproximada); o app mostra "sex 09/10, à noite" em vez de inventar 9h às 11h.
+PERIODOS = {"manha": ("09:00", "12:00"), "tarde": ("14:00", "18:00"), "noite": ("19:00", "23:00")}
+SEM_HORA = ("09:00", "18:00")  # nem período: o app mostra "horário a confirmar"
+
+
+def periodo_do_texto(texto):
+    """(início, fim) do período citado no texto (noite, tarde, manhã), ou None."""
+    t = sem_acento(texto)
+    for p in ("noite", "tarde", "manha"):
+        if re.search(rf"\b{p}\b", t):
+            return PERIODOS[p]
+    return None
+
+
+def faixa_aproximada(hora, texto=""):
+    """(início, fim, aproximada). Hora com dígitos: faixa exata. Senão, o período da hora ou do texto; ou o dia."""
+    if re.search(r"\d", str(hora or "")) or sem_acento(hora) == "dia todo":
+        ini, fim = faixa(hora, None)
+        return ini, fim, False
+    per = periodo_do_texto(hora or "") or periodo_do_texto(texto or "") or SEM_HORA
+    return per[0], per[1], True
+
+
 def bairro_do_endereco(endereco, cidade=""):
     """Bairro no fim do endereço ("Av. X, 704 - Centro"). Nada se tiver número, UF/CEP ou for a própria cidade."""
     m = re.search(r"[-–,]\s*([^-–,\d]{3,40})\s*$", str(endereco or ""))
