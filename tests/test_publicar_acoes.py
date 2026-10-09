@@ -250,3 +250,34 @@ def test_trava_so_olha_turnos_de_hoje_em_diante(monkeypatch):
     monkeypatch.setattr(pa, "destino", lambda: ("management", None, "tok"))
     assert pa.ids_com_inscricao("redes", "2026-10-11") == {"a"}
     assert "t.inicio >= '2026-10-11'" in consultas[0] and "a.fonte = 'redes'" in consultas[0]
+
+
+def test_link_invalido_e_descartado_com_aviso_na_revisao():
+    item, motivo = pa.item_do_feed(feed_item(link="javascript:alert(1)"), LUGARES)
+    assert motivo is None and item["link"] == "" and item["aviso"].startswith("link descartado")
+    assert "aviso" not in pa.item_do_feed(feed_item(), LUGARES)[0]
+    assert "aviso" not in pa.item_do_feed(feed_item(link=""), LUGARES)[0]
+    feed = {"hoje": "2026-10-08", "acoes": [feed_item(id=1, link="javascript:alert(1)"), feed_item(id=2, local="Outro", link="www.sem-esquema.org")]}
+    itens, revisao = pa.itens_do_feed(feed, LUGARES)
+    assert [i["link"] for i in itens] == ["", ""] and all("aviso" not in i for i in itens)  # o item vai sem o aviso dentro
+    assert revisao == [("1", "Panfletagem no centro", "aviso: link descartado (não é http/https): javascript:alert(1)"),
+                       ("2", "Panfletagem no centro", "aviso: link descartado (não é http/https): www.sem-esquema.org")]
+    r = pa.resumo(itens, revisao)
+    assert "2 para publicar" in r and "0 de fora" in r and "AVISO: 2 links descartados" in r
+    # rota redes (CSV): a mesma regra
+    itens, revisao = pa.itens_do_consolidado([linha(link="data:text/html,oi"), linha(titulo="Boa", link="https://x/ok")], LUGARES, hoje="2026-10-09")
+    assert [i["link"] for i in itens] == ["", "https://x/ok"]
+    assert revisao == [("instagram", "Caminhada com Lula no centro", "aviso: link descartado (não é http/https): data:text/html,oi")]
+    assert pa.sql_importar("redes", itens).count("javascript") == 0
+
+
+def test_com_foto_descarta_url_que_nao_e_https(capsys):
+    mapa = {"AAA": {"url": "http://cdn/AAA.jpg", "perfil": "x"}, "BBB": {"url": "https://s/divulgacao/BBB.jpg"}}
+    itens = [{"fonte_id": "1", "link": "https://www.instagram.com/p/AAA/", "organizacao": None,
+              "organizacao_foto": {"url": "javascript:alert(1)", "credito": "", "pagina": ""}},
+             {"fonte_id": "2", "link": "https://www.instagram.com/p/BBB/", "organizacao": None,
+              "organizacao_foto": {"url": "https://commons.wikimedia.org/x.svg", "credito": "", "pagina": ""}}]
+    pa.com_foto(itens, mapa)
+    assert itens[0]["foto"] is None and itens[0]["organizacao_foto"] is None
+    assert itens[1]["foto"]["url"].endswith("BBB.jpg") and itens[1]["organizacao_foto"]["url"].startswith("https://commons")
+    assert capsys.readouterr().err.count("AVISO") == 2

@@ -190,3 +190,25 @@ def test_converter_com_geocodificador_marca_precisao_e_logo():
     sem = bl.converter(feed, bl.carregar_lugares(), hoje="2026-10-08")
     assert sem["acoes"][0]["lugar"]["precisao"] == "cidade"
     assert "1 com ponto exato" in bl.resumo(d) and "1 com logo" in bl.resumo(d)
+
+
+def test_link_que_nao_e_http_e_descartado_com_aviso():
+    assert bl.link_valido("https://www.instagram.com/p/x/") == "https://www.instagram.com/p/x/"
+    assert bl.link_valido(" HTTP://site.org/a ") == "HTTP://site.org/a"
+    for ruim in ["javascript:alert(1)", "data:text/html;base64,AAAA", "www.site.org", "(11) 99999-9999", "", None, "ftp://x/y"]:
+        assert bl.link_valido(ruim) == "", ruim
+    assert bl.foto_valida("https://cdn/x.jpg") == "https://cdn/x.jpg"
+    assert bl.foto_valida("http://127.0.0.1:54321/storage/v1/object/public/divulgacao/a.jpg").startswith("http://127.0.0.1")
+    for ruim in ["http://cdn/x.jpg", "javascript:alert(1)", "data:image/png;base64,AAAA", "", None]:
+        assert bl.foto_valida(ruim) == "", ruim
+    feed = {"hoje": "2026-10-08", "acoes": [
+        {"id": 1, "data": "2026-10-10", "hora": "9h", "hora_ord": 9, "uf": "SP", "cidade": "Diadema", "local": "Praça", "endereco": "",
+         "atividade": "Panfletagem", "tipo": "Panfletagem", "organizacao": "", "link": "javascript:alert(1)", "online": False, "plataforma": ""},
+        {"id": 2, "data": "2026-10-10", "hora": "9h", "hora_ord": 9, "uf": "SP", "cidade": "Diadema", "local": "Praça", "endereco": "",
+         "atividade": "Ato", "tipo": "Ato", "organizacao": "", "link": "https://x/2", "online": False, "plataforma": ""}]}
+    d = bl.converter(feed, bl.carregar_lugares(), hoje="2026-10-08")
+    a1, a2 = d["acoes"]
+    assert a1["link"] == "" and a1["contatoLink"] is None and a1["contatoTipo"] == "organizador_chama"
+    assert "javascript:" not in a1["descricao"] and a1["aviso"].startswith("link descartado")
+    assert a2["link"] == "https://x/2" and a2["contatoTipo"] == "divulgacao" and "aviso" not in a2
+    assert "AVISO: 1 links descartados" in bl.resumo(d) and "ids 1" in bl.resumo(d)

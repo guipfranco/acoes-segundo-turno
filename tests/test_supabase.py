@@ -242,9 +242,13 @@ def test_importar_acoes_grava_foto_da_divulgacao_e_nao_apaga_sem_foto(cenario):
     assert bucket["public"] is True
 
 
+# imagem servida pelo próprio Storage da pilha local (a única que criar_acao aceita desde a migração 50)
+FOTO_BUCKET = f"{sb.URL}/storage/v1/object/public/fotos-acoes/teste/arte.jpg"
+
+
 def _nova(**extra):
     base = {"titulo": "Criada pelo app", "tipo": "panfletagem", "descricao": "teste", "online": False, "lugar_nome": "Praça",
-            "bairro": "Centro", "cidade": "São Paulo", "lat": -23.5, "lon": -46.6, "foto": "https://exemplo.org/arte.jpg",
+            "bairro": "Centro", "cidade": "São Paulo", "lat": -23.5, "lon": -46.6, "foto": FOTO_BUCKET,
             "turnos": [{"inicio": "2099-03-01T09:00", "fim": "2099-03-01T11:00"}]}
     base.update(extra)
     return base
@@ -416,3 +420,96 @@ def test_organizacao_nova_liga_existente_vira_pedido_e_selo_publica_direto(cenar
     assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org)}, jwt=cenario["jwt_a"]).corpo["message"] == "link_post"  # com selo também
     assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org, organizacao_link="https://www.instagram.com/p/xyz/")},
                   jwt=cenario["jwt_a"]).corpo["status"] == "publicada"
+
+
+def test_foto_da_acao_so_do_proprio_storage(cenario):
+    sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
+    for fora in ("https://exemplo.org/arte.jpg", "https://ommitzndniqnmsjsjghb.supabase.co.golpe.example/storage/v1/object/public/fotos-acoes/x.jpg",
+                 f"{sb.URL}/storage/v1/object/public/outro/x.jpg", "http://127.0.0.1:54321/x/storage/v1/object/public/fotos-acoes/x.jpg"):
+        assert sb.rpc("criar_acao", {"dados": _nova(foto=fora)}, jwt=cenario["jwt_b"]).corpo["message"] == "sem_foto", fora
+    r = sb.rpc("criar_acao", {"dados": _nova(foto=FOTO_BUCKET)}, jwt=cenario["jwt_b"])
+    assert r.status == 200, r.corpo
+    assert sb.admin("GET", f"/rest/v1/acao?id=eq.{r.corpo['id']}&select=foto_url").corpo == [{"foto_url": FOTO_BUCKET}]
+
+
+def test_logo_da_organizacao_fora_do_storage_vira_null(cenario):
+    tag = uuid.uuid4().hex[:6]
+    r = sb.rpc("salvar_organizacao", {"nome": f"Comitê Logo {tag}", "tipo": "coletivo", "logo": "https://exemplo.org/logo.png",
+                                      "link": "https://instagram.com/comite"}, jwt=cenario["jwt_b"])
+    assert r.status == 200 and r.corpo["situacao"] == "ligada", r.corpo
+    assert sb.rpc("minha_organizacao", {}, jwt=cenario["jwt_b"]).corpo["organizacao"]["foto_url"] is None
+    logo = f"{sb.URL}/storage/v1/object/public/fotos-acoes/teste/logo.png"
+    r = sb.rpc("salvar_organizacao", {"nome": f"Comitê Logo {tag}", "tipo": "coletivo", "logo": logo, "link": "https://instagram.com/comite"}, jwt=cenario["jwt_b"])
+    assert r.status == 200, r.corpo
+    assert sb.rpc("minha_organizacao", {}, jwt=cenario["jwt_b"]).corpo["organizacao"]["foto_url"] == logo
+
+
+def test_importar_acoes_descarta_link_e_foto_que_nao_sao_http(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    itens = [_item("a", link="javascript:alert(1)", foto={"url": "javascript:alert(2)", "credito": "x", "pagina": "https://www.instagram.com/p/x/"},
+                   organizacao="Org Link Ruim " + fonte, organizacao_foto={"url": "data:image/png;base64,AAAA", "credito": "x", "pagina": "x"}),
+             _item("b", link="HTTPS://www.instagram.com/p/y/")]
+    r = sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE)
+    assert r.status == 200, r.corpo
+    pub = {a["titulo"]: a for a in sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo}
+    a, b = pub["Importada a"], pub["Importada b"]
+    assert a["contato_tipo"] == "organizador_chama" and a["link_divulgacao"] is None and a["foto_url"] is None
+    assert sb.admin("GET", f"/rest/v1/acao?id=eq.{a['id']}&select=contato_link").corpo == [{"contato_link": None}]
+    assert b["contato_tipo"] == "divulgacao" and b["link_divulgacao"] == "HTTPS://www.instagram.com/p/y/"
+    org = sb.chamar("GET", f"/rest/v1/organizacao_publica?nome=eq.{urllib.parse.quote('Org Link Ruim ' + fonte)}").corpo
+    assert len(org) == 1 and org[0]["foto_url"] is None
+
+
+def test_moderador_bloqueia_e_desbloqueia_pessoa(cenario):
+    sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['b']}", {"papel": "organizador"})
+    publicada = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"]).corpo["id"]
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['b']}", {"papel": "participante"})
+    pendente = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"]).corpo["id"]
+    assert len(sb.chamar("GET", f"/rest/v1/acao_publica?id=eq.{publicada}").corpo) == 1
+    # participante comum não bloqueia; moderador não bloqueia a si nem outro moderador
+    assert sb.rpc("bloquear_pessoa", {"pessoa_id": cenario["b"]}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
+    assert sb.rpc("bloquear_pessoa", {"pessoa_id": cenario["b"]}).status in (401, 403)
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['org']}", {"papel": "moderador"})
+    assert sb.rpc("bloquear_pessoa", {"pessoa_id": cenario["a"]}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
+    assert sb.rpc("bloquear_pessoa", {"pessoa_id": cenario["org"]}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
+    assert sb.rpc("bloquear_pessoa", {"pessoa_id": cenario["b"], "motivo": "spam"}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert sb.admin("GET", f"/rest/v1/pessoa?id=eq.{cenario['b']}&select=bloqueada").corpo == [{"bloqueada": True}]
+    assert sb.chamar("GET", f"/rest/v1/acao_publica?id=eq.{publicada}").corpo == []
+    assert sb.admin("GET", f"/rest/v1/acao?id=eq.{publicada}&select=status,motivo_recusa").corpo == [{"status": "rascunho", "motivo_recusa": "spam"}]
+    assert sb.admin("GET", f"/rest/v1/acao?id=eq.{pendente}&select=status").corpo == [{"status": "em análise"}]
+    assert any(m["acao"]["id"] == publicada and m["organizador"]["bloqueada"] for m in sb.rpc("fila_moderacao", {"situacao": "rascunho"}, jwt=cenario["jwt_a"]).corpo)
+    assert sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"]).corpo["message"] == "bloqueada"
+    assert sb.rpc("reativar_acao", {"acao_id": publicada}, jwt=cenario["jwt_a"]).corpo["message"] == "organizador_bloqueado"
+    reg = sb.admin("GET", f"/rest/v1/registro_moderacao?alvo_tipo=eq.pessoa&alvo_id=eq.{cenario['b']}&order=id").corpo
+    assert [(r["acao_feita"], r["motivo"]) for r in reg] == [("bloquear", "spam")]
+    # desbloquear só desmarca: a ação segue suspensa até o moderador reativar
+    assert sb.rpc("desbloquear_pessoa", {"pessoa_id": cenario["b"]}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
+    assert sb.rpc("desbloquear_pessoa", {"pessoa_id": cenario["b"]}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert sb.admin("GET", f"/rest/v1/pessoa?id=eq.{cenario['b']}&select=bloqueada").corpo == [{"bloqueada": False}]
+    assert sb.admin("GET", f"/rest/v1/acao?id=eq.{publicada}&select=status").corpo == [{"status": "rascunho"}]
+    assert sb.rpc("desbloquear_pessoa", {"pessoa_id": cenario["b"]}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
+    assert sb.rpc("reativar_acao", {"acao_id": publicada}, jwt=cenario["jwt_a"]).status in (200, 204)
+    reg = sb.admin("GET", f"/rest/v1/registro_moderacao?alvo_tipo=eq.pessoa&alvo_id=eq.{cenario['b']}&order=id").corpo
+    assert [r["acao_feita"] for r in reg] == ["bloquear", "desbloquear"]
+
+
+def _enviar_foto(cenario, jwt, caminho):
+    import urllib.request, urllib.error
+    jpeg = bytes.fromhex("ffd8ffe000104a46494600010100000100010000ffd9")
+    req = urllib.request.Request(f"{sb.URL}/storage/v1/object/fotos-acoes/{caminho}", data=jpeg, method="POST",
+                                 headers={"apikey": sb.ANON, "Authorization": f"Bearer {jwt}", "Content-Type": "image/jpeg"})
+    try:
+        with urllib.request.urlopen(req) as r:
+            return r.status
+    except urllib.error.HTTPError as e:
+        return e.code
+
+
+def test_limite_de_40_fotos_por_pessoa_no_bucket(cenario):
+    for i in range(40):
+        assert _enviar_foto(cenario, cenario["jwt_b"], f"{cenario['b']}/lote-{i}.jpg") == 200, i
+    assert _enviar_foto(cenario, cenario["jwt_b"], f"{cenario['b']}/lote-40.jpg") in (400, 403)
+    # a pasta cheia de uma pessoa não trava a outra
+    assert _enviar_foto(cenario, cenario["jwt_a"], f"{cenario['a']}/um.jpg") == 200

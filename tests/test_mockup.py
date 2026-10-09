@@ -123,7 +123,18 @@ def test_perfil_e_fila():
 
 def test_recusa_exige_motivo_e_bloqueio_despublica_tudo():
     assert "Escreva o motivo" in HTML
-    assert "bloqueada=true" in HTML.replace(" ", "")
+    # bloquear saiu do modo exemplo (mexia em DADOS direto) e virou chamada da camada de dados, com motivo
+    assert "bloqueada=true" not in HTML.replace(" ", "")
+    assert "API.bloquear(pid,m)" in HTML and "API.desbloquear(pid)" in HTML
+
+
+def test_fila_bloqueia_e_desbloqueia_em_qualquer_aba_com_motivo():
+    i = HTML.index("function telaFila"); fila = HTML[i:HTML.index("// ---------- roteamento")]
+    assert "API.modo==='exemplo'" not in fila and "aba==='publicadas'&&ex" not in fila
+    for s in ["Bloquear organizador", "Confirmar bloqueio", "Motivo do bloqueio", "Desbloquear",
+              '<span class="status recusada">bloqueada</span>', "p.bloqueada?"]:
+        assert s in fila, s
+    assert "estado.bloqueando=null;estado.erroBloqueio=null" in HTML  # some ao sair da fila
 
 
 def test_fluxo_de_status_nos_dados_e_no_codigo():
@@ -467,7 +478,8 @@ def test_identidade_visual_da_campanha():
 def test_contagem_de_visitas_goatcounter_sem_dado_pessoal():
     # GoatCounter: sem cookie; conta a tela pelo hash (sem a query, onde passa o code do login) e alguns cliques
     assert 'data-goatcounter="https://acoes-segundo-turno.goatcounter.com/count"' in HTML
-    assert 'src="https://gc.zgo.at/count.js"' in HTML
+    # versão fixa com o hash publicado em goatcounter.com/help/countjs-versions
+    assert 'src="https://gc.zgo.at/count.v5.js" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ" crossorigin="anonymous"' in HTML
     assert "location.pathname+(location.hash||'#/inicio')" in HTML
     assert "window.addEventListener('hashchange',contarTela)" in HTML
     for evento in ["eu-vou-clique", "eu-vou-confirmado", "entrar", "cadastrar-acao-abrir", "cadastrar-acao-enviada",
@@ -482,3 +494,36 @@ def test_privacidade_fala_da_contagem_de_visitas():
     priv = (RAIZ / "app" / "privacidade.html").read_text(encoding="utf-8")
     assert "GoatCounter" in priv
     assert "não guardamos nada sobre você" not in priv
+
+
+def test_scripts_de_cdn_tem_integridade():
+    # Subresource Integrity: todo script de fora tem versão fixa, hash sha384 e crossorigin
+    externos = re.findall(r'<script[^>]*src="https://[^"]+"[^>]*>', HTML)
+    assert len(externos) == 5, externos
+    for tag in externos:
+        assert re.search(r'integrity="sha384-[A-Za-z0-9+/]{64}"', tag), tag
+        assert 'crossorigin="anonymous"' in tag, tag
+        assert re.search(r"@\d+\.\d+\.\d+/|/\d+\.\d+\.\d+/|count\.v\d+\.js", tag), tag
+
+
+RESPONSAVEL = "Site voluntário feito por Guilherme Pereira Franco, sem vínculo com a campanha nem com partido."
+GITHUB = "https://github.com/guipfranco/acoes-segundo-turno"
+
+
+def test_rodape_de_responsabilidade_na_inicial_e_na_privacidade():
+    # lei eleitoral veda anonimato: quem faz o site, sem vínculo e sem divulgação paga
+    i = HTML.index("function telaInicio"); inicio = HTML[i:HTML.index("function irParaCidade")]
+    assert "rodapeHtml()" in inicio
+    rodape = HTML[HTML.index("function rodapeHtml"):].split("\n", 1)[0]
+    assert RESPONSAVEL in rodape and "Nenhuma divulgação paga." in rodape
+    assert 'class="rodape sec"' in rodape and 'href="privacidade.html"' in rodape and f'href="{GITHUB}"' in rodape
+    assert ".rodape{text-align:center;font-size:13px" in HTML
+    priv = re.sub(r"\s+", " ", (RAIZ / "app" / "privacidade.html").read_text(encoding="utf-8"))
+    assert RESPONSAVEL in priv and "Nenhuma divulgação paga." in priv and f'href="{GITHUB}"' in priv
+
+
+def test_aviso_de_que_o_link_do_grupo_fica_visivel_a_quem_vai():
+    i = HTML.index("cv('grupo',this.value)")
+    trecho = HTML[i:i + 400]
+    assert 'Qualquer pessoa com conta Google que disser "Eu vou!" vê este link.' in trecho
+    assert "aprovação de um administrador" in trecho and "deixe em branco" in trecho

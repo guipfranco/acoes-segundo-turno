@@ -68,11 +68,14 @@ def item_do_feed(x, lugares, geo=None):
     local, endereco = (x.get("local") or "").strip(), (x.get("endereco") or "").strip()
     h_ini, h_fim = bl.faixa(x.get("hora"), x.get("hora_ord"))
     data = x["data"]
+    link_bruto = (x.get("link") or "").strip()
     item = {
         "fonte_id": str(x["id"]), "titulo": (x.get("atividade") or "Ação")[:120], "tipo": bl.tipo_mapa(x.get("tipo"), x.get("atividade")),
-        "organizacao": (x.get("organizacao") or "").strip() or None, "link": (x.get("link") or "").strip(),
+        "organizacao": (x.get("organizacao") or "").strip() or None, "link": bl.link_valido(link_bruto),
         "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
     }
+    if link_bruto and not item["link"]:  # sem link válido o contato vira organizador_chama (importar_acoes)
+        item["aviso"] = bl.aviso_link(link_bruto)
     item["organizacao_tipo"] = bl.tipo_org(item["organizacao"]) if item["organizacao"] else None
     item["organizacao_foto"] = bl.logo_org(item["organizacao"]) if item["organizacao"] else None
     if online:
@@ -108,8 +111,16 @@ def itens_do_feed(feed, lugares, hoje=None, ate=ATE, geo=None):
             continue
         if k:
             vistos[k] = x["id"]
+        anotar_aviso(item, revisao, str(x["id"]), x.get("atividade") or "")
         itens.append(item)
     return itens, revisao
+
+
+def anotar_aviso(item, revisao, ident, titulo):
+    """O item entra mesmo assim, mas o aviso vai para a fila de revisão (revisao-*.csv) com o prefixo "aviso:"."""
+    aviso = item.pop("aviso", None)
+    if aviso:
+        revisao.append((ident, titulo, "aviso: " + aviso))
 
 
 # ---- conversão: consolidado das redes ----
@@ -174,11 +185,14 @@ def item_da_rede(r, lugares, geo=None):
     h_ini, h_fim = bl.faixa(hora, None) if hora else ("09:00", "11:00")
     data = r["data"]
     org = limpar_org(r.get("organizador"))
+    link_bruto = (r.get("link") or "").strip()
     item = {
         "fonte_id": None, "titulo": (r.get("titulo") or "Ação")[:120], "tipo": tipo_redes(r.get("tipo"), r.get("titulo")),
         "organizacao": org or None, "organizacao_tipo": bl.tipo_org(org) if org else None,
-        "organizacao_foto": bl.logo_org(org) if org else None, "link": (r.get("link") or "").strip(), "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
+        "organizacao_foto": bl.logo_org(org) if org else None, "link": bl.link_valido(link_bruto), "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
     }
+    if link_bruto and not item["link"]:
+        item["aviso"] = bl.aviso_link(link_bruto)
     if online:
         item.update(online=True, lugar_nome=None, bairro=None, cidade=None, lat=None, lon=None, lugar_aproximado=False)
     else:
@@ -265,6 +279,7 @@ def itens_do_consolidado(linhas, lugares, itens_feed=(), hoje=None, ate=ATE, geo
             revisao.append((frente, r.get("titulo", ""), "repetido no consolidado"))
             continue
         aceitas.append((frente, item))
+        anotar_aviso(item, revisao, frente, r.get("titulo", ""))
         itens.append(item)
     return itens, revisao
 
@@ -348,9 +363,15 @@ def publicar(fonte, itens, encerrar=True, ref=None):
 # ---- linha de comando ----
 
 def com_foto(itens, mapa):
-    """Põe em cada item a imagem da divulgação original já coletada (scripts/fotos_divulgacao.py)."""
+    """Põe em cada item a imagem da divulgação original já coletada (scripts/fotos_divulgacao.py). Foto ou logo cuja
+    url não é https (nem a pilha local) é descartada, com aviso: só https vira <img> no app."""
     for it in itens:
         it["foto"] = fd.foto_do_item(it, mapa)
+        for campo in ("foto", "organizacao_foto"):
+            f = it.get(campo)
+            if f and not bl.foto_valida(f.get("url")):
+                print(f"AVISO: {campo} descartada em {it.get('fonte_id')} (url não é https): {str(f.get('url'))[:60]}", file=sys.stderr)
+                it[campo] = None
     return itens
 
 
@@ -364,12 +385,18 @@ def resumo(itens, revisao):
     com_logo = sum(1 for i in itens if i.get("organizacao_foto"))
     com_img = sum(1 for i in itens if i.get("foto"))
     top += f"; {exatas} com ponto exato, {com_logo} com logo da organização, {com_img} com imagem da divulgação"
-    motivos = {}
+    motivos, avisos = {}, 0
     for _, _, m in revisao:
+        if m.startswith("aviso:"):
+            avisos += 1
+            continue
         m = re.sub(r"\s*\(.*|\s*\d+$", "", m)
         motivos[m] = motivos.get(m, 0) + 1
     fora = ", ".join(f"{m} {n}" for m, n in sorted(motivos.items(), key=lambda kv: -kv[1]))
-    return f"{len(itens)} para publicar ({top}); {len(revisao)} de fora: {fora or 'nada'}"
+    texto = f"{len(itens)} para publicar ({top}); {len(revisao) - avisos} de fora: {fora or 'nada'}"
+    if avisos:
+        texto += f". AVISO: {avisos} links descartados por não serem http/https (veja revisao-*.csv)"
+    return texto
 
 
 def gravar_ensaio(fonte, itens, revisao):

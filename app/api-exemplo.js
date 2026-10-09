@@ -235,6 +235,19 @@
         const a = dados.acoes.find(x => x.id === id); if (!a || a.status === 'excluída') throw erro('nao_pode');
         a.status = 'excluída';
       },
+      // bloquear tira do ar as publicadas da pessoa (como suspender); desbloquear só desmarca (o moderador reativa uma a uma)
+      async bloquear(pid, motivo) {
+        if (!ehModerador()) throw erro('so_moderador');
+        const p = pessoa(pid); if (!p || p.id === sessao || p.papel === 'moderador') throw erro('nao_pode');
+        p.bloqueada = true;
+        const m = String(motivo || '').trim() || null;
+        dados.acoes.filter(a => a.organizador === pid && a.status === 'publicada').forEach(a => { a.status = 'rascunho'; a.motivoRecusa = m; });
+      },
+      async desbloquear(pid) {
+        if (!ehModerador()) throw erro('so_moderador');
+        const p = pessoa(pid); if (!p || !p.bloqueada) throw erro('nao_pode');
+        p.bloqueada = false;
+      },
     };
   }
   return { criar, formatarTelefone };
