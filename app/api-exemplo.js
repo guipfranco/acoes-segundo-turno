@@ -253,6 +253,7 @@
         if (!ehModerador()) throw erro('so_moderador');
         const p = pessoa(pid); if (!p || !p.bloqueada) throw erro('nao_pode');
         p.bloqueada = false;
+      },
       // feedback: qualquer pessoa manda (logada ou não); só moderador lê e marca como tratado
       async enviarFeedback(d) {
         const texto = String((d || {}).texto || '').trim().slice(0, 2000);
