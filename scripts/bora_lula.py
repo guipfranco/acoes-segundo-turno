@@ -223,10 +223,23 @@ def mesma_cidade(r, cidade, uf, centro):
         return False
 
 
+def variantes(texto):
+    """Formas cada vez mais simples de um endereço do feed, para o Nominatim achar:
+    "Rua X, 860 (atrás do Y) - Centro" -> sem parêntese -> sem bairro -> "Rua X, 860" -> "Rua X"; "A com B" -> "A"."""
+    saida = []
+    t = re.sub(r"\s+", " ", texto).strip(" ,-")
+    for v in (t, re.sub(r"\s*\(.*?\)", "", t), re.split(r"\s+[-–]\s+", re.sub(r"\s*\(.*?\)", "", t))[0],
+              re.split(r"\s+com\s+|\s+esquina\s+", t, flags=re.I)[0], re.split(r"\s*[,;]\s*", t)[0]):
+        v = v.strip(" ,.-")
+        if len(v) > 3 and v not in saida:
+            saida.append(v)
+    return saida
+
+
 def localizar(geo, endereco, local, cidade, uf, centro):
-    """(lat, lon, precisao). Tenta o endereço, depois o nome do local; sem acerto, o centro da cidade ('cidade').
-    Sem geocodificador, fica no centro da cidade."""
-    textos = [t.strip() for t in (endereco, local) if t and t.strip() and chave_cidade(t) != chave_cidade(cidade) and len(t.strip()) > 3]
+    """(lat, lon, precisao). Tenta o endereço, depois o nome do local, cada um em formas cada vez mais simples;
+    sem acerto, o centro da cidade ('cidade'). Sem geocodificador, fica no centro da cidade."""
+    textos = [v for t in (endereco, local) if t for v in variantes(t) if chave_cidade(v) != chave_cidade(cidade)]
     for texto in dict.fromkeys(textos) if geo else ():
         res = geo.buscar(f"{texto}, {cidade}, {uf}, Brasil")
         if not res:
@@ -293,6 +306,7 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25", geo=None):
     config = dict(_config_base())
     config["hoje"] = hoje
     config["fonte"] = FONTE
+    config.pop("eu", None)  # ninguém logado: a única pessoa é a de sistema
     organizacoes, idx_org = [], {}
     pessoa_feed = {"id": 1, "nome": "Agenda Bora Lula", "papel": "organizador", "organizacao": None,
                    "telefone": "", "bloqueada": False}

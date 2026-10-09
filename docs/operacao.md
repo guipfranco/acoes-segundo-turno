@@ -93,6 +93,8 @@ consultam endereço novo. `--sem-geocodificar` pula tudo. Organização reconhec
 MTST, Levante) ganha o logo do Wikimedia Commons, com crédito, pelo mapa `LOGOS` em `scripts/bora_lula.py`; a
 tela mostra o logo como avatar de quem divulga e como capa quando a ação não tem foto própria. Ação do feed sem
 organização mostra a marca da Agenda Bora Lula (Comitê Popular) como avatar.
+Aplicado em produção em 2026-10-09 (migração + reimportação do feed e das redes); capturas em
+`docs/capturas/2026-10-09-acao-logo-ponto-exato.png` e `2026-10-09-vitrine-avatares.png`.
 
 Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capturas em
 `docs/capturas/2026-10-09-acao-importada.png` e `2026-10-09-mapa-importadas.png`.

@@ -124,6 +124,25 @@ def test_localizar_usa_endereco_depois_local_e_cai_no_centro(tmp_path):
     assert bl.localizar(g3, "Praça da Moça, 10 - Centro", "", "Diadema", "SP", centro)[2] == "cidade" and g3.cache == {}
 
 
+def test_variantes_do_endereco_vao_do_completo_ao_simples():
+    assert bl.variantes("Rua Generina Vale, 860 (por trás da Ligzarb) - Centro") == [
+        "Rua Generina Vale, 860 (por trás da Ligzarb) - Centro", "Rua Generina Vale, 860 - Centro", "Rua Generina Vale, 860", "Rua Generina Vale"]
+    assert bl.variantes("Gervasio Pires com Av. Conde da Boa Vista") == ["Gervasio Pires com Av. Conde da Boa Vista", "Gervasio Pires"]
+    assert bl.variantes("UnB") == []  # curto demais: nem consulta
+    assert bl.variantes(" Praça da Moça ") == ["Praça da Moça"]
+    # a forma simples só é consultada quando a completa falha
+    pedidos = []
+
+    def consultar(q):
+        pedidos.append(q)
+        return [{"lat": "-6.46", "lon": "-37.10", "category": "highway", "addresstype": "road", "name": "Rua Generina Vale",
+                 "address": {"city": "Caicó", "ISO3166-2-lvl4": "BR-RN"}}] if q.startswith("Rua Generina Vale, 860,") else []
+    geo = bl.Geocodificador(arquivo=None, consultar=consultar)
+    assert bl.localizar(geo, "Rua Generina Vale, 860 (por trás da Ligzarb) - Centro", "Comitê", "Caicó", "RN", (-6.45, -37.09))[2] == "rua"
+    assert pedidos == ["Rua Generina Vale, 860 (por trás da Ligzarb) - Centro, Caicó, RN, Brasil", "Rua Generina Vale, 860 - Centro, Caicó, RN, Brasil",
+                       "Rua Generina Vale, 860, Caicó, RN, Brasil"]
+
+
 def test_mesma_cidade_aceita_por_nome_ou_distancia():
     centro = (-15.78, -47.93)  # Brasília
     perto = {"lat": "-15.82", "lon": "-48.11", "address": {"town": "Ceilândia", "ISO3166-2-lvl4": "BR-DF"}}

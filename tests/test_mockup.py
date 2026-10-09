@@ -350,7 +350,7 @@ def test_acao_importada_tem_divulgacao_e_lugar_aproximado_na_tela():
 
 def test_quem_divulga_tem_avatar_e_logo_da_organizacao_vira_capa():
     for trecho in ["function quemDivulga", "function fotoQuem", "function logoCapa", 'class="avatar"', 'class="logo"',
-                   "const FONTES=", "'bora-lula':{nome:'Agenda Bora Lula'", "function creditoLogo", "Logo: "]:
+                   "const FONTES=", "'bora-lula':{nome:'Agenda Bora Lula'", "function creditoLogo", "Logo: ", "const avatarLetra=", ".avatar.letra{"]:
         assert trecho in HTML, trecho
     # card e página usam quem divulga (avatar + nome); capa cai no logo quando não há foto própria
     assert "${quemDivulga(a)}, ${quantosVao(vaoNa(a.id))}" in HTML

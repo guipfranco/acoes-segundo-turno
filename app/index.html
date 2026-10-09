@@ -74,6 +74,7 @@ nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
 .foto.capa .logo{width:40%;height:56%}
 .quem{display:inline-flex;align-items:center;gap:6px;min-width:0}.quem>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .avatar{flex:none;width:22px;height:22px;border-radius:50%;object-fit:contain;background:#fff;border:1px solid var(--nevoa);padding:1px;box-sizing:border-box}
+.avatar.letra{display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--nevoa);color:var(--tinta);border:0}
 .evento .tit{font-weight:600;font-size:16px;line-height:1.25;margin:10px 0 2px}
 .evento .meta{font-size:14px;color:var(--cinza)}.evento .meta b{color:var(--tinta);font-weight:600}
 .f-panfletagem{background:linear-gradient(135deg,#fde7e9,#f3a9b0)}.f-adesivaco{background:linear-gradient(135deg,#fff1d6,#f7c978)}.f-roda{background:linear-gradient(135deg,#e6f0ff,#a9c4f5)}
@@ -224,9 +225,11 @@ function lugarAproximadoNota(l){return l.aproximado?`<div class="sec" style="fon
 function espalhar(lista){const grupos={};return lista.map(x=>{const l=x.a.lugar;if(!l.aproximado)return [l.lat,l.lon];const k=l.lat.toFixed(3)+','+l.lon.toFixed(3);const i=grupos[k]=(grupos[k]||0)+1;if(i===1)return [l.lat,l.lon];const r=0.0025*Math.sqrt(i),ang=i*2.4;return [l.lat+r*Math.sin(ang),l.lon+r*Math.cos(ang)*1.1]})}
 // quem divulga: logo da organização (Wikimedia Commons) ou a marca da fonte de onde a ação veio
 const FONTES={'bora-lula':{nome:'Agenda Bora Lula',foto:{url:'https://comitepopular.org.br/wp-content/uploads/2026/07/logosembico-removebg-preview.png',credito:'Comitê Popular',pagina:'https://comitepopular.org.br/agenda'}}};
-function fotoQuem(a){const o=a.organizacao?org(a.organizacao):null;if(o&&o.foto&&o.foto.url)return o.foto;const f=a.fonte&&FONTES[a.fonte];return f?f.foto:null}
+function fotoQuem(a){const o=a.organizacao?org(a.organizacao):null;if(o)return o.foto&&o.foto.url?o.foto:null;const f=a.fonte&&FONTES[a.fonte];return f?f.foto:null}
 const imgAvatar=f=>f&&f.url?`<img class="avatar" src="${esc(f.url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:'';
-function quemDivulga(a){return `<span class="quem">${imgAvatar(fotoQuem(a))}<span>${nomeOrganizador(a)}</span></span>`}
+// organização sem logo: inicial do nome num círculo, como avatar
+const avatarLetra=nome=>`<span class="avatar letra" aria-hidden="true">${esc(String(nome||'?').trim().charAt(0).toUpperCase())}</span>`;
+function quemDivulga(a){const f=fotoQuem(a),o=a.organizacao?org(a.organizacao):null;return `<span class="quem">${f?imgAvatar(f):o?avatarLetra(o.nome):''}<span>${nomeOrganizador(a)}</span></span>`}
 // sem foto própria, o logo da organização vira a capa (sobre a cor do tipo)
 function logoCapa(a){const o=a.organizacao?org(a.organizacao):null;return !(a.foto&&a.foto.url)&&o&&o.foto&&o.foto.url?o.foto:null}
 const imgLogo=f=>`<img class="logo" src="${esc(f.url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`;
