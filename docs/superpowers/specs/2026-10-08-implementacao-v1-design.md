@@ -73,8 +73,11 @@ moderadores veem. Organizador de organização verificada publica direto; os dem
 - `organizador_chama` (padrão): a pessoa só deixa nome e telefone e não vê contato nenhum. O
   organizador chama no WhatsApp ou adiciona no grupo quem ele quiser, depois de ver quem é.
 - `whatsapp`: a pessoa vê um número informado pelo organizador (o dele ou outro) e chama.
-- `link_grupo`: a pessoa vê o link do grupo. Na escolha, aviso claro: qualquer inscrito vai ver o
-  link.
+- `link_grupo`: a pessoa vê o link do grupo. Ao escolher, antes do campo do link, uma orientação
+  curta com os passos no WhatsApp: configurar o grupo para **só administradores enviarem
+  mensagens** e **aprovar quem entra**. Explica que sem isso qualquer inscrito pode falar com todo
+  mundo e ver os números. Uma caixa "Já configurei o grupo assim" precisa ser marcada para o campo
+  do link liberar. A mesma orientação aparece em Minhas ações.
 Pode ser mudada depois editando a ação. Nunca é obrigatório informar link de grupo.
 
 **Horário** (tabela `turno`): ação, início, fim, lotação opcional. Público junto com a ação.
@@ -130,8 +133,8 @@ prioritária derivada do mapa; upload de foto; login por Instagram; denúncia pe
 auto-aprovação de organizador por histórico. Tudo isso cabe no modelo sem migração destrutiva.
 
 Risco: participante mal-intencionado se inscreve. Com a forma de contato padrão ele não vê nada e
-o organizador filtra antes de chamar. Só na opção de link do grupo ele chega ao grupo, e o
-organizador escolhe isso ciente do aviso. Bloqueio pelo moderador cobre o resto.
+o organizador filtra antes de chamar. Só na opção de link do grupo ele chega ao grupo, que
+a orientação manda fechar para mensagens só de administradores; ali ele só lê os avisos. Bloqueio pelo moderador cobre o resto.
 
 ## Do mockup ao app
 
