@@ -156,14 +156,11 @@
         if ((pessoa(a.organizador) || {}).bloqueada) throw erro('organizador_bloqueado');
         a.status = 'publicada'; a.motivoRecusa = null;
       },
-      // apaga a ação com turnos e inscrições; importada não (a próxima importação traria de volta): suspende
+      // não apaga: marca 'excluída' (some do site e da fila; turnos e inscrições ficam)
       async excluir(id) {
         if (!ehModerador()) throw erro('so_moderador');
-        const a = dados.acoes.find(x => x.id === id); if (!a) throw erro('nao_pode');
-        if (a.fonte) throw erro('importada');
-        const tids = dados.turnos.filter(t => t.acao === id).map(t => t.id);
-        const tirar = (lista, fora) => { for (let k = lista.length - 1; k >= 0; k--) if (fora(lista[k])) lista.splice(k, 1); };
-        tirar(dados.inscricoes, i => tids.includes(i.turno)); tirar(dados.turnos, t => t.acao === id); tirar(dados.acoes, x => x.id === id);
+        const a = dados.acoes.find(x => x.id === id); if (!a || a.status === 'excluída') throw erro('nao_pode');
+        a.status = 'excluída';
       },
     };
   }

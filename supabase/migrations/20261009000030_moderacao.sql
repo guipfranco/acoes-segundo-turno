@@ -4,6 +4,9 @@
 -- Suspensa usa o status 'rascunho' (o app mostra "Suspensa"). Só se suspende ação publicada (a em análise se
 -- recusa), e reativar não republica ação de pessoa bloqueada. Reimportar não reativa: importar_acoes só mexe
 -- no status de quem estava 'encerrada'. A aba Suspensas da fila inclui as importadas (é o jeito de tirá-las do ar).
+-- Excluir não apaga: marca 'excluída' (some do site e da fila; turnos, inscrições e histórico ficam no banco).
+
+alter type status_acao add value if not exists 'excluída';
 
 -- Ação em qualquer status, para quem criou ou modera; para os outros, null.
 create or replace function acao_restrita(acao_id bigint) returns json language plpgsql stable security definer set search_path = public as $$
@@ -38,17 +41,13 @@ begin
   insert into registro_moderacao (moderador, acao_feita, alvo_tipo, alvo_id) values (auth.uid(), 'reativar', 'acao', acao_id::text);
 end $$;
 
--- Apaga a ação, os turnos e as inscrições. Ação importada não se exclui (a próxima importação traria de volta):
--- suspende. O registro guarda o título, já que a ação some.
+-- Marca a ação como excluída, em qualquer status. Vale também para importada: reimportar só reabre 'encerrada'.
 create or replace function excluir_acao(acao_id bigint) returns void language plpgsql security definer set search_path = public as $$
-declare a acao;
 begin
   if not eh_moderador() then raise exception 'so_moderador'; end if;
-  select * into a from acao where id = acao_id;
+  update acao set status = 'excluída' where id = acao_id and status::text <> 'excluída';
   if not found then raise exception 'nao_pode'; end if;
-  if a.fonte is not null then raise exception 'importada'; end if;
-  delete from acao where id = acao_id;
-  insert into registro_moderacao (moderador, acao_feita, alvo_tipo, alvo_id, motivo) values (auth.uid(), 'excluir', 'acao', acao_id::text, a.titulo);
+  insert into registro_moderacao (moderador, acao_feita, alvo_tipo, alvo_id) values (auth.uid(), 'excluir', 'acao', acao_id::text);
 end $$;
 
 -- Fila: igual à da migração 21, mas Suspensas ('rascunho') traz também as importadas.
