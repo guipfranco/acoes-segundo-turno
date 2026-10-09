@@ -70,9 +70,9 @@ def test_acao_com_turno_passado_fica_fora_da_lista():
 
 
 def test_tela_acao_regras_de_inscricao():
-    for s in ["function telaAcao", "function inscrever", "function desistir", "lotado", "turno encerrado",
-              "Esta ação já aconteceu", "Você vai", "Seu nome e telefone vão para quem organiza esta ação",
-              "Receber código", "Entrar no grupo do WhatsApp", "minimapa"]:
+    for s in ["function telaAcao", "function inscrever", "function desistir", "lotado", "horário encerrado",
+              "Esta ação já aconteceu", "Inscrito", "Seu nome e telefone vão para quem organiza esta ação",
+              "Confirmar", "Entrar no grupo do WhatsApp", "minimapa"]:
         assert s in HTML, s
 
 
@@ -170,7 +170,7 @@ def test_turno_no_passado_e_recusado_ao_criar():
 def test_turno_encerrado_vence_inscrito():
     i = HTML.index("function botaoTurno")
     corpo = HTML[i:i + 800]
-    assert corpo.index("turno encerrado") < corpo.index("Você vai")
+    assert corpo.index("horário encerrado") < corpo.index("Inscrito")
 
 
 def test_marcadores_sem_imagem_externa():
@@ -308,3 +308,13 @@ def test_publicar_recarrega_antes_de_ir_para_minhas_sem_render_duplo():
     corpo = HTML[HTML.index("function publicarAcao"):HTML.index("// ---------- minhas")]
     assert "sincronizar();location.hash" not in corpo
     assert corpo.count("recarregar().then(()=>{location.hash='#/minhas'})") == 2
+
+
+def test_vou_pede_telefone_uma_vez_e_mostra_a_forma_de_contato():
+    acao = HTML[HTML.index("function telaAcao"):HTML.index("function montarMiniMapa")]
+    assert "Receber código" not in HTML and "Código que chegou" not in HTML
+    for s in ["Seu nome e telefone vão para quem organiza esta ação", "vai entrar em contato", "Chamar no WhatsApp",
+              "Entrar no grupo do WhatsApp", "wa.me/55", "organizador_chama", "'whatsapp'", "link_grupo"]:
+        assert s in acao, s
+    assert "function continuarVouPendente" in HTML and "vouPendente" in HTML
+    assert ">Inscreva-se<" in HTML and "Inscrito ✓" in HTML and ">Vou<" not in HTML

@@ -175,7 +175,6 @@ const estado={onde:null,quando:'breve',de:'',ate:'',formato:'qualquer',tipo:null
 let PUB={config:{hoje:'',frase:'',vaquinha:'#'},organizacoes:[],acoes:[],turnos:[]};
 const org=id=>PUB.organizacoes.find(o=>o.id===id);
 const pessoa=id=>DADOS.pessoas.find(p=>p.id===id); // só telas de organizador e moderador (modo exemplo)
-const acao=id=>PUB.acoes.find(a=>a.id===id);
 const eu=()=>estado.sessao?estado.sessao.id:null;
 const turnosDa=id=>PUB.turnos.filter(t=>t.acao===id).sort((a,b)=>a.inicio.localeCompare(b.inicio));
 function turnosFuturos(id){return turnosDa(id).filter(t=>t.inicio.slice(0,10)>=PUB.config.hoje)}
@@ -349,18 +348,27 @@ function irParaLugar(l){estado.onde={rotulo:nomeLugar(l),lat:l[2],lon:l[3]};cons
   if(estado.gaveta==='baixa')abrirGaveta('meio')}
 function usarLocalizacao(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{irParaLugar(['Minha localização','',p.coords.latitude,p.coords.longitude,'g'])},()=>{})}
 // ---------- acao ----------
-async function inscrever(tid){try{await API.inscrever(tid)}catch(e){alert('Não deu: '+e.codigo);return}estado.inscrevendo=null;await sincronizar()}
 async function desistir(tid){await API.desistir(tid);await sincronizar()}
-function iniciarVou(tid){estado.inscrevendo={turno:tid,passo:'dados'};render()}
-function pedirCodigo(){estado.inscrevendo.passo='codigo';render()}
+async function iniciarVou(tid){
+  if(!estado.sessao){localStorage.setItem('vouPendente',String(tid));await API.entrar();await continuarVouPendente();return}
+  estado.inscrevendo={turno:tid,telefone:estado.sessao.telefone||'',erro:null};render()}
+async function continuarVouPendente(){const tid=Number(localStorage.getItem('vouPendente'));if(!tid)return;
+  estado.sessao=await API.sessao();if(!estado.sessao)return;localStorage.removeItem('vouPendente');
+  estado.inscrevendo={turno:tid,telefone:estado.sessao.telefone||'',erro:null};await render()}
+const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_telefone:'Informe seu WhatsApp.',telefone_invalido:'Telefone no formato (11) 9xxxx-xxxx.',bloqueada:'Sua conta está bloqueada.',lotado:'Esse horário lotou.',turno_passado:'Esse horário já passou.',nao_publicada:'Esta ação não está aberta a inscrições.'};
+async function confirmarVou(tid){const ins=estado.inscrevendo;const tel=(document.getElementById('vtel')||{}).value||'';
+  try{if(tel!==(estado.sessao.telefone||''))estado.sessao=await API.salvarTelefone(tel);await API.inscrever(tid)}
+  catch(e){ins.erro=MENSAGEM[e.codigo]||'Não deu. Tente de novo.';ins.telefone=tel;render();return}
+  estado.inscrevendo=null;await sincronizar()}
+async function inscrever(tid){return confirmarVou(tid)}
 function compartilhar(){const u=location.href;if(navigator.share)navigator.share({url:u});else{navigator.clipboard&&navigator.clipboard.writeText(u);alert('Link copiado')}}
 function botaoTurno(t){const n=vaoNo(t);
-  if(t.inicio.slice(0,10)<PUB.config.hoje)return `<button class="btn" disabled>turno encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
-  if(estouInscrito(t.id))return `<span class="selo">Você vai ✓</span> <button class="btn sec mini" onclick="desistir(${t.id})">desistir</button>`;
+  if(t.inicio.slice(0,10)<PUB.config.hoje)return `<button class="btn" disabled>horário encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
+  if(estouInscrito(t.id))return `<span class="selo">Inscrito ✓</span> <button class="btn sec mini" onclick="desistir(${t.id})">desistir</button>`;
   if(t.lotacao&&n>=t.lotacao)return `<button class="btn" disabled>lotado</button>`;
-  return `<button class="btn" onclick="iniciarVou(${t.id})">Vou</button>`}
-function telaAcao(id){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const a=ab.acao,fechada=a.status!=='publicada';
-  const ts=ab.turnos,futuros=ts.filter(t=>t.inicio.slice(0,10)>=PUB.config.hoje),ins=estado.inscrevendo;const inscritoEmAlgum=ab.inscrita.length>0;
+  return `<button class="btn" onclick="iniciarVou(${t.id})">Inscreva-se</button>`}
+function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const a=ab.acao,fechada=a.status!=='publicada';
+  const ts=ab.turnos,futuros=ts.filter(t=>t.inicio.slice(0,10)>=PUB.config.hoje),ins=estado.inscrevendo;
   return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a><div class="acao"><div class="acao-corpo">
   ${a.foto&&a.foto.url?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a)}</div>${creditoFoto(a)}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
   <h1>${esc(a.titulo)}</h1>
@@ -372,10 +380,14 @@ function telaAcao(id){const ab=estado.acaoAberta;if(!ab)return '<div class="pagi
   <div id="minimapa" style="height:200px;border-radius:14px;margin:10px 0"></div>`}</div>
   <aside class="acao-lado"><h2>Quando</h2>
   ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${quantosVao(vaoNo(t))}${t.lotacao?` de ${t.lotacao} vagas`:''}</div><div style="margin-top:8px">${fechada?'':botaoTurno(t)}</div>
-    ${ins&&ins.turno===t.id&&ins.passo==='dados'?`<label>Seu nome</label><input id="vnome"><label>Seu WhatsApp</label><input id="vtel" placeholder="(11) 9xxxx-xxxx"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p><button class="btn" onclick="pedirCodigo()">Receber código</button>`:''}
-    ${ins&&ins.turno===t.id&&ins.passo==='codigo'?`<label>Código que chegou no WhatsApp</label><input id="vcod" maxlength="4" placeholder="0000"><div style="margin-top:8px"><button class="btn" onclick="inscrever(${t.id})">Confirmar</button></div>`:''}</div>`).join('')}</aside>
-  <div class="acao-resto">${ab.combinado?`<h2>Combinado</h2><div class="aviso"><p>${esc(ab.combinado.detalhe||'')}</p>${ab.combinado.contato.link?`<a class="btn" href="${esc(ab.combinado.contato.link)}" target="_blank" rel="noopener">Entrar no grupo do WhatsApp</a> `:''}<button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`:''}
+    ${ins&&ins.turno===t.id?`<div class="sec" style="margin-top:8px">Você: <strong>${esc(estado.sessao.nome)}</strong></div><label>Seu WhatsApp</label><input id="vtel" value="${esc(ins.telefone)}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p>${ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}<div style="margin-top:8px"><button class="btn" onclick="confirmarVou(${t.id})">Confirmar</button> <button class="btn sec mini" onclick="estado.inscrevendo=null;render()">Cancelar</button></div>`:''}</div>`).join('')}</aside>
+  <div class="acao-resto">${ab.combinado?blocoCombinado(a,ab.combinado):''}
   <h2>Quem organiza</h2><div class="sec" style="font-size:15px">${nomeOrganizador(a)}</div></div></div></div>`}
+function blocoCombinado(a,c){const ct=c.contato;const tel=ct.whatsapp?ct.whatsapp.replace(/\D/g,''):'';
+  const como=ct.tipo==='organizador_chama'?`<p><strong>${nomeOrganizador(a)}</strong> vai entrar em contato pelo seu WhatsApp.</p>`:
+    ct.tipo==='whatsapp'?`<p>Chame quem organiza para combinar:</p><a class="btn" href="https://wa.me/55${tel}" target="_blank" rel="noopener">Chamar no WhatsApp</a> `:
+    ct.tipo==='link_grupo'&&ct.link?`<a class="btn" href="${esc(ct.link)}" target="_blank" rel="noopener">Entrar no grupo do WhatsApp</a> `:'';
+  return `<h2>Combinado</h2><div class="aviso">${c.detalhe?`<p>${esc(c.detalhe)}</p>`:''}${como}<button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`}
 function montarMiniMapa(l,arrastavel){const el=document.getElementById('minimapa');if(!el)return null;const m=L.map(el,{zoomControl:false,attributionControl:false}).setView([l.lat,l.lon],arrastavel?14:15);fundoBase(m);
   const mk=L.marker([l.lat,l.lon],{icon:L.divIcon({html:'<span class="etiqueta">📍 aqui</span>',className:'',iconSize:[0,0]}),draggable:!!arrastavel}).addTo(m);return {m,mk}}
 // ---------- criar ----------
@@ -485,7 +497,7 @@ async function render(){
   const app=document.getElementById('app');
   const soExemplo=['criar','minhas','fila'].includes(rota)&&API.modo!=='exemplo';
   app.innerHTML=soExemplo?'<div class="pagina"><h1>Em breve</h1><p>Criar ação, Minhas ações e a Fila chegam na próxima etapa.</p></div>':
-    rota==='acao'?telaAcao(Number(arg)):rota==='criar'?telaCriar():rota==='minhas'?telaMinhas():rota==='fila'?telaFila():rota==='mapa'?telaMapa():telaInicio();
+    rota==='acao'?telaAcao():rota==='criar'?telaCriar():rota==='minhas'?telaMinhas():rota==='fila'?telaFila():rota==='mapa'?telaMapa():telaInicio();
   document.querySelectorAll('nav a[data-rota]').forEach(a=>a.classList.toggle('ativo',a.dataset.rota===(rota||'inicio')));
   document.querySelectorAll('nav a[data-so-exemplo]').forEach(a=>a.style.display=API.modo==='exemplo'?'':'none');
   document.getElementById('doar').href=PUB.config.vaquinha||'#';
