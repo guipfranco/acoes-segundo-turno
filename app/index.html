@@ -57,9 +57,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--tinta);outline:none}
 nav{position:fixed;left:0;right:0;bottom:0;height:var(--nav);background:var(--papel);border-top:1px solid var(--nevoa);z-index:1000}
 nav .barra{max-width:560px;margin:0 auto;height:100%;display:flex;align-items:stretch}
 nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:var(--cinza);font-size:11px;font-weight:600}
-nav a span:first-child{font-size:20px;line-height:1}
+nav a>span:first-child{font-size:20px;line-height:1;display:flex}nav a>span:first-child svg{width:22px;height:22px}#conta-icone.logado svg circle{fill:currentColor}
 nav a.ativo{color:var(--tinta)}
-nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;font-weight:700}nav a.cta span:first-child{font-size:18px}nav a.cta.ativo{color:#fff}
+nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;font-weight:700}nav a.cta>span:first-child svg{width:20px;height:20px}nav a.cta.ativo{color:#fff}
 .btn.google{background:var(--tinta)}.btn.google:hover{background:#34343b}.btn.google .g{background:#fff;color:#d6232e;border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center;font-weight:800;font-size:14px}
 .enviar-foto{margin-top:14px;cursor:pointer}.previa-card{max-width:300px;pointer-events:none}
 .btn.vou{font-size:18px;padding:14px 26px;font-weight:800}.cta-topo{margin:14px 0 6px}@media (min-width:900px){.cta-topo{display:none}}
@@ -229,7 +229,7 @@ nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;fon
   nav .marca{display:inline-flex;margin-right:auto;font-size:19px;font-weight:800;letter-spacing:-.02em;color:var(--tinta);padding:0}
   nav .marca em{font-style:normal;color:var(--vermelho)}
   nav a{flex:0 0 auto;flex-direction:row;gap:7px;font-size:14px;padding:0 14px;height:40px;border-radius:10px}
-  nav a span:first-child{font-size:17px}nav a:hover{background:var(--nevoa)}nav a.ativo{color:var(--tinta);background:var(--nevoa)}
+  nav a>span:first-child svg{width:19px;height:19px}nav a:hover{background:var(--nevoa)}nav a.ativo{color:var(--tinta);background:var(--nevoa)}
   nav a.cta{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.cta:hover,nav a.cta.ativo{background:var(--vinho)}
   /* páginas internas mais largas e com respiro */
   .pagina{max-width:760px;padding:32px 24px 56px}.pagina.estreita{max-width:620px}
@@ -262,12 +262,12 @@ nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;fon
 <main id="app"><p class="sec" style="padding:24px">Carregando…</p></main>
 <nav><div class="barra">
   <a class="marca" href="#/inicio">Eleja o <em>Lula</em></a>
-  <a href="#/inicio" data-rota="inicio"><span>🔍</span><span>Ações</span></a>
-  <a href="#/mapa" data-rota="mapa"><span>🗺️</span><span>Mapa</span></a>
-  <a href="#/fila" data-rota="fila" data-so-moderador style="display:none"><span>✅</span><span>Fila</span></a>
-  <a href="#/perfil" id="conta" data-rota="perfil" onclick="return contaClique()"><span id="conta-icone">👤</span><span id="conta-rotulo">Entrar</span></a>
-  <a id="doar" href="#" target="_blank" rel="noopener" onclick="contar('doar')"><span>❤️</span><span>Doar</span></a>
-  <a class="cta" href="#/criar" data-rota="criar" onclick="novaCriacao()"><span>＋</span><span><span class="so-cel">Ação</span><span class="so-desk">Cadastrar ação</span></span></a>
+  <a href="#/inicio" data-rota="inicio"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></span><span>Ações</span></a>
+  <a href="#/mapa" data-rota="mapa"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14l-6 2.5z"/><path d="M9 4v14M15 6.5v14"/></svg></span><span>Mapa</span></a>
+  <a href="#/fila" data-rota="fila" data-so-moderador style="display:none"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.8-5"/></svg></span><span>Fila</span></a>
+  <a href="#/perfil" id="conta" data-rota="perfil" onclick="return contaClique()"><span id="conta-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/></svg></span><span id="conta-rotulo">Entrar</span></a>
+  <a id="doar" href="#" target="_blank" rel="noopener" onclick="contar('doar')"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5 4.4 13a4.6 4.6 0 0 1 6.5-6.5l1.1 1.1 1.1-1.1a4.6 4.6 0 0 1 6.5 6.5z"/></svg></span><span>Doar</span></a>
+  <a class="cta" href="#/criar" data-rota="criar" onclick="novaCriacao()"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span><span class="so-cel">Ação</span><span class="so-desk">Cadastrar ação</span></span></a>
 </div></nav>
 <script src="dados.js"></script>
 <script src="lugares.js"></script>
@@ -435,10 +435,10 @@ function blocoVitrine(titulo,lista,link,sub,extra,chave){const aberto=!!(estado.
 function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='online';
   const linkMapa=c=>`<a href="#/mapa" onclick="irParaCidade(${c.lat},${c.lon},'${esc(c.rotulo)}');return false">Ver no mapa</a>`;
   const tituloPerto=`Perto de você: <button class="cidade" id="cidade-btn" aria-haspopup="true" aria-expanded="false" title="Trocar a cidade" onclick="abrirCidade(event)">${esc(perto.rotulo)}<span aria-hidden="true">▾</span></button>`;
-  const popCidade=`<div class="pop-cidade" id="pop-cidade" hidden><div class="busca"><span>🔍</span><input id="busca-cidade" placeholder="Digite sua cidade" autocomplete="off" oninput="sugerir(this.value,'cidade')" onkeydown="teclaBusca(event)">
+  const popCidade=`<div class="pop-cidade" id="pop-cidade" hidden><div class="busca"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></span><input id="busca-cidade" placeholder="Digite sua cidade" autocomplete="off" oninput="sugerir(this.value,'cidade')" onkeydown="teclaBusca(event)">
     <button class="ico" title="Usar minha localização" onclick="localizarCidade()">📍</button></div><div id="sug-cidade"></div></div>`;
   return `<div class="inicio-pg"><header class="hero"><h1>${esc(PUB.config.frase)}</h1><p>Panfletagem, encontro, ato, caminhada, bandeiraço. Encontre uma ação perto de você e diga que vai.</p>
-   <div class="caixa"><div class="busca"><span>🔍</span><input id="busca-lugar" placeholder="Em que cidade você está?" autocomplete="off" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
+   <div class="caixa"><div class="busca"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></span><input id="busca-lugar" placeholder="Em que cidade você está?" autocomplete="off" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
     <button class="ico" title="Usar minha localização" onclick="usarLocalizacao()">📍</button></div><div id="sugestoes"></div></div>
    <div class="hero-cta"><span>Vai organizar uma ação?</span><a class="btn" href="#/criar" onclick="novaCriacao()">＋ Cadastrar ação</a></div>
 </header>
@@ -474,7 +474,7 @@ function cardAcao(x){const a=x.a;return `<a class="card ${estado.foco===a.id?'fo
   ${linhaVao(a)}${a.prioritaria?'<div class="meta"><span class="prior">Área prioritária</span></div>':''}</div></a>`}
 function telaMapa(){
   return `<div id="tela-mapa"><div id="mapa" aria-label="Mapa das ações"></div>
-  <div id="topo"><div class="busca"><span>🔍</span><input id="busca-lugar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(estado.onde?estado.onde.rotulo:'')}" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
+  <div id="topo"><div class="busca"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></span><input id="busca-lugar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(estado.onde?estado.onde.rotulo:'')}" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
     <button class="ico" title="Usar minha localização" onclick="usarLocalizacao()">📍</button></div><div id="sugestoes"></div>
    ${tiposHtml()}</div>
   <div id="gaveta" class="${estado.gaveta==='meio'?'meio':estado.gaveta==='cheia'?'cheia':''}"><div class="puxa" ontouchstart="arrastar(event)">
@@ -971,7 +971,7 @@ async function render(){
   document.getElementById('doar').href=PUB.config.vaquinha||'#';
   document.querySelectorAll('nav a[data-so-moderador]').forEach(a=>a.style.display=estado.sessao&&estado.sessao.papel==='moderador'?'':'none');
   document.getElementById('conta-rotulo').textContent=estado.sessao?'Perfil':'Entrar';
-  document.getElementById('conta-icone').textContent=estado.sessao?'👤':'👋';
+  document.getElementById('conta-icone').classList.toggle('logado',!!estado.sessao);
   if(rota==='mapa')montarMapa();
   if((rota||'inicio')==='inicio')chutarCidade();
   const ab=estado.acaoAberta;
