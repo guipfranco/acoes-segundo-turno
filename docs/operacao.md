@@ -6,6 +6,7 @@
 - Moderador: por enquanto, `update pessoa set papel='moderador' where email='...'` no SQL Editor.
 - Organizador parceiro: `update pessoa set papel='organizador' where email='...'`.
 - Plano grátis pausa após 7 dias sem uso: o ping diário entra na etapa 5.
+- Capa de compartilhamento (WhatsApp, redes): `app/capa.png` (1200x630) e `app/favicon.png`, geradas por `scripts/gerar_capa.py`; as metatags ficam no `<head>` de `app/index.html`.
 - Segredos (service_role, senha do banco, segredo do Google) ficam fora do repo. A chave `anon` em
   `app/config.js` é pública por desenho; o que protege os dados é o RLS.
 
