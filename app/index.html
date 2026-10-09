@@ -433,13 +433,13 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
 function publicarAcao(){const c=estado.criar,e={};if(!c.nome.trim())e.nome='Seu nome.';if(!telValido(c.telefone))e.telefone='Telefone no formato (11) 9xxxx-xxxx.';c.erros=e;if(Object.keys(e).length){render();return}
   const lugar=c.online?LUGAR_ONLINE():Object.assign({},c.lugar);
   if(c.editando){const a=acaoExemplo(c.editando);Object.assign(a,{titulo:c.titulo,descricao:c.descricao,foto:c.foto.trim()?{url:c.foto.trim(),credito:''}:null,lugar,detalhe:c.detalhe,grupo:c.grupo,organizacao:c.organizacao,prioritaria:!c.online&&DADOS.areasPrioritarias.includes(lugar.bairro)});
-    atualizarTurnos(c,a.id);estado.aviso='Ação atualizada.';estado.criar=novoCriar();sincronizar();location.hash='#/minhas';return}
+    atualizarTurnos(c,a.id);estado.aviso='Ação atualizada.';estado.criar=novoCriar();recarregar().then(()=>{location.hash='#/minhas'});return}
   const o=c.organizacao?org(c.organizacao):null;const status=o&&o.verificada?'publicada':'em análise';
   const id=Math.max(...DADOS.acoes.map(a=>a.id))+1;
   DADOS.acoes.push({id,titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,foto:c.foto.trim()?{url:c.foto.trim(),credito:''}:null,organizador:eu(),organizacao:c.organizacao,lugar,detalhe:c.detalhe,grupo:c.grupo,status,motivoRecusa:null,prioritaria:!c.online&&DADOS.areasPrioritarias.includes(lugar.bairro),criadaEm:PUB.config.hoje});
   DADOS.turnos.push(...turnosDoFormulario(c,id));
   estado.aviso=status==='publicada'?'Publicada! Sua ação já aparece no mapa.':'Recebemos: sua ação está em análise, avisamos pelo WhatsApp.';
-  estado.criar=novoCriar();sincronizar();location.hash='#/minhas'}
+  estado.criar=novoCriar();recarregar().then(()=>{location.hash='#/minhas'})}
 // ---------- minhas ----------
 const ORDEM={'em análise':0,'publicada':1,'encerrada':2,'recusada':3,'rascunho':4};
 function textoAviso(a,t){return `Oi! ${fmtData(t.inicio)} tem ${a.titulo}${ehOnline(a)?', online':` em ${a.lugar.nome}, ${a.lugar.bairro}`}. ${a.detalhe} Até lá!`}

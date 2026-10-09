@@ -301,3 +301,10 @@ def test_telas_de_participante_leem_pela_api():
         assert s in HTML, s
     inicio = HTML[HTML.index("function acoesVisiveis"):HTML.index("function telaCriar")]
     assert "DADOS.acoes" not in inicio and "DADOS.inscricoes" not in inicio and "DADOS.config" not in inicio
+
+
+def test_publicar_recarrega_antes_de_ir_para_minhas_sem_render_duplo():
+    # um render a mais apagaria o aviso de Minhas (telaMinhas zera estado.aviso)
+    corpo = HTML[HTML.index("function publicarAcao"):HTML.index("// ---------- minhas")]
+    assert "sincronizar();location.hash" not in corpo
+    assert corpo.count("recarregar().then(()=>{location.hash='#/minhas'})") == 2
