@@ -3,14 +3,21 @@
 Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segundo-turno` em 2026-10-08.
 
 - Tudo em pt-BR, datas AAAA-MM-DD. Push logo depois de cada commit.
-- `app/` é protótipo estático, sem build. Publicado em https://guipfranco.github.io/acoes-segundo-turno/
+- `app/` (antes `mockup/`) é o app: estático, sem build. Publicado em https://guipfranco.github.io/acoes-segundo-turno/
   (GitHub Pages via `.github/workflows/pages.yml`, só a pasta `app/`; repo público desde 2026-10-08) e também
   como artifact do claude.ai https://claude.ai/artifact/5FLiCyZHCJD6ADZbofmrjL ; o mapa base no artifact é o
   Protomaps da RMSP copiado dos assets do artifact do mapa principal (ids em app/fundo.js); fora dele o
-  mockup usa tiles do OpenStreetMap.
+  app usa tiles do OpenStreetMap.
+- Camada de dados em `app/api.js` (escolhe `api-exemplo.js`, dados fictícios em memória, ou `api-supabase.js`,
+  Supabase com login Google, conforme `app/config.js`; `?modo=exemplo` força o exemplo). Regras sensíveis são
+  funções SQL em `supabase/migrations/`. Nunca commitar service_role, senha do banco nem segredo do Google
+  (a chave anon é pública). Operação e banco local em `docs/operacao.md`.
+- Testes: `python -m pytest tests -q` (telas; `tests/test_supabase.py` só roda com `SUPABASE_URL`,
+  `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_KEY` da pilha local) e `node --test "tests/js/*.test.js"`.
+  Roteiro e2e do Inscreva-se em `tests/e2e/vou.spec.mjs` (precisa de `playwright`, fora do package.json).
 - Sem dado pessoal real no repo. Como o repo é público, pessoas e organizações de exemplo são inventadas
   (nada de mandato, partido ou movimento real nos dados).
-- Estado em 2026-10-08: mockup navegável. Inicial sem mapa (estilo Meetup): busca por cidade que chuta a
+- Estado em 2026-10-08: app navegável (modo exemplo completo; Supabase + login Google na v1 etapas 1-2, a ligar em produção). Inicial sem mapa (estilo Meetup): busca por cidade que chuta a
   cidade pela geolocalização, filtro "Quando" (em breve, hoje, amanhã, esta semana, fim de semana, próxima
   semana, escolher datas), formato presencial ou online, vitrine por cidade (SP, Recife, BH, Porto Alegre,
   Salvador) com foto placeholder por ação e bloco "Online". Mapa com lista que acompanha o enquadramento em
@@ -21,7 +28,7 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   início, automação depois; uma vaquinha só, geral, apontando para arrecadação oficial; busca por
   lugar livre (Brasil inteiro), referência visual Airbnb/Meetup.
 - Para republicar o artifact: publicar `app/index.html` com os arquivos `dados.js`, `lugares.js`,
-  `fundo.js` e `leaflet.css` ao lado (o artifact só carrega stylesheet próprio). Fora do artifact o
+  `fundo.js`, `config.js`, `api.js`, `api-exemplo.js`, `api-supabase.js` e `leaflet.css` ao lado (o artifact só carrega stylesheet próprio). Fora do artifact o
   mapa usa tiles do OpenStreetMap.
 - Pages publica a cada push em `master` que toque `app/`.
 - Levantamento de ações reais (2026-10-08): pasta `levantamento/` (no .gitignore, nunca versionar: tem nomes e links)

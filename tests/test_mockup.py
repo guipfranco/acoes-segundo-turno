@@ -268,7 +268,7 @@ def test_mapa_virou_rota_propria():
     assert "location.hash='#/mapa'" in HTML  # escolher cidade na inicial leva ao mapa
 
 
-def test_workflow_do_pages_publica_so_a_pasta_mockup():
+def test_workflow_do_pages_publica_so_a_pasta_app():
     assert "actions/upload-pages-artifact" in WORKFLOW and "actions/deploy-pages" in WORKFLOW
     assert "path: app" in WORKFLOW
 
