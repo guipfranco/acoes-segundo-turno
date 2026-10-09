@@ -21,13 +21,17 @@ drop trigger if exists acao_publicada_em on acao;
 create trigger acao_publicada_em before insert or update on acao for each row execute function marcar_publicada_em();
 
 -- Ações de antes: no ar ou suspensa (só se suspende publicada), importada, aprovada ou reativada pela moderação,
--- ou com alguém inscrito (só se inscreve em publicada). Cancelada sem nenhum desses sinais fica como nunca publicada.
+-- com alguém inscrito (só se inscreve em publicada), ou criada no app por quem é verificado (essas nasciam publicadas,
+-- sem passar pela moderação). Cancelada sem nenhum desses sinais fica como nunca publicada.
 update acao a set publicada_em = a.criada_em
  where a.publicada_em is null
    and (a.status in ('publicada', 'rascunho') or a.fonte is not null
         or exists (select 1 from registro_moderacao r where r.alvo_tipo = 'acao' and r.alvo_id = a.id::text
                    and r.acao_feita in ('aprovar', 'reativar'))
-        or exists (select 1 from inscricao i join turno t on t.id = i.turno where t.acao = a.id));
+        or exists (select 1 from inscricao i join turno t on t.id = i.turno where t.acao = a.id)
+        or (a.status = 'encerrada' and exists (select 1 from pessoa p where p.id = a.organizador
+              and (p.papel in ('organizador', 'moderador')
+                   or exists (select 1 from organizacao o where o.id = p.organizacao and o.verificada)))));
 
 create or replace function acao_restrita(acao_id bigint) returns json language plpgsql stable security definer set search_path = public as $$
 declare a acao; j json;
@@ -57,7 +61,8 @@ create or replace function minhas_inscricoes() returns json language sql stable 
              'foto_url', a.foto_url, 'foto_credito', a.foto_credito, 'foto_pagina', a.foto_pagina, 'prioritaria', a.prioritaria,
              'contato_tipo', a.contato_tipo, 'status', a.status, 'criada_em', a.criada_em,
              'fonte', a.fonte, 'lugar_aproximado', a.lugar_aproximado,
-             'link_divulgacao', case when a.contato_tipo::text = 'divulgacao' then a.contato_link end),
+             'link_divulgacao', case when a.contato_tipo::text = 'divulgacao' then a.contato_link end,
+             'ultimo_inicio', (select max(x.inicio) from turno x where x.acao = a.id)),
     'desistiu', i.cancelada_em is not null
   ) order by t.inicio), '[]'::json)
   from inscricao i join turno t on t.id = i.turno join acao a on a.id = t.acao

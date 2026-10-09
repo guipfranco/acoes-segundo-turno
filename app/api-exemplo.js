@@ -13,7 +13,10 @@
   function criar(dados) {
     let sessao = dados.config.eu;
     // quando a ação foi ao ar pela primeira vez (como publicada_em no banco): só a cancelada que já esteve no ar abre para todos
-    dados.acoes.forEach(a => { if (!a.publicadaEm && ['publicada', 'rascunho'].includes(a.status)) a.publicadaEm = a.criadaEm; });
+    // ações de antes, pela mesma regra da migração 40: no ar ou suspensa, importada, com inscrito, ou cancelada de verificado
+    const verificado = id => { const p = dados.pessoas.find(x => x.id === id) || {}; return p.papel === 'organizador' || p.papel === 'moderador' || !!(p.organizacao && (dados.organizacoes.find(o => o.id === p.organizacao) || {}).verificada); };
+    const temInscrito = aid => dados.inscricoes.some(i => (dados.turnos.find(t => t.id === i.turno) || {}).acao === aid);
+    dados.acoes.forEach(a => { if (!a.publicadaEm && (['publicada', 'rascunho'].includes(a.status) || a.fonte || temInscrito(a.id) || (a.status === 'encerrada' && verificado(a.organizador)))) a.publicadaEm = a.criadaEm; });
     const publicar = a => { a.status = 'publicada'; a.motivoRecusa = null; if (!a.publicadaEm) a.publicadaEm = dados.config.hoje; };
     const pessoa = id => dados.pessoas.find(p => p.id === id);
     const org = id => dados.organizacoes.find(o => o.id === id);
@@ -26,6 +29,7 @@
       prioritaria: !!a.prioritaria, status: a.status, contatoTipo: a.contatoTipo || 'organizador_chama', criadaEm: a.criadaEm,
       fonte: a.fonte || null, linkDivulgacao: a.contatoTipo === 'divulgacao' ? a.contatoLink || null : null,
     });
+    const ultimoInicio = aid => dados.turnos.filter(t => t.acao === aid).map(t => t.inicio).sort().pop() || null;
     const turno = t => ({ id: t.id, acao: t.acao, inicio: t.inicio, fim: t.fim, lotacao: t.lotacao || null, vao: ativas(t.id).length });
     const turnosDa = aid => dados.turnos.filter(t => t.acao === aid).sort((a, b) => a.inicio.localeCompare(b.inicio)).map(turno);
     const combinadoDe = a => ({ detalhe: a.detalhe || null, contato: { tipo: a.contatoTipo || 'organizador_chama', whatsapp: a.contatoWhatsapp || null, link: a.contatoLink || null } });
@@ -90,7 +94,7 @@
         if (sessao == null) return [];
         return dados.inscricoes.filter(i => i.pessoa === sessao).map(i => {
           const t = dados.turnos.find(x => x.id === i.turno); const a = t && dados.acoes.find(x => x.id === t.acao);
-          return a ? { acao: publica(a), turno: turno(t), desistiu: !!i.canceladaEm } : null;
+          return a ? { acao: Object.assign(publica(a), { ultimoInicio: ultimoInicio(a.id) }), turno: turno(t), desistiu: !!i.canceladaEm } : null;
         }).filter(Boolean).sort((p, q) => p.turno.inicio.localeCompare(q.turno.inicio));
       },
       async minhaOrganizacao() {

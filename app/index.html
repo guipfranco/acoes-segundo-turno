@@ -540,7 +540,7 @@ const botaoEntrar=()=>`<button class="btn google" onclick="entrar()"><span class
 const inscProxima=m=>!m.desistiu&&m.acao.status==='publicada'&&m.turno.inicio.slice(0,10)>=PUB.config.hoje;
 // por que a inscrição saiu da lista de próximas: nada some, fica no histórico com o motivo
 const SITUACAO_INSC={rascunho:'ação fora do ar','excluída':'ação excluída',recusada:'ação recusada','em análise':'ação em análise'};
-const situacaoInsc=m=>m.desistiu?'você desistiu':m.acao.status==='publicada'?'já aconteceu':m.acao.status==='encerrada'?ENCERRADA[encerramento(m.acao,[m.turno])].insc:SITUACAO_INSC[m.acao.status]||'ação encerrada';
+const situacaoInsc=m=>m.desistiu?'você desistiu':m.acao.status==='publicada'?'já aconteceu':m.acao.status==='encerrada'?ENCERRADA[encerramento(m.acao)].insc:SITUACAO_INSC[m.acao.status]||'ação encerrada';
 function linhaInscricao(m){const prox=inscProxima(m);
   return `<div class="insc"><a class="insc-link" href="#/acao/${m.acao.id}">${cuboAcao(m.acao,'width:56px;height:56px;font-size:24px;border-radius:12px')}
     <div style="min-width:0"><div class="tit">${esc(m.acao.titulo)}</div><div class="meta"><b>${fmtData(m.turno.inicio)}</b> · ${esc(lugarCurto(m.acao.lugar))}</div></div></a>
@@ -575,7 +575,7 @@ const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_inscricao:'Esta a�
   link_instagram_invalido:'Esse link não parece de um post do Instagram.',instagram_sem_imagem:'Não achamos a imagem desse post. Ele é público?',
   instagram_ocupado:'O Instagram pediu para esperar um pouco. Tente de novo em instantes ou envie do celular.',
   so_no_site:'No modo exemplo não dá para puxar do Instagram: escolha uma imagem do celular.',sem_motivo:'Escreva o motivo.',so_moderador:'Só moderadores fazem isso.',nao_pode:'Não deu: a ação mudou de situação. Recarregue a página.'};
-async function confirmarVou(tid,campo='vtel'){const ins=estado.inscrevendo;const tel=(document.getElementById(campo)||{}).value||'';
+async function confirmarVou(tid){const ins=estado.inscrevendo;const tel=(document.getElementById('vtel')||{}).value||'';
   try{if(tel!==(estado.sessao.telefone||''))estado.sessao=await API.salvarTelefone(tel);await API.inscrever(tid)}
   catch(e){ins.erro=MENSAGEM[e.codigo]||'Não deu. Tente de novo.';ins.telefone=tel;render();return}
   estado.inscrevendo=null;await recarregar();await render();estado.vouOk=tid;await render()}
@@ -619,14 +619,15 @@ function botaoTurno(a,t,onde='lado'){const n=vaoNo(t);
 // Sai num lugar só: no computador, na coluna "Quando" (o topo fica escondido); no celular, onde a pessoa tocou
 // (sem toque registrado, como na volta do login: no topo se a ação tem um horário só)
 function lugarDoVou(futuros){return ehDesktop()?'lado':estado.vouOnde||(futuros.length===1?'topo':'lado')}
-function depoisDoBotao(t,onde,futuros){if(onde!==lugarDoVou(futuros))return '';const ins=estado.inscrevendo,campo=onde==='topo'?'vtel-topo':'vtel';
+function depoisDoBotao(t,onde,futuros){if(onde!==lugarDoVou(futuros))return '';const ins=estado.inscrevendo;
   return `${estado.vouOk===t.id?'<div class="selo" style="margin-top:8px">Pronto! A ação está no seu <a href="#/inscricoes">Perfil</a>.</div>':''}
     ${ins&&ins.turno===t.id&&ins.semFormulario&&ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}
-    ${ins&&ins.turno===t.id&&!ins.semFormulario?`<div class="form-vou"><div class="sec" style="margin-top:8px">Você: <strong>${esc(estado.sessao.nome)}</strong></div><label for="${campo}">Seu WhatsApp</label><input id="${campo}" value="${esc(ins.telefone)}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p>${ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}<div style="margin-top:8px"><button class="btn" onclick="confirmarVou(${t.id},'${campo}')">Confirmar</button> <button class="btn sec mini" onclick="estado.inscrevendo=null;render()">Cancelar</button></div></div>`:''}`}
+    ${ins&&ins.turno===t.id&&!ins.semFormulario?`<div class="form-vou"><div class="sec" style="margin-top:8px">Você: <strong>${esc(estado.sessao.nome)}</strong></div><label for="vtel">Seu WhatsApp</label><input id="vtel" value="${esc(ins.telefone)}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p>${ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}<div style="margin-top:8px"><button class="btn" onclick="confirmarVou(${t.id})">Confirmar</button> <button class="btn sec mini" onclick="estado.inscrevendo=null;render()">Cancelar</button></div></div>`:''}`}
 function ctaTopo(a,futuros){return `<div class="cta-topo">${futuros.length===1?botaoTurno(a,futuros[0],'topo')+depoisDoBotao(futuros[0],'topo',futuros):`<a class="btn vou" href="#" onclick="document.querySelector('.acao-lado').scrollIntoView({behavior:'smooth'});return false">Eu vou!</a> <span class="sec">escolha o horário</span>`}</div>`}
 // ação 'encerrada': quem criou cancelou; ou a importada saiu da agenda de origem, porque já passou ou por outro motivo
+// (já passou = o último horário da ação ficou para trás; a lista "Onde eu vou" recebe esse último horário pronto)
 function encerramento(a,turnos){if(!a.fonte)return 'cancelada';
-  return (turnos||[]).length&&turnos.every(t=>t.inicio.slice(0,10)<PUB.config.hoje)?'passou':'saiu'}
+  const ultimo=a.ultimoInicio||(turnos||[]).map(t=>t.inicio).sort().pop();return ultimo&&ultimo.slice(0,10)<PUB.config.hoje?'passou':'saiu'}
 const ENCERRADA={cancelada:{aviso:'Esta ação foi cancelada.',rotulo:['Cancelada','recusada'],insc:'ação cancelada'},
   saiu:{aviso:'Esta ação saiu da agenda de origem: foi cancelada ou mudou.',rotulo:['Saiu da agenda',''],insc:'saiu da agenda de origem'},
   passou:{aviso:'Esta ação já aconteceu.',rotulo:['Já aconteceu',''],insc:'já aconteceu'}};
@@ -968,7 +969,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('#topo,.caixa')){cons
 function ajeitarMenu(d){const o=d.querySelector('.opcoes');if(!o)return;o.classList.remove('esq','dir');
   const r=o.getBoundingClientRect();if(r.left<8)o.classList.add('esq');else if(r.right>innerWidth-8)o.classList.add('dir')}
 window.matchMedia('(min-width:900px)').addEventListener('change',()=>{const ins=estado.inscrevendo;
-  if(!ins||!(location.hash||'').startsWith('#/acao/'))return;const e=document.getElementById('vtel-topo')||document.getElementById('vtel');if(e)ins.telefone=e.value;render()});
+  if(!(ins||estado.vouOk)||!(location.hash||'').startsWith('#/acao/'))return;const e=document.getElementById('vtel');if(ins&&e)ins.telefone=e.value;render()});
 document.addEventListener('toggle',e=>{const d=e.target;if(d.open&&d.matches&&d.matches('details.mais,details.agenda'))ajeitarMenu(d)},true);
 window.addEventListener('hashchange',render);
 window.addEventListener('DOMContentLoaded',sincronizar);
