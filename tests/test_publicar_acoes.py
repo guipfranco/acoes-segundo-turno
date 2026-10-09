@@ -98,7 +98,7 @@ def test_itens_do_consolidado_filtra_e_deduplica_contra_o_feed():
     assert [i["titulo"] for i in itens] == ["Plenária das mulheres", "Live"]
     pl = itens[0]
     assert pl["organizacao"] == "Juventude PT Recife" and pl["organizacao_tipo"] == "partido"
-    assert pl["bairro"] == "Boa Vista" and pl["lugar_nome"] == "Boa Vista" and pl["inicio"] == "2026-10-11T15:00" and pl["tipo"] == "outro"
+    assert pl["bairro"] == "Boa Vista" and pl["lugar_nome"] == "Boa Vista" and pl["inicio"] == "2026-10-11T15:00" and pl["tipo"] == "encontro"
     assert len(pl["fonte_id"]) == 16 and "Varredura" in pl["descricao"]
     assert itens[1]["online"] is True and itens[1]["inicio"] == "2026-10-11T09:00"
     motivos = {t: m for _, t, m in revisao}

@@ -68,7 +68,7 @@ def item_do_feed(x, lugares, geo=None):
     h_ini, h_fim = bl.faixa(x.get("hora"), x.get("hora_ord"))
     data = x["data"]
     item = {
-        "fonte_id": str(x["id"]), "titulo": (x.get("atividade") or "Ação")[:120], "tipo": bl.tipo_mapa(x.get("tipo")),
+        "fonte_id": str(x["id"]), "titulo": (x.get("atividade") or "Ação")[:120], "tipo": bl.tipo_mapa(x.get("tipo"), x.get("atividade")),
         "organizacao": (x.get("organizacao") or "").strip() or None, "link": (x.get("link") or "").strip(),
         "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
     }
@@ -114,16 +114,17 @@ def itens_do_feed(feed, lugares, hoje=None, ate=ATE, geo=None):
 # ---- conversão: consolidado das redes ----
 
 TIPOS_REDES = {"panfletagem": "panfletagem", "adesivaco": "adesivaço", "bandeiraco": "bandeiraço",
-               "roda de conversa": "roda de conversa", "corpo a corpo": "porta a porta",
-               "distribuicao de material": "panfletagem", "banquinha": "panfletagem"}
+               "roda de conversa": "encontro", "plenaria": "encontro", "encontro": "encontro", "corpo a corpo": "porta a porta",
+               "distribuicao de material": "panfletagem", "banquinha": "panfletagem", "caminhada": "caminhada",
+               "carreata": "caminhada", "ato": "ato", "cultural": "cultural", "sarau": "cultural"}
 
 
-def tipo_redes(tipo):
+def tipo_redes(tipo, titulo=""):
     t = bl.sem_acento(tipo)
     for k, v in TIPOS_REDES.items():
-        if k in t:
+        if re.search(r"\b" + k, t):  # início de palavra: "ato" não casa com "contato"
             return v
-    return "outro"
+    return bl.tipo_pelo_titulo(titulo)
 
 
 def id_redes(r):
@@ -139,7 +140,7 @@ ORG_BOA = ("comite", "coletivo", "frente", "uje", "ujs", "une", "uee", "dce", "c
 def limpar_org(texto):
     """Só organização pública reconhecível vira organização; pessoa comum, perfil ou "não identificado" fica de fora."""
     org = (texto or "").split(";")[0]
-    org = re.split(r",?\s*divulgad[oa] por", org, flags=re.I)[0]
+    org = re.split(r",?\s*divulgad[oa] por\b", org, flags=re.I)[0]
     org = re.sub(r"\s*\((página|perfil|canal|site oficial)[^)]*\)\s*$", "", org, flags=re.I).strip(" ,")
     n = bl.sem_acento(org)
     if not org or any(k in n for k in ORG_RUIM):
@@ -171,7 +172,7 @@ def item_da_rede(r, lugares, geo=None):
     data = r["data"]
     org = limpar_org(r.get("organizador"))
     item = {
-        "fonte_id": id_redes(r), "titulo": (r.get("titulo") or "Ação")[:120], "tipo": tipo_redes(r.get("tipo")),
+        "fonte_id": id_redes(r), "titulo": (r.get("titulo") or "Ação")[:120], "tipo": tipo_redes(r.get("tipo"), r.get("titulo")),
         "organizacao": org or None, "organizacao_tipo": bl.tipo_org(org) if org else None,
         "organizacao_foto": bl.logo_org(org) if org else None, "link": (r.get("link") or "").strip(), "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
     }

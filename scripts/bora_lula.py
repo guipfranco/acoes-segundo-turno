@@ -34,12 +34,30 @@ GEOCACHE = RAIZ / "levantamento" / "geocache.json"
 AGENTE = "acoes-segundo-turno/1.0 (github.com/guipfranco/acoes-segundo-turno)"
 RAIO_MESMA_CIDADE_KM = 40
 
+# Tipos revistos em 2026-10-09 (migração 20261009000010): no feed real, "Encontro", "Ato" e "Caminhada" somam
+# mais da metade das ações; antes Ato, Caminhada e Cultural caíam em "outro".
 TIPOS = {
     "panfletagem": "panfletagem",
     "adesivaco": "adesivaço",
     "bandeiraco": "bandeiraço",
-    "encontro": "roda de conversa",
+    "encontro": "encontro",
+    "ato": "ato",
+    "caminhada": "caminhada",
+    "cultural": "cultural",
 }
+
+# Quando o tipo do feed é "Outro" (ou vazio), o título costuma dizer o que é. A ordem importa: a primeira que casa vence.
+TIPOS_TITULO = [
+    (r"plenari|assembleia|reuniao|encontro|roda de conversa|conversa", "encontro"),
+    (r"carreata|caminhada|marcha|arrastao|bicicletada|motociata", "caminhada"),
+    (r"panfleta|banquinha|distribuicao de material", "panfletagem"),
+    (r"bandeiraco", "bandeiraço"),
+    (r"adesivaco", "adesivaço"),
+    (r"sarau|show|oficina|festival|samba|cineclube|cultura|musica|hip hop", "cultural"),
+    (r"\bato\b|manifestacao|mobilizacao", "ato"),
+    (r"porta a porta|corpo a corpo", "porta a porta"),
+    (r"ligatona|telefonaco", "ligatona"),
+]
 
 
 def sem_acento(s):
@@ -47,8 +65,17 @@ def sem_acento(s):
     return "".join(c for c in s if not unicodedata.combining(c)).lower().strip()
 
 
-def tipo_mapa(tipo_feed):
-    return TIPOS.get(sem_acento(tipo_feed), "outro")
+def tipo_pelo_titulo(titulo):
+    t = sem_acento(titulo)
+    for padrao, tipo in TIPOS_TITULO:
+        if re.search(padrao, t):
+            return tipo
+    return "outro"
+
+
+def tipo_mapa(tipo_feed, titulo=""):
+    tipo = TIPOS.get(sem_acento(tipo_feed), "outro")
+    return tipo_pelo_titulo(titulo) if tipo == "outro" else tipo
 
 
 def hora_hhmm(hora, hora_ord):
@@ -345,7 +372,7 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25", geo=None):
         if link:
             descricao += f" Divulgação original: {link}"
         acoes.append({
-            "id": item["id"], "titulo": (item.get("atividade") or "Ação")[:120], "tipo": tipo_mapa(item.get("tipo")),
+            "id": item["id"], "titulo": (item.get("atividade") or "Ação")[:120], "tipo": tipo_mapa(item.get("tipo"), item.get("atividade")),
             "tipoOrigem": item.get("tipo") or "", "descricao": descricao, "organizador": pessoa_feed["id"],
             "organizacao": org_id, "lugar": lugar, "detalhe": "", "contatoTipo": "divulgacao" if link else "organizador_chama", "contatoWhatsapp": None, "contatoLink": link or None, "status": "publicada",
             "motivoRecusa": None, "prioritaria": False, "criadaEm": hoje, "foto": None, "fonte": "bora-lula", "link": link,

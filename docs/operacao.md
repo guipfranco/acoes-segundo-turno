@@ -85,6 +85,11 @@ caminho da pilha local) ou, sem elas, `SUPABASE_ACCESS_TOKEN` + ref em `supabase
 produção). Rode o ensaio e leia o `revisao-*.csv` antes do `--aplicar`. Reimportar é seguro: a chave é
 (`fonte`, `fonte_id`). Ação recusada por moderador não volta. Para o feed, o plano é rodar 2x por dia.
 
+Tipos de ação: a migração `20261009000010_tipos_acao.sql` troca "roda de conversa" por "encontro" e cria "ato",
+"caminhada" e "cultural". Depois de aplicá-la em produção, rode `python scripts/publicar_acoes.py bora-lula --aplicar`
+de novo: o importador agora usa o título quando o feed diz "Outro" (no feed de 2026-10-09, "outro" cai de 241 para
+11 das 427 ações). O app aceita "roda de conversa" enquanto a migração não chega.
+
 Ponto exato e logo (2026-10-09): o endereço (ou o nome do local) do feed é geocodificado no Nominatim do
 OpenStreetMap (1 consulta/s, `User-Agent` do projeto) e só vira ponto exato (`lugar_aproximado = false`) se o
 resultado for prédio, número ou via dentro do município; senão fica o centro da cidade, marcado como aproximado.
