@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ações do 2º turno</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Montserrat:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="leaflet.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pmtiles@4.5.0/dist/pmtiles.js"></script>
@@ -234,12 +234,7 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
 }
 @media (max-width:899px){nav .marca{display:none}.so-desk{display:none}}@media (min-width:900px){.so-cel{display:none}}
 </style>
-<script>
-// rascunho da identidade visual da campanha: ?tema=forte|imersao|toque aplica um CSS por cima do atual
-(function(){const t=new URLSearchParams(location.search).get('tema');if(!/^(forte|imersao|toque)$/.test(t||''))return;
-  document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Montserrat:wght@400;500;600;700;800&display=swap"><link rel="stylesheet" href="tema-'+t+'.css">');
-  document.documentElement.dataset.tema=t})();
-</script>
+<link rel="stylesheet" href="marca.css">
 </head>
 <body>
 <main id="app"><p class="sec" style="padding:24px">Carregando…</p></main>
