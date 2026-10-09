@@ -75,3 +75,22 @@ Varrer na véspera dessas datas rende mais que em qualquer outro dia.
 - Só leitura nas redes: nada de seguir, curtir, entrar em grupo ou enviar mensagem.
 - Nada de `levantamento/` vai para o git (nomes, telefones, links de grupo).
 - Dados reais no site publicado só com decisão do Gui, e de preferência depois de um contato com o Comitê Popular.
+
+## Publicar os dados reais (liberado pelo Gui em 2026-10-09)
+Ações e organizações públicas podem ir para produção (Supabase) e para o modo exemplo (`app/dados.js`). O app agora lê
+do Supabase em produção, então publicar = inserir no banco, não trocar o `dados.js`. Antes de inserir:
+1. **Organizador de sistema.** `acao.organizador` é uuid de `pessoa` (not null). Criar uma pessoa de sistema
+   "Agenda Bora Lula (importação)" com papel organizador e usar em toda ação importada. Nunca pessoa real.
+2. **Coordenada obrigatória.** O banco exige lat/lon e lugar_nome para ação presencial. Ação sem cidade reconhecida
+   (20 no feed) fica de fora ou vai para fila de revisão. Ação com só a cidade recebe o centro do município: gravar
+   isso em `detalhe` ou num campo próprio e o mapa precisa agrupar/rotular como "lugar aproximado", senão dezenas de
+   ações de uma capital se empilham num pino.
+3. **Link da divulgação original** em `contato_link` com `contato_tipo` adequado, e crédito da fonte na descrição.
+   Esconder inscrição e grupo para ação importada quando não houver contato real.
+4. **Idempotência.** Guardar o id do feed (ex.: `fonte = 'bora-lula'`, `fonte_id`) para reimportar 2x/dia sem duplicar
+   e para marcar como encerrada o que sumir do feed. Precisa de migração com esses campos.
+5. **Converter também o consolidado das redes** (`levantamento/acoes-consolidado-*.csv`), com geocodificação por
+   cidade via `app/lugares.js` e dedup contra o feed.
+6. **Miudezas:** vírgula sobrando sem bairro; organizador "Agenda Bora Lula" quando o feed não informa;
+   duplicatas do mesmo ato com títulos diferentes.
+7. Nunca versionar `levantamento/`. Se usar `supabase/seed.sql`, só com dados públicos.

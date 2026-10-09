@@ -15,8 +15,11 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
 - Testes: `python -m pytest tests -q` (telas; `tests/test_supabase.py` só roda com `SUPABASE_URL`,
   `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_KEY` da pilha local) e `node --test "tests/js/*.test.js"`.
   Roteiro e2e do Inscreva-se em `tests/e2e/vou.spec.mjs` (precisa de `playwright`, fora do package.json).
-- Sem dado pessoal real no repo. Como o repo é público, pessoas e organizações de exemplo são inventadas
-  (nada de mandato, partido ou movimento real nos dados).
+- Sem dado pessoal real no repo (nome, telefone, e-mail, link de grupo de pessoa comum). Desde 2026-10-09 o Gui
+  liberou dados reais de AÇÕES PÚBLICAS e de ORGANIZAÇÕES públicas (partidos, mandatos, movimentos, comitês) nos
+  dados versionados e em produção, sempre com crédito à fonte (hoje: agenda Bora Lula do Comitê Popular). Pessoas
+  de exemplo continuam inventadas; ação importada tem como organizador uma pessoa de sistema, nunca pessoa real.
+  A pasta `levantamento/` segue fora do git porque guarda a varredura bruta com nomes e telefones.
 - Estado em 2026-10-08: app navegável (modo exemplo completo; Supabase + login Google na v1 etapas 1-2).
 - Produção ligada em 2026-10-09: Supabase ref `ommitzndniqnmsjsjghb` e login Google; estado em `docs/operacao.md`.
 - Telas: inicial sem mapa (estilo Meetup): busca por cidade que chuta a cidade pela geolocalização, filtro
@@ -37,6 +40,6 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
 - Levantamento de ações reais (2026-10-08): pasta `levantamento/` (no .gitignore, nunca versionar: tem nomes e links)
   guarda a varredura de fontes e o balanço em `levantamento/RODADA-1.md`. Fonte principal: agenda "Bora Lula" do
   Comitê Popular (JSON público). `python scripts/bora_lula.py` baixa o feed, guarda cópia datada em
-  `levantamento/bora-lula/` e gera `levantamento/dados-bora-lula.js` no formato do mockup (copiar sobre
-  `app/dados.js` só localmente para ver; dados reais no site publicado é decisão do Gui). Testes em
-  `tests/test_bora_lula.py`.
+  `levantamento/bora-lula/` e gera `levantamento/dados-bora-lula.js` no formato de `app/dados.js` (modo exemplo).
+  Para produção o caminho é inserir no Supabase (tabelas `acao`, `turno`, `organizacao`): checklist em
+  `docs/2026-10-08-plano-expansao-varredura.md`, seção "Publicar". Testes em `tests/test_bora_lula.py`.

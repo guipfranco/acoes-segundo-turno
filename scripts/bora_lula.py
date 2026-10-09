@@ -1,4 +1,4 @@
-"""Baixa a agenda "Bora Lula" do Comitê Popular e converte para o formato do mockup.
+"""Baixa a agenda "Bora Lula" do Comitê Popular e converte para o formato do app (modo exemplo).
 
 Uso:
   python scripts/bora_lula.py                 # baixa, guarda cópia datada e gera levantamento/dados-bora-lula.js
