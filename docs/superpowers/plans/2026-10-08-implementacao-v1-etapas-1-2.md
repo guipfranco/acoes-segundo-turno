@@ -19,6 +19,7 @@
 - Login só por conta social (Google agora; Facebook depois). Sem e-mail e senha, sem código por SMS.
 - Telefone nunca aparece em página pública nem é legível por quem não deve: garantido por RLS e views, não por JS.
 - Organizador é status concedido; neste plano ninguém cria ação no modo Supabase (sem política de insert em `acao`).
+- Rótulos: botão **Inscreva-se**, estado **Inscrito ✓**; nunca "Vou" na tela.
 - Formas de contato: `organizador_chama` (padrão), `whatsapp`, `link_grupo`. Link de grupo nunca é obrigatório.
 - Pages publica em cada push em `master` que toque `app/`.
 - Testes: `python -m pytest tests` precisa passar ao fim de cada task; `node --test tests/js` idem a partir da Task 2.
@@ -556,6 +557,7 @@ def test_vou_pede_telefone_uma_vez_e_mostra_a_forma_de_contato():
               "Entrar no grupo do WhatsApp", "wa.me/55", "organizador_chama", "'whatsapp'", "link_grupo"]:
         assert s in acao, s
     assert "function continuarVouPendente" in HTML and "vouPendente" in HTML
+    assert ">Inscreva-se<" in HTML and "Inscrito ✓" in HTML and ">Vou<" not in HTML
 ```
 
 Run: `python -m pytest tests -q -k vou_pede` → FAIL.
@@ -579,9 +581,9 @@ async function confirmarVou(tid){const ins=estado.inscrevendo;const tel=(documen
 async function inscrever(tid){return confirmarVou(tid)}
 function botaoTurno(t){const n=vaoNo(t);
   if(t.inicio.slice(0,10)<PUB.config.hoje)return `<button class="btn" disabled>horário encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
-  if(estouInscrito(t.id))return `<span class="selo">Você vai ✓</span> <button class="btn sec mini" onclick="desistir(${t.id})">desistir</button>`;
+  if(estouInscrito(t.id))return `<span class="selo">Inscrito ✓</span> <button class="btn sec mini" onclick="desistir(${t.id})">desistir</button>`;
   if(t.lotacao&&n>=t.lotacao)return `<button class="btn" disabled>lotado</button>`;
-  return `<button class="btn" onclick="iniciarVou(${t.id})">Vou</button>`}
+  return `<button class="btn" onclick="iniciarVou(${t.id})">Inscreva-se</button>`}
 ```
 
 Em `telaAcao`, o formulário dentro de cada horário vira:
@@ -600,7 +602,7 @@ function blocoCombinado(a,c){const ct=c.contato;const tel=ct.whatsapp?ct.whatsap
   return `<h2>Combinado</h2><div class="aviso">${c.detalhe?`<p>${esc(c.detalhe)}</p>`:''}${como}<button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`}
 ```
 
-e em `telaAcao`: `${ab.combinado?blocoCombinado(a,ab.combinado):''}`. Troque "turno encerrado" por "horário encerrado" no teste `test_turno_encerrado_vence_inscrito`.
+e em `telaAcao`: `${ab.combinado?blocoCombinado(a,ab.combinado):''}`. Troque "turno encerrado" por "horário encerrado" e "Você vai" por "Inscrito" no teste `test_turno_encerrado_vence_inscrito`. Rótulos na tela: o botão é **Inscreva-se** e o estado depois é **Inscrito ✓** (decisão do Gui em 2026-10-08; os nomes internos `iniciarVou`, `vouPendente` ficam).
 
 - [ ] **Step 3: Rodar testes e conferir no browser**
 
@@ -1438,7 +1440,7 @@ await p.waitForSelector('.evento');
 await p.click('#conta'); // sair (exemplo começa logado)
 await p.waitForFunction(() => document.getElementById('conta-rotulo').textContent === 'Entrar');
 await p.goto('http://localhost:8000/?modo=exemplo#/acao/3'); // ação 3: 'organizador_chama'; se o Carlos já estiver inscrito nela, escolha outra
-await p.click('text=Vou');
+await p.click('text=Inscreva-se');
 await p.waitForSelector('#vtel'); // volta do "login" com o formulário aberto
 await p.fill('#vtel', '11988887777'); await p.click('text=Confirmar');
 await p.waitForSelector('text=vai entrar em contato');

@@ -47,6 +47,9 @@ para casos avulsos. Cada repetição vira um horário independente: cancela ou l
 outros; a inscrição é sempre num horário específico. Com um horário só, a tela mostra apenas dia e
 hora.
 
+O botão de inscrição é **Inscreva-se** (não "Vou"); depois de inscrito aparece **Inscrito ✓** e o botão de
+desistir.
+
 ## Modelo de dados e visibilidade
 
 **Pessoa** (criada no primeiro login): nome, e-mail, telefone (pedido no primeiro Vou ou ao pedir
