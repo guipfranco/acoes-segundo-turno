@@ -4,12 +4,13 @@
 -- verificada e publicaria sem análise). O selo da organização (verificada) é dado por moderador; quem é de
 -- organização verificada publica direto (regra de criar_acao, migração 20261009000021).
 -- No cadastro da ação, "Quem organiza?": eu mesmo(a), a minha organização ou outra, escrita à mão.
--- Verificação: toda organização cadastrada (ou escrita à mão numa ação) vem com o link de um perfil oficial
--- (Instagram, Facebook, site). A moderação confere por ele antes de dar o selo ou aprovar a ação.
+-- Verificação: a organização cadastrada no Perfil vem com o link do perfil oficial dela (Instagram, Facebook, site).
+-- A ação em nome de organização sem selo (a minha ou outra escrita à mão) vem com o link do POST oficial da
+-- organização anunciando aquela ação: é por ele que a moderação confere que a organização está mesmo por trás.
 
 alter table organizacao add column if not exists criada_por uuid references pessoa(id);
 alter table organizacao add column if not exists link_oficial text;
-alter table acao add column if not exists organizacao_link text;  -- link oficial informado junto com a ação
+alter table acao add column if not exists organizacao_link text;  -- post oficial da organização anunciando a ação
 
 -- link de perfil oficial: http(s), com domínio
 create or replace function link_oficial_valido(l text) returns boolean language sql immutable as $$
@@ -151,19 +152,24 @@ begin
   if grupo is not null and grupo !~ '^https://chat\.whatsapp\.com/' then raise exception 'grupo_invalido'; end if;
   -- quem organiza
   org_nome := nullif(trim(coalesce(dados->>'organizacao_nome', '')), '');
+  org_link := nullif(trim(coalesce(dados->>'organizacao_link', '')), '');
   if nullif(dados->>'organizacao', '')::bigint is not null and nullif(dados->>'organizacao', '')::bigint = p.organizacao then
     org_id := p.organizacao;
+    -- minha organização ainda sem selo: precisa do post dela anunciando a ação
+    if not exists (select 1 from organizacao o where o.id = org_id and o.verificada) and not link_oficial_valido(org_link) then
+      raise exception 'link_post';
+    end if;
   elsif org_nome is not null then
     if length(org_nome) < 3 or length(org_nome) > 80 then raise exception 'nome_organizacao'; end if;
-    org_link := trim(coalesce(dados->>'organizacao_link', ''));
-    if not link_oficial_valido(org_link) then raise exception 'link_oficial'; end if;
+    if not link_oficial_valido(org_link) then raise exception 'link_post'; end if;
     achada := organizacao_por_nome(org_nome);
     if achada.id is null then
-      insert into organizacao (nome, tipo, criada_por, link_oficial) values (org_nome, 'coletivo', p.id, org_link) returning id into org_id;
+      insert into organizacao (nome, tipo, criada_por) values (org_nome, 'coletivo', p.id) returning id into org_id;
     else
       org_id := achada.id;
     end if;
   end if;
+  if org_id is null then org_link := null; end if;
 
   insert into acao (titulo, tipo, descricao, organizador, organizacao, lugar_nome, bairro, cidade, lat, lon, online,
                     detalhe, contato_tipo, contato_link, foto_url, status, organizacao_link)

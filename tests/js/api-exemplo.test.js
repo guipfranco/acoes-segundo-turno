@@ -192,8 +192,8 @@ test('organização: nome novo liga na hora, nome existente vira pedido; ação 
   // ação: organização de outra pessoa pelo id é ignorada; nome escrito à mão liga (ou cria sem selo)
   const r1 = await api.criarAcao(novaAcao(d, { organizacao: verificada.id }));
   assert.equal(d.acoes.find(a => a.id === r1.id).organizacao, null);
-  await assert.rejects(api.criarAcao(novaAcao(d, { organizacao_nome: 'Coletivo Escrito à Mão' })), { codigo: 'link_oficial' });
-  const r2 = await api.criarAcao(novaAcao(d, { organizacao_nome: 'Coletivo Escrito à Mão', organizacao_link: 'https://coletivo.org.br' }));
+  await assert.rejects(api.criarAcao(novaAcao(d, { organizacao_nome: 'Coletivo Escrito à Mão' })), { codigo: 'link_post' });
+  const r2 = await api.criarAcao(novaAcao(d, { organizacao_nome: 'Coletivo Escrito à Mão', organizacao_link: 'https://www.instagram.com/p/abc/' }));
   const o2 = d.organizacoes.find(o => o.id === d.acoes.find(a => a.id === r2.id).organizacao);
   assert.equal(o2.nome, 'Coletivo Escrito à Mão'); assert.equal(o2.verificada, false);
   assert.equal(r2.status, 'em análise');

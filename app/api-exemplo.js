@@ -156,19 +156,22 @@
         const verificada = p.papel === 'organizador' || p.papel === 'moderador' || !!(p.organizacao && (org(p.organizacao) || {}).verificada);
         const status = verificada ? 'publicada' : 'em análise';
         // quem organiza: a minha organização (só a minha) ou outra escrita à mão (criada sem selo se não existe)
-        let orgId = null, orgLink = null; const nomeOrg = String(d.organizacao_nome || '').trim();
-        if (d.organizacao && d.organizacao === p.organizacao) orgId = p.organizacao;
+        let orgId = null; const nomeOrg = String(d.organizacao_nome || '').trim(), orgLink = String(d.organizacao_link || '').trim() || null;
+        if (d.organizacao && d.organizacao === p.organizacao) {
+          orgId = p.organizacao; // minha organização sem selo: precisa do post dela anunciando a ação
+          if (!(org(orgId) || {}).verificada && !linkValido(orgLink)) throw erro('link_post');
+        }
         else if (nomeOrg) {
           if (nomeOrg.length < 3 || nomeOrg.length > 80) throw erro('nome_organizacao');
-          orgLink = String(d.organizacao_link || '').trim(); if (!linkValido(orgLink)) throw erro('link_oficial');
+          if (!linkValido(orgLink)) throw erro('link_post');
           let o = orgPorNome(nomeOrg);
-          if (!o) { o = { id: Math.max(0, ...dados.organizacoes.map(x => x.id)) + 1, nome: nomeOrg, tipo: 'coletivo', verificada: false, foto: null, criadaPor: sessao, linkOficial: orgLink }; dados.organizacoes.push(o); }
+          if (!o) { o = { id: Math.max(0, ...dados.organizacoes.map(x => x.id)) + 1, nome: nomeOrg, tipo: 'coletivo', verificada: false, foto: null, criadaPor: sessao }; dados.organizacoes.push(o); }
           orgId = o.id;
         }
         const id = Math.max(0, ...dados.acoes.map(a => a.id)) + 1;
         const lugar = d.online ? { nome: 'Online', bairro: 'Online', cidade: 'Online', lat: null, lon: null, online: true }
           : { nome: d.lugar_nome, bairro: d.bairro || '', cidade: d.cidade || '', lat: d.lat, lon: d.lon };
-        dados.acoes.push({ id, titulo: d.titulo.trim(), tipo: d.tipo, descricao: d.descricao || '', organizador: sessao, organizacao: orgId, organizacaoLink: orgLink,
+        dados.acoes.push({ id, titulo: d.titulo.trim(), tipo: d.tipo, descricao: d.descricao || '', organizador: sessao, organizacao: orgId, organizacaoLink: orgId ? orgLink : null,
           lugar, detalhe: d.detalhe || '', contatoTipo: grupo ? 'link_grupo' : 'organizador_chama', contatoLink: grupo || null,
           foto: { url: foto, credito: '' },
           status, motivoRecusa: null, prioritaria: false, criadaEm: hoje });
