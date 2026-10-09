@@ -20,7 +20,6 @@ h1{line-height:.98}h2{font-size:22px}
 nav{background:var(--vermelho);border-color:var(--vermelho)}
 nav a,nav a.ativo{color:#fff}
 nav a.cta{background:var(--amarelo);color:var(--tinta)}nav a.cta.ativo{color:var(--tinta)}
-nav a.entrar{background:var(--tinta)}
 @media (max-width:899px){nav a.ativo span:last-child{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}}
 
 /* inicial */

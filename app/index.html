@@ -4,6 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Eleja o Lula</title>
+<meta name="description" content="Encontre panfletagens, atos e encontros perto de você e ajude a eleger o Lula no 2º turno.">
+<meta name="theme-color" content="#e60000">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="favicon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Eleja o Lula">
+<meta property="og:title" content="Eleja o Lula">
+<meta property="og:description" content="Encontre panfletagens, atos e encontros perto de você e ajude a eleger o Lula no 2º turno.">
+<meta property="og:url" content="https://guipfranco.github.io/acoes-segundo-turno/">
+<meta property="og:image" content="https://guipfranco.github.io/acoes-segundo-turno/capa.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Eleja o Lula">
+<meta name="twitter:description" content="Encontre panfletagens, atos e encontros perto de você e ajude a eleger o Lula no 2º turno.">
+<meta name="twitter:image" content="https://guipfranco.github.io/acoes-segundo-turno/capa.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Montserrat:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="leaflet.css">
@@ -42,10 +60,6 @@ nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-conte
 nav a span:first-child{font-size:20px;line-height:1}
 nav a.ativo{color:var(--tinta)}
 nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;font-weight:700}nav a.cta span:first-child{font-size:18px}nav a.cta.ativo{color:#fff}
-nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;font-weight:700}nav a.entrar span:first-child{font-size:18px}
-/* convite para entrar (inicial, ação, perfil) */
-.convite{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff5f5;border:1.5px solid #f6c9cc;border-radius:16px;padding:14px 16px;margin:18px auto 0;max-width:640px;text-align:left}
-.convite p{margin:0;flex:1 1 220px;font-size:15px}.convite p b{display:block;font-size:16px}
 .btn.google{background:var(--tinta)}.btn.google:hover{background:#34343b}.btn.google .g{background:#fff;color:#d6232e;border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center;font-weight:800;font-size:14px}
 .enviar-foto{margin-top:14px;cursor:pointer}.previa-card{max-width:300px;pointer-events:none}
 .btn.vou{font-size:18px;padding:14px 26px;font-weight:800}.cta-topo{margin:14px 0 6px}@media (min-width:900px){.cta-topo{display:none}}
@@ -217,7 +231,6 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
   nav a{flex:0 0 auto;flex-direction:row;gap:7px;font-size:14px;padding:0 14px;height:40px;border-radius:10px}
   nav a span:first-child{font-size:17px}nav a:hover{background:var(--nevoa)}nav a.ativo{color:var(--tinta);background:var(--nevoa)}
   nav a.cta{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.cta:hover,nav a.cta.ativo{background:var(--vinho)}
-  nav a.entrar{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.entrar:hover{background:#34343b}nav a.entrar span:first-child{display:none}
   /* páginas internas mais largas e com respiro */
   .pagina{max-width:760px;padding:32px 24px 56px}.pagina.estreita{max-width:620px}
   h1{font-size:34px}
@@ -420,7 +433,7 @@ function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='o
    <div class="caixa"><div class="busca"><span>🔍</span><input id="busca-lugar" placeholder="Em que cidade você está?" autocomplete="off" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
     <button class="ico" title="Usar minha localização" onclick="usarLocalizacao()">📍</button></div><div id="sugestoes"></div></div>
    <div class="hero-cta"><span>Vai organizar uma ação?</span><a class="btn" href="#/criar" onclick="novaCriacao()">＋ Cadastrar ação</a></div>
-   ${estado.sessao?'':`<div class="convite"><p><b>Vai participar?</b>Entre com o Google para dizer "Eu vou!" nas ações e cadastrar a sua.</p>${botaoEntrar()}</div>`}</header>
+</header>
   ${filtrosHtml()}${tiposHtml(true)}
   ${soOnline?'':blocoVitrine(tituloPerto,acoesPerto(perto),linkMapa(perto),'',popCidade,'perto')}
   <div id="bloco-online">${blocoVitrine('Online, de qualquer lugar',acoesOnline(),'','Ligatona e mutirão de mensagens: você participa de casa, pelo celular.','','online')}</div>
@@ -951,7 +964,6 @@ async function render(){
   document.querySelectorAll('nav a[data-so-moderador]').forEach(a=>a.style.display=estado.sessao&&estado.sessao.papel==='moderador'?'':'none');
   document.getElementById('conta-rotulo').textContent=estado.sessao?'Perfil':'Entrar';
   document.getElementById('conta-icone').textContent=estado.sessao?'👤':'👋';
-  document.getElementById('conta').classList.toggle('entrar',!estado.sessao); // "Entrar" com destaque, como o Doar
   if(rota==='mapa')montarMapa();
   if((rota||'inicio')==='inicio')chutarCidade();
   const ab=estado.acaoAberta;

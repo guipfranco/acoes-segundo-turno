@@ -382,8 +382,9 @@ def test_mapa_previa_e_selecao_do_pino():
         assert s in HTML, s
 
 
-def test_entrar_tem_destaque_como_doar():
-    assert "nav a.entrar{" in HTML and "classList.toggle('entrar',!estado.sessao)" in HTML
+def test_entrar_e_item_comum_da_barra_sem_convite_na_inicial():
+    # decisão do Gui (2026-10-09): "Entrar" igual aos outros itens da barra e sem caixa de convite na inicial
+    assert "nav a.entrar{" not in HTML and "classList.toggle('entrar'" not in HTML and 'class="convite"' not in HTML
 
 
 def test_quem_divulga_tem_avatar_e_logo_da_organizacao_vira_capa():
@@ -405,10 +406,10 @@ def test_cards_com_colunas_iguais_e_sem_zero_vao():
     assert ".meta.quem-linha{display:flex;align-items:center" in HTML
 
 
-def test_conta_logada_vai_ao_perfil_e_entrar_tem_destaque():
+def test_conta_logada_vai_ao_perfil():
     assert 'href="#/perfil" id="conta" data-rota="perfil"' in HTML
     assert "function contaClique(){if(estado.sessao)return true;" in HTML
-    assert "estado.sessao?'Perfil':'Entrar'" in HTML and "class=\"convite\"" in HTML
+    assert "estado.sessao?'Perfil':'Entrar'" in HTML
     assert "data-so-moderador" in HTML
 
 
