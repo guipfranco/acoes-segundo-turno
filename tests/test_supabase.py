@@ -311,3 +311,36 @@ def test_foto_so_na_propria_pasta_do_bucket(cenario):
             return e.code
     assert enviar(f"{cenario['a']}/teste-{uuid.uuid4().hex[:6]}.jpg") == 200
     assert enviar(f"{cenario['b']}/teste-{uuid.uuid4().hex[:6]}.jpg") in (400, 403)
+
+
+def test_organizacao_nova_liga_existente_vira_pedido_e_selo_publica_direto(cenario):
+    tag = uuid.uuid4().hex[:6]
+    sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
+    r = sb.rpc("salvar_organizacao", {"nome": f"Comitê {tag}", "tipo": "coletivo"}, jwt=cenario["jwt_b"])
+    assert r.status == 200 and r.corpo["situacao"] == "ligada", r.corpo
+    org = r.corpo["id"]
+    mo = sb.rpc("minha_organizacao", {}, jwt=cenario["jwt_b"]).corpo
+    assert mo["organizacao"]["id"] == org and mo["organizacao"]["minha"] is True and mo["organizacao"]["verificada"] is False
+    # outra pessoa com o mesmo nome (outra caixa) não entra direto: vira pedido
+    sb.rpc("salvar_telefone", {"telefone": "11988887777"}, jwt=cenario["jwt_a"])
+    r = sb.rpc("salvar_organizacao", {"nome": f"  COMITÊ {tag} ", "tipo": "coletivo"}, jwt=cenario["jwt_a"])
+    assert r.corpo["situacao"] == "pedido", r.corpo
+    assert sb.rpc("minha_organizacao", {}, jwt=cenario["jwt_a"]).corpo["organizacao"] is None
+    # ação em análise usando o id da organização de outra pessoa: o id é ignorado
+    a = sb.rpc("criar_acao", {"dados": _nova(organizacao=org)}, jwt=cenario["jwt_a"]).corpo
+    assert sb.admin("GET", f"/rest/v1/acao?id=eq.{a['id']}&select=organizacao").corpo == [{"organizacao": None}]
+    # nome escrito à mão: liga a ação à organização (cria sem selo se não existe)
+    a = sb.rpc("criar_acao", {"dados": _nova(organizacao_nome=f"Coletivo {tag}")}, jwt=cenario["jwt_a"]).corpo
+    o = sb.admin("GET", f"/rest/v1/acao?id=eq.{a['id']}&select=organizacao(nome,verificada)").corpo[0]["organizacao"]
+    assert o == {"nome": f"Coletivo {tag}", "verificada": False}
+    # moderação: só moderador vê a fila; aprova o pedido e dá o selo
+    assert sb.rpc("fila_organizacoes", {}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['org']}", {"papel": "moderador"})
+    fila = sb.rpc("fila_organizacoes", {}, jwt=cenario["jwt_org"]).corpo
+    pedido = next(p for p in fila["pedidos"] if p["organizacao"] == f"Comitê {tag}")
+    assert any(x["id"] == org for x in fila["sem_selo"])
+    assert sb.rpc("decidir_pedido_organizacao", {"pedido_id": pedido["id"], "aprovar": True}, jwt=cenario["jwt_org"]).status in (200, 204)
+    assert sb.rpc("minha_organizacao", {}, jwt=cenario["jwt_a"]).corpo["organizacao"]["id"] == org
+    assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org)}, jwt=cenario["jwt_a"]).corpo["status"] == "em análise"
+    assert sb.rpc("dar_selo_organizacao", {"organizacao_id": org}, jwt=cenario["jwt_org"]).status in (200, 204)
+    assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org)}, jwt=cenario["jwt_a"]).corpo["status"] == "publicada"

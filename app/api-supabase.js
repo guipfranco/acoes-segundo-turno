@@ -84,6 +84,21 @@
         if (error) { let c = 'falha_envio'; try { c = (await error.context.json()).erro || c; } catch (e) { /* sem corpo */ } throw erroDe({ message: c }); }
         return data.url;
       },
+      // organização de quem usa o app (Perfil) e a moderação delas
+      async minhaOrganizacao() {
+        const r = await rpc('minha_organizacao'); if (!r) return { organizacao: null, pedido: null };
+        const o = r.organizacao;
+        return { organizacao: o ? { id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada, foto: o.foto_url ? { url: o.foto_url } : null, minha: !!o.minha } : null,
+          pedido: r.pedido || null };
+      },
+      async salvarOrganizacao(nome, tipo, logo) { return rpc('salvar_organizacao', { nome, tipo, logo: logo || null }); },
+      async sairDaOrganizacao() { await rpc('sair_da_organizacao'); },
+      async filaOrganizacoes() {
+        const r = await rpc('fila_organizacoes');
+        return { pedidos: r.pedidos || [], semSelo: (r.sem_selo || []).map(o => Object.assign({}, o, { foto: o.foto_url ? { url: o.foto_url } : null })) };
+      },
+      async decidirPedido(id, aprovar, motivo) { await rpc('decidir_pedido_organizacao', { pedido_id: id, aprovar, motivo: motivo || null }); },
+      async darSelo(id) { await rpc('dar_selo_organizacao', { organizacao_id: id }); },
       async criarAcao(dados) { return rpc('criar_acao', { dados }); },
       async minhasAcoes() { return (await rpc('minhas_acoes')).map(comInscritos); },
       async encerrarAcao(id) { await rpc('encerrar_acao', { acao_id: id }); },
