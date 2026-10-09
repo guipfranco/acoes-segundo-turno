@@ -177,6 +177,8 @@ nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;fon
 /* mapa: mapa + busca + gaveta */
 #tela-mapa{position:fixed;inset:0 0 var(--nav) 0;overflow:hidden}
 #mapa{position:absolute;inset:0;background:#e9ebee}#mapa .leaflet-tile-pane{filter:saturate(.75) contrast(.95)}
+/* pinos numa camada só da GPU: sem isso, com zoom afastado (centenas de pinos), o Chrome compunha cada pino à parte e o arrasto travava */
+#mapa .leaflet-marker-pane{will-change:transform}
 #topo{position:absolute;top:12px;left:12px;right:12px;z-index:700}
 .busca{display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;box-shadow:0 2px 12px rgba(23,23,26,.18);padding:6px 6px 6px 16px}
 .busca input{border:0;padding:8px 0;font-size:16px;flex:1;min-width:0;background:transparent}.busca input:focus{outline:none}
@@ -396,7 +398,7 @@ function acoesVisiveis(semTipo){const f=F();
   lista.forEach(x=>x.km=estado.onde&&!ehOnline(x.a)?distanciaKm(estado.onde,x.a.lugar):null);
   return lista.sort((p,q)=>p.t.inicio.localeCompare(q.t.inicio)||((p.km??0)-(q.km??0)))}
 const acoesOnline=()=>acoesVisiveis().filter(x=>ehOnline(x.a));
-function acoesNaArea(){const todas=acoesVisiveis().filter(x=>temPino(x.a));if(!mapa)return todas;const b=mapa.getBounds();return todas.filter(x=>b.contains([x.a.lugar.lat,x.a.lugar.lon]))}
+function acoesNaArea(vistas=acoesVisiveis()){const todas=vistas.filter(x=>temPino(x.a));if(!mapa)return todas;const b=mapa.getBounds();return todas.filter(x=>b.contains([x.a.lugar.lat,x.a.lugar.lon]))}
 function fmtKm(km){return km<10?km.toFixed(1).replace('.',','):String(Math.round(km))}
 function pillFiltro(campo,k,v){return `<button class="pill ${F()[campo]===k?'ativo':''}" data-${campo}="${k}" onclick="F().${campo}='${k}';render()">${v}</button>`}
 function filtrosHtml(){const h=PUB.config.hoje,f=F();
@@ -487,7 +489,7 @@ function montarMapa(){
   L.control.zoom({position:'bottomright'}).addTo(mapa);
   fundoBase(mapa);
   const este=mapa;mapa.on('moveend',()=>{if(mapa!==este)return;const c=mapa.getCenter();estado.vista={lat:c.lat,lon:c.lng,zoom:mapa.getZoom()};atualizarLista()});
-  atualizarLista();
+  desenharPinos();atualizarLista();
 }
 function etiquetaPino(x){return L.divIcon({html:`<span class="etiqueta ${estado.foco===x.a.id?'foco':''} ${estado.sel===x.a.id?'sel':''}">${ICONES[x.a.tipo]} ${fmtCurta(x.t.inicio)}</span>`,className:'',iconSize:[0,0]})}
 // prévia da ação sobre o mapa, como no Airbnb: foto, título, quando, onde e link para a página
@@ -508,14 +510,17 @@ function marcarSelecao(){document.querySelectorAll('.card').forEach(c=>c.classLi
   marcadores.forEach(m=>{const s=m._acao===estado.sel;m.setZIndexOffset(s?1000:0);const el=m.getElement();const e=el&&el.querySelector('.etiqueta');if(e)e.classList.toggle('sel',s)})}
 function rolarParaSel(){const c=document.getElementById('card-'+estado.sel);if(c)c.scrollIntoView({block:'center',behavior:'smooth'})}
 function abrirGaveta(nivel){estado.gaveta=nivel;const g=document.getElementById('gaveta');if(g)g.className=nivel==='baixa'?'':nivel}
-function atualizarLista(){
-  if(!mapa)return;
-  const todas=acoesVisiveis().filter(x=>temPino(x.a)),aqui=acoesNaArea();
+// os pinos só dependem dos filtros, que remontam o mapa: desenhados uma vez, não a cada movimento (recriar centenas pesava no fim do arrasto)
+function desenharPinos(){
   marcadores.forEach(m=>m.remove());marcadores=[];
-  const pos=espalhar(todas);
+  const todas=acoesVisiveis().filter(x=>temPino(x.a)),pos=espalhar(todas);
   todas.forEach((x,i)=>{const m=L.marker(pos[i],{icon:etiquetaPino(x),riseOnHover:true,zIndexOffset:estado.sel===x.a.id?1000:0});m._acao=x.a.id;m.addTo(mapa);
     m.on('click',()=>selecionar(x,pos[i]));marcadores.push(m)});
-  const online=acoesOnline();
+}
+// a cada movimento do mapa só a contagem e a lista mudam
+function atualizarLista(){
+  if(!mapa)return;
+  const vistas=acoesVisiveis(),aqui=acoesNaArea(vistas),online=vistas.filter(x=>ehOnline(x.a));
   document.getElementById('contagem').textContent=aqui.length?`${aqui.length===1?'1 ação':aqui.length+' ações'} nesta área`:'Nenhuma ação nesta área';
   document.getElementById('lista').innerHTML=(aqui.length?aqui.map(cardAcao).join(''):
     `<div class="vazio"><p>Ainda não tem ação por aqui.</p><p class="sec" style="font-weight:400">Afaste o mapa para ver outras, ou crie a primeira ação do seu bairro.</p><a class="btn" href="#/criar" onclick="novaCriacao()">Cadastrar ação</a></div>`)

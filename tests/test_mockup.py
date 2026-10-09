@@ -301,7 +301,17 @@ def test_foto_tem_reserva_e_credito_e_imagem_obrigatoria_no_cadastro():
 def test_mapa_ignora_acao_presencial_sem_coordenada():
     # ação importada sem cidade reconhecida tem lat/lon null e não pode quebrar o mapa
     assert "const temPino=" in HTML
-    assert "function acoesNaArea(){const todas=acoesVisiveis().filter(x=>temPino(x.a))" in HTML
+    assert "function acoesNaArea(vistas=acoesVisiveis()){const todas=vistas.filter(x=>temPino(x.a))" in HTML
+    assert "const todas=acoesVisiveis().filter(x=>temPino(x.a)),pos=espalhar(todas)" in HTML
+
+
+def test_mover_o_mapa_nao_recria_os_pinos():
+    # recriar centenas de pinos a cada moveend travava o arrasto no celular: os pinos saem só no montarMapa
+    lista = HTML[HTML.index("function atualizarLista"):HTML.index("function focar")]
+    assert "L.marker" not in lista and "marcadores" not in lista
+    assert "desenharPinos();atualizarLista();" in HTML
+    # com zoom afastado, cada pino virava uma camada própria do compositor e o arrasto travava no PC
+    assert "#mapa .leaflet-marker-pane{will-change:transform}" in HTML
 
 
 def test_telas_de_participante_leem_pela_api():
