@@ -264,7 +264,7 @@ def test_filtro_de_data_claro_com_proximos_primeiro_e_intervalo():
 
 def test_formato_presencial_ou_online_em_toda_a_cadeia():
     assert "const FORMATOS" not in HTML and "data-formato" not in HTML  # sem filtro de formato na inicial e no mapa
-    for s in ["Ver ações online", "filtrosHtml(true)", "'online'", "const ehOnline", "acoesOnline", "LUGAR_ONLINE",
+    for s in ["tiposHtml(true)", "<b>💻</b>online", "'online'", "const ehOnline", "acoesOnline", "LUGAR_ONLINE",
               "Ação online (ligatona", "O link da chamada vai para quem se inscreve", "if(!c.online){"]:
         assert s in HTML, s
     assert "!ehOnline(ab.acao)" in HTML  # ação online não monta minimapa
@@ -367,7 +367,7 @@ def test_tipos_revistos_e_nome_antigo_aceito():
     for t in ["'encontro'", "'ato'", "'caminhada'", "'cultural'", "'panfletagem'", "'outro'"]:
         assert t in bloco, t
     assert "'roda de conversa':'encontro'" in HTML and "normalizarTipos(PUB.acoes)" in HTML
-    assert "function tiposHtml(){const f=F(),n={}" in HTML  # chips só dos tipos com ação
+    assert "function tiposHtml(comOnline){const f=F(),n={}" in HTML  # chips só dos tipos com ação
 
 
 def test_adicionar_a_agenda():

@@ -79,14 +79,14 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
 .caixa .busca{padding:8px 8px 8px 18px;box-shadow:0 4px 18px rgba(23,23,26,.16)}
 .caixa .busca input{font-size:17px;padding:10px 0}
 .caixa #sugestoes{top:62px;z-index:900}
-.hero-cta{display:flex;align-items:center;justify-content:center;gap:10px 14px;flex-wrap:wrap;margin-top:18px;font-size:15px;color:var(--cinza)}
+.hero-cta{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:18px;font-size:15px;color:var(--cinza)}
 .link{background:none;border:0;color:var(--vinho);font-weight:600;cursor:pointer;padding:6px 0;text-decoration:underline;font-size:14px}
 .filtros{display:flex;flex-direction:column;gap:6px;margin:14px 0 4px}
 .filtro{display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:2px 0}.filtro::-webkit-scrollbar{display:none}
 .filtro .rot{flex:0 0 64px;font-size:13px;font-weight:600;color:var(--cinza)}
 .filtro .pill{flex:0 0 auto;border:1.5px solid var(--nevoa);background:#fff;font-size:13px;padding:7px 12px}
 .filtro .pill.ativo{border-color:var(--tinta);color:var(--tinta);box-shadow:none}
-.datas{display:flex;gap:8px;align-items:center;margin:2px 0 4px 70px;flex-wrap:wrap}
+.datas{display:flex;gap:8px;align-items:center;margin:2px 0 4px;flex-wrap:wrap}
 .datas input{flex:1 1 120px;min-width:0;width:auto;padding:8px 10px;font-size:14px}.datas span{font-size:13px;color:var(--cinza)}
 .bloco{margin:32px 0 0}
 .bloco .cab{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
@@ -217,7 +217,7 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
   #topo{top:16px}
   .cabeca .filtro{flex-wrap:wrap}
 }
-@media (max-width:899px){nav .marca{display:none}.so-desk{display:none}}
+@media (max-width:899px){nav .marca{display:none}.so-desk{display:none}}@media (min-width:900px){.so-cel{display:none}}
 </style>
 </head>
 <body>
@@ -229,7 +229,7 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
   <a href="#/fila" data-rota="fila" data-so-moderador style="display:none"><span>✅</span><span>Fila</span></a>
   <a href="#/perfil" id="conta" data-rota="perfil" onclick="return contaClique()"><span id="conta-icone">👤</span><span id="conta-rotulo">Entrar</span></a>
   <a id="doar" href="#" target="_blank" rel="noopener"><span>❤️</span><span>Doar</span></a>
-  <a class="cta" href="#/criar" data-rota="criar" onclick="novaCriacao()"><span>＋</span><span>Cadastrar<span class="so-desk"> ação</span></span></a>
+  <a class="cta" href="#/criar" data-rota="criar" onclick="novaCriacao()"><span>＋</span><span><span class="so-cel">Ação</span><span class="so-desk">Cadastrar ação</span></span></a>
 </div></nav>
 <script src="dados.js"></script>
 <script src="lugares.js"></script>
@@ -353,16 +353,15 @@ const acoesOnline=()=>acoesVisiveis().filter(x=>ehOnline(x.a));
 function acoesNaArea(){const todas=acoesVisiveis().filter(x=>temPino(x.a));if(!mapa)return todas;const b=mapa.getBounds();return todas.filter(x=>b.contains([x.a.lugar.lat,x.a.lugar.lon]))}
 function fmtKm(km){return km<10?km.toFixed(1).replace('.',','):String(Math.round(km))}
 function pillFiltro(campo,k,v){return `<button class="pill ${F()[campo]===k?'ativo':''}" data-${campo}="${k}" onclick="F().${campo}='${k}';render()">${v}</button>`}
-// comOnline: só na inicial, um botão liga e desliga "só ações online" (no mapa não há online: ação online não tem pino)
-function filtrosHtml(comOnline){const h=PUB.config.hoje,f=F(),on=f.formato==='online';
+function filtrosHtml(){const h=PUB.config.hoje,f=F();
   return `<div class="filtros">
-   <div class="filtro"><span class="rot">Quando</span>${QUANDO.map(([k,v])=>pillFiltro('quando',k,v)).join('')}</div>
-   ${comOnline?`<div class="filtro"><span class="rot">Onde</span><button class="pill ${on?'ativo':''}" aria-pressed="${on}" onclick="F().formato=${on?"'qualquer'":"'online'"};render()">💻 Ver ações online</button>${on?`<button class="pill" onclick="F().formato='qualquer';render()">Ver todas</button>`:''}</div>`:''}
+   <div class="filtro">${QUANDO.map(([k,v])=>pillFiltro('quando',k,v)).join('')}</div>
    ${f.quando==='datas'?`<div class="datas"><span>de</span><input type="date" aria-label="de" value="${f.de}" min="${h}" onchange="F().de=this.value;if(F().ate&&F().ate<this.value)F().ate='';render()"><span>até</span><input type="date" aria-label="até" value="${f.ate}" min="${f.de||h}" onchange="F().ate=this.value;render()"></div>`:''}</div>`}
 // chips só dos tipos que têm ação com os filtros atuais (o ativo fica sempre, para poder desmarcar)
-function tiposHtml(){const f=F(),n={};acoesVisiveis(true).forEach(x=>n[x.a.tipo]=(n[x.a.tipo]||0)+1);
-  const vis=TIPOS.filter(t=>n[t]||f.tipo===t);if(!vis.length)return '';
-  return `<div class="tipos">${vis.map(t=>`<button class="chip ${f.tipo===t?'ativo':''}" onclick="F().tipo=F().tipo==='${t}'?null:'${t}';render()"><b>${ICONES[t]}</b>${t}</button>`).join('')}</div>`}
+// comOnline (só na inicial): o primeiro chip é "online", que liga e desliga só ações online (no mapa não há: ação online não tem pino)
+function tiposHtml(comOnline){const f=F(),n={},on=f.formato==='online',vistas=acoesVisiveis(true);vistas.forEach(x=>n[x.a.tipo]=(n[x.a.tipo]||0)+1);
+  const vis=TIPOS.filter(t=>n[t]||f.tipo===t),temOnline=comOnline&&(on||vistas.some(x=>ehOnline(x.a)));if(!vis.length&&!temOnline)return '';
+  return `<div class="tipos">${temOnline?`<button class="chip ${on?'ativo':''}" aria-pressed="${on}" onclick="F().formato=${on?"'qualquer'":"'online'"};render()"><b>💻</b>online</button>`:''}${vis.map(t=>`<button class="chip ${f.tipo===t?'ativo':''}" onclick="F().tipo=F().tipo==='${t}'?null:'${t}';render()"><b>${ICONES[t]}</b>${t}</button>`).join('')}</div>`}
 // ---------- inicial: busca por cidade e vitrine de ações pelo Brasil ----------
 const VITRINE=[['São Paulo','SP',-23.55,-46.63],['Recife','PE',-8.05,-34.9],['Belo Horizonte','MG',-19.92,-43.94],['Porto Alegre','RS',-30.03,-51.23],['Salvador','BA',-12.97,-38.51]];
 const PADRAO={rotulo:'São Paulo',lat:-23.55,lon:-46.63,chute:true};
@@ -389,7 +388,7 @@ function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='o
     <button class="ico" title="Usar minha localização" onclick="usarLocalizacao()">📍</button></div><div id="sugestoes"></div></div>
    <div class="hero-cta"><span>Vai organizar uma ação?</span><a class="btn" href="#/criar" onclick="novaCriacao()">＋ Cadastrar ação</a></div>
    ${estado.sessao?'':`<div class="convite"><p><b>Vai participar?</b>Entre com o Google para dizer "Eu vou!" nas ações e cadastrar a sua.</p>${botaoEntrar()}</div>`}</header>
-  ${filtrosHtml(true)}${tiposHtml()}
+  ${filtrosHtml()}${tiposHtml(true)}
   ${soOnline?'':blocoVitrine(tituloPerto,acoesPerto(perto),linkMapa(perto),'',popCidade)}
   ${soOnline?'':VITRINE.filter(c=>c[0]!==perto.rotulo).map(c=>blocoVitrine(esc(c[0]),acoesPerto({lat:c[2],lon:c[3]}),linkMapa({rotulo:c[0],lat:c[2],lon:c[3]}))).join('')}
   <div id="bloco-online">${blocoVitrine('Online, de qualquer lugar',acoesOnline(),'','Ligatona e mutirão de mensagens: você participa de casa, pelo celular.')}</div>
