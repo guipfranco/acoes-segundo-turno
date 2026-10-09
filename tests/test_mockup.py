@@ -103,7 +103,7 @@ def test_criar_tem_tres_passos_modelos_e_validacao():
 def test_criar_pela_api_e_so_verificado_publica_direto():
     assert "API.criarAcao(" in HTML and "function souVerificado" in HTML
     assert "s.papel==='organizador'||s.papel==='moderador'" in HTML
-    assert "if(!estado.sessao)return `<div class=\"pagina estreita\"><h1>Criar ação</h1>" in HTML
+    assert "if(!estado.sessao)return `<div class=\"pagina estreita\"><h1>Cadastrar ação</h1>" in HTML
     for codigo in ["limite_diario:", "limite_em_analise:", "turno_invalido:", "grupo_invalido:"]:
         assert codigo in HTML, codigo
 
@@ -115,7 +115,7 @@ def test_validacao_dos_campos_obrigatorios():
 
 
 def test_perfil_e_fila():
-    for s in ["function telaPerfil", "function telaFila", "Copiar telefones", "Escrever aviso para quem vai", "Abrir no WhatsApp", "Ações que criei",
+    for s in ["function telaPerfil", "function telaFila", "Copiar telefones", "Escrever aviso para quem vai", "Abrir no WhatsApp", "Ações que cadastrei",
               "Encerrar ação", "Editar", "Aprovar", "Recusar", "Dar selo à organização", "Sair da conta",
               "Bloquear organizador", "Recuse se:", "Já criou", "API.minhasAcoes()", "API.fila(", "Motivo da recusa"]:
         assert s in HTML, s
@@ -224,7 +224,7 @@ def test_inicial_sem_mapa_com_busca_e_vitrine():
     i = HTML.index("function telaInicio"); corpo = HTML[i:HTML.index("function irParaCidade")]
     assert 'id="mapa"' not in corpo
     for s in ["Em que cidade você está?", "Perto de você", "Online, de qualquer lugar", "Ver no mapa",
-              "blocoVitrine", "Criar a primeira ação"]:
+              "blocoVitrine", "Cadastrar a primeira ação"]:
         assert s in corpo, s
     assert "function chutarCidade" in HTML and "getCurrentPosition" in HTML
     assert "Chutamos a cidade" not in HTML  # a cidade virou botão que abre a busca
@@ -264,7 +264,7 @@ def test_filtro_de_data_claro_com_proximos_primeiro_e_intervalo():
 
 def test_formato_presencial_ou_online_em_toda_a_cadeia():
     assert "const FORMATOS" not in HTML and "data-formato" not in HTML  # sem filtro de formato na inicial e no mapa
-    for s in ["Prefiro ajudar online", "Ver também as ações presenciais", "'online'", "const ehOnline", "acoesOnline", "LUGAR_ONLINE",
+    for s in ["Ver ações online", "filtrosHtml(true)", "'online'", "const ehOnline", "acoesOnline", "LUGAR_ONLINE",
               "Ação online (ligatona", "O link da chamada vai para quem se inscreve", "if(!c.online){"]:
         assert s in HTML, s
     assert "!ehOnline(ab.acao)" in HTML  # ação online não monta minimapa
@@ -433,3 +433,8 @@ def test_desistir_e_encerrar_so_no_menu_de_tres_pontinhos():
     assert "const menuMais=" in HTML and 'class="perigo" onclick="desistir(' in HTML
     assert 'class="btn sec mini" onclick="desistir(' not in HTML
     assert "details.mais[open]" in HTML
+
+
+def test_inicial_tem_botao_cadastrar_acao_e_filtro_online():
+    assert 'class="hero-cta"' in HTML and "＋ Cadastrar ação" in HTML
+    assert "Prefiro ajudar online" not in HTML and "Criar ação" not in HTML

@@ -37,7 +37,7 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
 - Conta e criação (branch `eu-vou-perfil`, 2026-10-09): logado, o botão da conta vira "Perfil" (`#/perfil`: WhatsApp,
   resumo do "Eu vou", ações que criei com situação e motivo da recusa, Sair no fim); deslogado, "Entrar" escuro e
   convite na inicial. "Eu vou!" em toda ação; na de divulgação (importada) só marca presença, sem telefone (migração
-  20261009000020). Qualquer pessoa logada cria ação: nasce "em análise", exceto verificado (papel organizador ou
+  20261009000020). Qualquer pessoa logada cadastra ação ("Cadastrar ação", botão vermelho da barra e da inicial): nasce "em análise", exceto verificado (papel organizador ou
   moderador, ou membro de organização verificada), que publica direto; limite de 10 por dia e 10 em análise
   (migração 20261009000021: `criar_acao`, `minhas_acoes`, `encerrar_acao`, `fila_moderacao`, `aprovar_acao`,
   `recusar_acao`). Fila (`#/fila`) só para moderador. Editar ação, selo, bloquear seguem só no modo exemplo.
