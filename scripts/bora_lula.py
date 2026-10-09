@@ -10,9 +10,13 @@ não podem ter organizações reais. Sem dependências além da biblioteca padr�
 """
 import argparse
 import json
+import math
 import re
 import sys
+import time
 import unicodedata
+import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import date, datetime
 from pathlib import Path
@@ -25,6 +29,10 @@ LUGARES_JS = RAIZ / "app" / "lugares.js"
 DADOS_JS = RAIZ / "app" / "dados.js"
 FONTE = "Agenda Bora Lula do Comitê Popular (comitepopular.org.br/agenda)"
 DURACAO_PADRAO_H = 2
+URL_NOMINATIM = "https://nominatim.openstreetmap.org/search"
+GEOCACHE = RAIZ / "levantamento" / "geocache.json"
+AGENTE = "acoes-segundo-turno/1.0 (github.com/guipfranco/acoes-segundo-turno)"
+RAIO_MESMA_CIDADE_KM = 40
 
 # Tipos revistos em 2026-10-09 (migração 20261009000010): no feed real, "Encontro", "Ato" e "Caminhada" somam
 # mais da metade das ações; antes Ato, Caminhada e Cultural caíam em "outro".
@@ -158,6 +166,135 @@ def resolver_lugar(cidade, uf, lugares):
     return None
 
 
+# ---- geocodificação do endereço (Nominatim / OpenStreetMap) ----
+
+class Geocodificador:
+    """Consulta -> resultado do Nominatim, com cache em levantamento/geocache.json (fora do git) e no máximo
+    uma consulta por segundo, como pede a política do serviço. `consultar` pode ser trocado nos testes."""
+
+    def __init__(self, arquivo=GEOCACHE, consultar=None):
+        self.arquivo = Path(arquivo) if arquivo else None
+        self.cache = {}
+        if self.arquivo and self.arquivo.exists():
+            try:
+                self.cache = json.loads(self.arquivo.read_text(encoding="utf-8"))
+            except ValueError:
+                self.cache = {}
+        self.consultar = consultar or self._nominatim
+        self._ultima = 0.0
+        self.consultas = 0
+        self.sujo = False
+
+    def _nominatim(self, consulta):
+        espera = 1.1 - (time.monotonic() - self._ultima)
+        if espera > 0:
+            time.sleep(espera)
+        self._ultima = time.monotonic()
+        q = urllib.parse.urlencode({"q": consulta, "format": "jsonv2", "addressdetails": 1, "limit": 1, "countrycodes": "br"})
+        req = urllib.request.Request(f"{URL_NOMINATIM}?{q}", headers={"User-Agent": AGENTE})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return json.load(r)
+        except (urllib.error.URLError, OSError, ValueError):
+            return None  # sem cache: tenta de novo na próxima rodada
+
+    def buscar(self, consulta):
+        if consulta in self.cache:
+            return self.cache[consulta]
+        res = self.consultar(consulta)
+        self.consultas += 1
+        if res is None:
+            return None
+        self.cache[consulta] = res
+        self.sujo = True
+        return res
+
+    def salvar(self):
+        if self.sujo and self.arquivo:
+            self.arquivo.parent.mkdir(parents=True, exist_ok=True)
+            self.arquivo.write_text(json.dumps(self.cache, ensure_ascii=False), encoding="utf-8")
+            self.sujo = False
+
+
+VIAS = re.compile(r"^(rua|r\.|av\.?|avenida|travessa|alameda|praca|largo|estrada|rodovia|rod\.|viaduto|beco)\b")
+PONTOS = ("building", "amenity", "shop", "office", "leisure", "tourism", "railway", "public_transport", "historic", "man_made", "club")
+
+
+def precisao_de(r):
+    """'endereco' (prédio, número ou ponto de interesse), 'rua' (via) ou None (só achou cidade/bairro)."""
+    end = r.get("address") or {}
+    if end.get("house_number") or r.get("category") in PONTOS:
+        return "endereco"
+    if r.get("category") == "highway" or r.get("addresstype") == "road" or VIAS.match(sem_acento(r.get("name"))):
+        return "rua"
+    return None
+
+
+def distancia_km(a, b):
+    la1, lo1, la2, lo2 = map(math.radians, (a[0], a[1], b[0], b[1]))
+    h = math.sin((la2 - la1) / 2) ** 2 + math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2
+    return 2 * 6371 * math.asin(math.sqrt(h))
+
+
+def mesma_cidade(r, cidade, uf, centro):
+    """Resultado dentro da UF e no município (pelo nome) ou a até RAIO_MESMA_CIDADE_KM do centro dele."""
+    end = r.get("address") or {}
+    if end.get("ISO3166-2-lvl4") and end["ISO3166-2-lvl4"] != "BR-" + uf:
+        return False
+    nomes = [end.get(k) for k in ("city", "town", "municipality", "city_district", "village")]
+    if any(n and chave_cidade(n) == chave_cidade(cidade) for n in nomes):
+        return True
+    try:
+        return distancia_km((float(r["lat"]), float(r["lon"])), centro) <= RAIO_MESMA_CIDADE_KM
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def localizar(geo, endereco, local, cidade, uf, centro):
+    """(lat, lon, precisao). Tenta o endereço, depois o nome do local; sem acerto, o centro da cidade ('cidade').
+    Sem geocodificador, fica no centro da cidade."""
+    textos = [t.strip() for t in (endereco, local) if t and t.strip() and chave_cidade(t) != chave_cidade(cidade) and len(t.strip()) > 3]
+    for texto in dict.fromkeys(textos) if geo else ():
+        res = geo.buscar(f"{texto}, {cidade}, {uf}, Brasil")
+        if not res:
+            continue
+        r = res[0]
+        p = precisao_de(r)
+        if p and mesma_cidade(r, cidade, uf, centro):
+            return float(r["lat"]), float(r["lon"]), p
+    return centro[0], centro[1], "cidade"
+
+
+# ---- logo da organização (Wikimedia Commons, licença livre ou domínio público) ----
+
+COMMONS = "https://commons.wikimedia.org/wiki/"
+
+
+def _logo(arquivo, credito):
+    q = urllib.parse.quote(arquivo.replace(" ", "_"))
+    return {"url": f"{COMMONS}Special:Redirect/file/{q}?width=400", "credito": f"{credito}, via Wikimedia Commons",
+            "pagina": f"{COMMONS}File:{q}"}
+
+
+LOGOS = [  # (padrão sobre o nome sem acento, logo). Vence o que aparece primeiro no nome.
+    (r"\bmtst\b", _logo("MTST-logo.png", "MTST, CC0")),
+    (r"\bmst\b", _logo("MST-logo-png.png", "MST, CC BY-SA 3.0")),
+    (r"\bpsol\b", _logo("Logo PSOL roxo.svg", "PSOL, domínio público")),
+    (r"\bpc ?do ?b\b", _logo("PCdoB logo.svg", "PCdoB, domínio público")),
+    (r"\bcut\b", _logo("Logotipo da CUT.svg", "CUT, domínio público")),
+    (r"\bune\b", _logo("Logotipo da União Nacional dos Estudantes.svg", "UNE, domínio público")),
+    (r"\blevante\b", _logo("Logo LevantePopularDaJuventude.png", "Levante Popular da Juventude, CC0")),
+    (r"\b(pt|jpt|partido dos trabalhadores)\b", _logo("Logo do Partido dos Trabalhadores.svg", "PT, domínio público")),
+]
+
+
+def logo_org(nome):
+    """Logo da organização pública reconhecível no nome (PT, PSOL, UNE, MST...), ou None."""
+    n = sem_acento(nome)
+    achados = [(m.start(), logo) for pad, logo in LOGOS for m in [re.search(pad, n)] if m]
+    return dict(min(achados)[1]) if achados else None
+
+
 def baixar(destino_pasta=PASTA):
     req = urllib.request.Request(URL_FEED, headers={"User-Agent": "Mozilla/5.0 acoes-segundo-turno"})
     with urllib.request.urlopen(req, timeout=60) as r:
@@ -178,7 +315,7 @@ def _config_base():
     return {}
 
 
-def converter(feed, lugares, hoje=None, ate="2026-10-25"):
+def converter(feed, lugares, hoje=None, ate="2026-10-25", geo=None):
     hoje = hoje or feed.get("hoje") or date.today().isoformat()
     config = dict(_config_base())
     config["hoje"] = hoje
@@ -196,7 +333,8 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25"):
         if nome_org:
             if nome_org not in idx_org:
                 idx_org[nome_org] = len(organizacoes) + 1
-                organizacoes.append({"id": idx_org[nome_org], "nome": nome_org, "tipo": tipo_org(nome_org), "verificada": False})
+                organizacoes.append({"id": idx_org[nome_org], "nome": nome_org, "tipo": tipo_org(nome_org), "verificada": False,
+                                     "foto": logo_org(nome_org)})
             org_id = idx_org[nome_org]
         online = bool(item.get("online"))
         cidade = (item.get("cidade") or "").strip()
@@ -207,9 +345,9 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25"):
             lugar = {"nome": "Online", "bairro": "Online", "cidade": "Online", "lat": None, "lon": None, "online": True}
         else:
             c = coordenada(cidade, uf, lugares)
+            lat, lon, precisao = localizar(geo, endereco, local, cidade, uf, c) if c else (None, None, "nenhuma")
             lugar = {"nome": local or endereco or cidade or "A confirmar", "bairro": bairro_do_endereco(endereco, cidade), "cidade": cidade or "A confirmar",
-                     "uf": uf, "endereco": endereco, "lat": c[0] if c else None, "lon": c[1] if c else None,
-                     "precisao": "cidade" if c else "nenhuma"}
+                     "uf": uf, "endereco": endereco, "lat": lat, "lon": lon, "precisao": precisao}
         h_ini, h_fim = faixa(item.get("hora"), item.get("hora_ord"))
         inicio, fim = f"{data}T{h_ini}", f"{data}T{h_fim}"
         link = (item.get("link") or "").strip()
@@ -235,14 +373,18 @@ def dados_js(d):
 
 
 def resumo(d):
-    por_uf, sem_coord = {}, 0
+    por_uf, sem_coord, exatas = {}, 0, 0
     for a in d["acoes"]:
         uf = a["lugar"].get("uf", "online" if a["lugar"].get("online") else "")
         por_uf[uf] = por_uf.get(uf, 0) + 1
         if not a["lugar"].get("online") and a["lugar"]["lat"] is None:
             sem_coord += 1
+        if a["lugar"].get("precisao") in ("endereco", "rua"):
+            exatas += 1
     top = ", ".join(f"{k or '?'} {v}" for k, v in sorted(por_uf.items(), key=lambda kv: -kv[1])[:8])
-    return f"{len(d['acoes'])} ações, {len(d['organizacoes'])} organizações, {sem_coord} sem coordenada. Por UF: {top}"
+    com_logo = sum(1 for o in d["organizacoes"] if o.get("foto"))
+    return (f"{len(d['acoes'])} ações ({exatas} com ponto exato), {len(d['organizacoes'])} organizações ({com_logo} com logo), "
+            f"{sem_coord} sem coordenada. Por UF: {top}")
 
 
 def main(argv=None):
@@ -250,6 +392,7 @@ def main(argv=None):
     p.add_argument("--de", help="JSON já baixado, em vez de baixar")
     p.add_argument("--para", default=str(SAIDA_PADRAO), help="arquivo .js de saída")
     p.add_argument("--hoje", help="AAAA-MM-DD (padrão: campo hoje do feed)")
+    p.add_argument("--sem-geocodificar", action="store_true", help="não consulta o Nominatim: tudo no centro da cidade")
     args = p.parse_args(argv)
     if args.de:
         feed = json.loads(Path(args.de).read_text(encoding="utf-8"))
@@ -257,7 +400,11 @@ def main(argv=None):
     else:
         arq, feed = baixar()
         origem = str(arq)
-    d = converter(feed, carregar_lugares(), hoje=args.hoje)
+    geo = None if args.sem_geocodificar else Geocodificador()
+    d = converter(feed, carregar_lugares(), hoje=args.hoje, geo=geo)
+    if geo:
+        geo.salvar()
+        print(f"geocodificação: {geo.consultas} consultas novas ao Nominatim, cache em {GEOCACHE}")
     Path(args.para).parent.mkdir(parents=True, exist_ok=True)
     Path(args.para).write_text(dados_js(d), encoding="utf-8")
     print(f"feed: {origem} ({len(feed.get('acoes', []))} itens, hoje={feed.get('hoje')})")

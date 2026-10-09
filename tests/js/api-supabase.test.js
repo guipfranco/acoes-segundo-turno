@@ -1,6 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { deAcao, deTurno, dePessoa, hojeBrasilia } = require('../../app/api-supabase.js');
+const { deAcao, deTurno, dePessoa, deOrg, hojeBrasilia } = require('../../app/api-supabase.js');
+
+test('deOrg leva o logo da organização (ou null)', () => {
+  assert.deepEqual(deOrg({ id: 3, nome: 'PT de Diadema', tipo: 'partido', verificada: false, foto_url: 'https://commons.wikimedia.org/x', foto_credito: 'PT, domínio público, via Wikimedia Commons', foto_pagina: 'https://commons.wikimedia.org/wiki/File:x' }),
+    { id: 3, nome: 'PT de Diadema', tipo: 'partido', verificada: false, foto: { url: 'https://commons.wikimedia.org/x', credito: 'PT, domínio público, via Wikimedia Commons', pagina: 'https://commons.wikimedia.org/wiki/File:x' } });
+  assert.deepEqual(deOrg({ id: 4, nome: 'Org', tipo: 'coletivo', verificada: true, foto_url: null, foto_credito: null, foto_pagina: null }), { id: 4, nome: 'Org', tipo: 'coletivo', verificada: true, foto: null });
+});
 
 test('deAcao converte linha da view no formato AcaoPublica', () => {
   const a = deAcao({ id: 7, titulo: 'T', tipo: 'panfletagem', descricao: 'd', organizador: 'u1', organizador_nome: 'Carlos', organizacao: null,

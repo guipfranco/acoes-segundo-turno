@@ -36,7 +36,7 @@
       async publico() {
         return {
           config: { vaquinha: dados.config.vaquinha, frase: dados.config.frase, hoje: dados.config.hoje },
-          organizacoes: dados.organizacoes.map(o => ({ id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada })),
+          organizacoes: dados.organizacoes.map(o => ({ id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada, foto: o.foto && o.foto.url ? Object.assign({}, o.foto) : null })),
           acoes: dados.acoes.filter(a => a.status === 'publicada').map(publica),
           turnos: dados.turnos.filter(t => (dados.acoes.find(a => a.id === t.acao) || {}).status === 'publicada').map(turno),
         };

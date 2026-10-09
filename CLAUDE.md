@@ -47,6 +47,8 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   `levantamento/bora-lula/` e gera `levantamento/dados-bora-lula.js` no formato de `app/dados.js` (modo exemplo).
   Para produção: `python scripts/publicar_acoes.py bora-lula [--aplicar]` (e `redes --de CSV --feed JSON`) chama a
   função SQL `importar_acoes` (migração 20261009000001: pessoa de sistema, `fonte`/`fonte_id`, `lugar_aproximado`,
-  contato `divulgacao` sem inscrição). Como rodar em `docs/operacao.md`; checklist resolvido em
+  contato `divulgacao` sem inscrição; migração 20261009000002: logo da organização). O endereço vira ponto exato pelo
+  Nominatim (cache em `levantamento/geocache.json`); organização reconhecível ganha logo do Commons (`LOGOS` em
+  `scripts/bora_lula.py`). Como rodar em `docs/operacao.md`; checklist resolvido em
   `docs/2026-10-08-plano-expansao-varredura.md`, seção "Publicar". Testes em `tests/test_bora_lula.py`,
   `tests/test_publicar_acoes.py` e `tests/test_supabase.py` (pilha local).

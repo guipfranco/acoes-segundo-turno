@@ -110,3 +110,11 @@ test('ação importada no modo exemplo: lugar aproximado e link de divulgação 
   const comum = (await api.publico()).acoes.find(x => x.id !== 9901 && !x.lugar.online);
   assert.equal(comum.lugar.aproximado, false); assert.equal(comum.linkDivulgacao, null);
 });
+
+test('organização com logo no modo exemplo sai com foto; sem logo, foto null', async () => {
+  const d = dados();
+  d.organizacoes.push({ id: 9901, nome: 'Org com logo', tipo: 'partido', verificada: false, foto: { url: 'https://commons.wikimedia.org/x', credito: 'c, via Wikimedia Commons', pagina: 'https://commons.wikimedia.org/wiki/File:x' } });
+  const orgs = (await ApiExemplo.criar(d).publico()).organizacoes;
+  assert.deepEqual(orgs.find(o => o.id === 9901).foto, { url: 'https://commons.wikimedia.org/x', credito: 'c, via Wikimedia Commons', pagina: 'https://commons.wikimedia.org/wiki/File:x' });
+  assert.equal(orgs.find(o => o.id !== 9901).foto, null);
+});

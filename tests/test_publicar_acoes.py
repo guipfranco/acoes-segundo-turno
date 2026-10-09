@@ -35,7 +35,13 @@ def test_item_do_feed_presencial_online_e_sem_cidade():
     assert motivo is None
     assert item["fonte_id"] == "1" and item["tipo"] == "panfletagem" and item["organizacao_tipo"] == "partido"
     assert item["lugar_nome"] == "Praça da Moça" and item["bairro"] == "Centro" and item["cidade"] == "Diadema"
-    assert item["lugar_aproximado"] is True and item["lat"] is not None
+    assert item["lugar_aproximado"] is True and item["lat"] is not None  # sem geocodificador: centro da cidade
+    assert item["organizacao_foto"]["url"].startswith("https://commons.wikimedia.org/wiki/Special:Redirect/file/")
+    predio = [{"lat": "-23.6900", "lon": "-46.6200", "category": "amenity", "name": "Praça da Moça", "address": {"city": "Diadema", "ISO3166-2-lvl4": "BR-SP"}}]
+    geo = bl.Geocodificador(arquivo=None, consultar=lambda q: predio if q.startswith("Praça da Moça, 10") else [])
+    exato, _ = pa.item_do_feed(feed_item(), LUGARES, geo)
+    assert exato["lugar_aproximado"] is False and (exato["lat"], exato["lon"]) == (-23.69, -46.62)
+    assert pa.item_do_feed(feed_item(organizacao="Sergipe pela Democracia"), LUGARES)[0]["organizacao_foto"] is None
     assert item["inicio"] == "2026-10-10T09:00" and item["fim"] == "2026-10-10T11:00"
     assert item["link"] == "https://www.instagram.com/p/x/" and "Fonte:" in item["descricao"]
     on, _ = pa.item_do_feed(feed_item(online=True, cidade="", uf="", plataforma="YouTube"), LUGARES)

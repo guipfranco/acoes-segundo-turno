@@ -93,3 +93,81 @@ def test_serializa_como_dados_js():
     js = bl.dados_js({"config": {"hoje": "2026-10-08"}, "acoes": []})
     assert js.startswith("window.DADOS = ")
     json.loads(js.split("=", 1)[1].strip().rstrip(";"))
+
+
+def geo_falso(respostas):
+    """Geocodificador sem rede nem cache em disco: consulta -> resultado fixo."""
+    return bl.Geocodificador(arquivo=None, consultar=lambda q: respostas.get(q, []))
+
+
+def test_localizar_usa_endereco_depois_local_e_cai_no_centro(tmp_path):
+    centro = (-23.686, -46.623)
+    predio = [{"lat": "-23.6900", "lon": "-46.6200", "category": "building", "type": "yes", "name": "Praça da Moça",
+               "address": {"city": "Diadema", "ISO3166-2-lvl4": "BR-SP"}}]
+    rua = [{"lat": "-23.6950", "lon": "-46.6250", "category": "highway", "type": "residential", "addresstype": "road",
+            "name": "Rua X", "address": {"road": "Rua X", "town": "Diadema", "ISO3166-2-lvl4": "BR-SP"}}]
+    outra_uf = [{"lat": "-8.0", "lon": "-34.9", "category": "building", "name": "Y", "address": {"city": "Recife", "ISO3166-2-lvl4": "BR-PE"}}]
+    so_cidade = [{"lat": "-23.686", "lon": "-46.623", "category": "boundary", "type": "administrative", "name": "Diadema", "address": {"city": "Diadema"}}]
+    geo = geo_falso({"Praça da Moça, 10 - Centro, Diadema, SP, Brasil": predio, "Rua X, Diadema, SP, Brasil": rua,
+                     "Longe, Diadema, SP, Brasil": outra_uf, "Vago, Diadema, SP, Brasil": so_cidade})
+    assert bl.localizar(geo, "Praça da Moça, 10 - Centro", "Praça", "Diadema", "SP", centro) == (-23.69, -46.62, "endereco")
+    assert bl.localizar(geo, "", "Rua X", "Diadema", "SP", centro) == (-23.695, -46.625, "rua")
+    assert bl.localizar(geo, "Longe", "", "Diadema", "SP", centro) == (centro[0], centro[1], "cidade")  # outra UF: ignora
+    assert bl.localizar(geo, "Vago", "", "Diadema", "SP", centro) == (centro[0], centro[1], "cidade")  # só achou a cidade
+    assert bl.localizar(geo, "Diadema", "", "Diadema", "SP", centro) == (centro[0], centro[1], "cidade")  # endereço = cidade: nem consulta
+    assert bl.localizar(None, "Praça da Moça, 10 - Centro", "", "Diadema", "SP", centro) == (centro[0], centro[1], "cidade")
+    # cache em disco: a segunda instância não consulta
+    arq = tmp_path / "geocache.json"
+    g1 = bl.Geocodificador(arquivo=arq, consultar=lambda q: predio)
+    assert bl.localizar(g1, "Praça da Moça, 10 - Centro", "", "Diadema", "SP", centro)[2] == "endereco" and g1.consultas == 1
+    g1.salvar()
+
+    def nao_consulta(q):
+        raise AssertionError("consultou a rede com cache cheio")
+    g2 = bl.Geocodificador(arquivo=arq, consultar=nao_consulta)
+    assert bl.localizar(g2, "Praça da Moça, 10 - Centro", "", "Diadema", "SP", centro)[2] == "endereco" and g2.consultas == 0
+    # falha de rede (None) não entra no cache
+    g3 = bl.Geocodificador(arquivo=None, consultar=lambda q: None)
+    assert bl.localizar(g3, "Praça da Moça, 10 - Centro", "", "Diadema", "SP", centro)[2] == "cidade" and g3.cache == {}
+
+
+def test_mesma_cidade_aceita_por_nome_ou_distancia():
+    centro = (-15.78, -47.93)  # Brasília
+    perto = {"lat": "-15.82", "lon": "-48.11", "address": {"town": "Ceilândia", "ISO3166-2-lvl4": "BR-DF"}}
+    longe = {"lat": "-16.68", "lon": "-49.25", "address": {"city": "Goiânia", "ISO3166-2-lvl4": "BR-GO"}}
+    assert bl.mesma_cidade(perto, "Brasília", "DF", centro) is True
+    assert bl.mesma_cidade(longe, "Brasília", "DF", centro) is False
+    assert bl.precisao_de({"category": "amenity", "name": "Sede", "address": {}}) == "endereco"
+    assert bl.precisao_de({"category": "boundary", "name": "Avenida Barão de Maruim", "address": {}}) == "rua"
+    assert bl.precisao_de({"category": "boundary", "name": "Diadema", "address": {}}) is None
+
+
+def test_logo_da_organizacao_reconhecivel():
+    assert "Partido_dos_Trabalhadores" in bl.logo_org("PT de Diadema")["url"]
+    assert "via Wikimedia Commons" in bl.logo_org("Juventude do PT Santa Maria, Levante RS")["credito"]
+    assert "Partido_dos_Trabalhadores" in bl.logo_org("Juventude do PT Santa Maria, Levante RS")["url"]  # o primeiro do nome vence
+    assert "Partido_dos_Trabalhadores" in bl.logo_org("JPT")["url"]
+    assert "PSOL" in bl.logo_org("Bancada Feminista do PSOL")["url"]
+    assert "Estudantes" in bl.logo_org("UNE/ANPG")["url"]
+    assert "MTST" in bl.logo_org("MTST Zona Leste")["url"] and "MST-logo" in bl.logo_org("MST Bahia")["url"]
+    assert "Levante" in bl.logo_org("Levante Popular da Juventude Espírito Santo")["url"]
+    assert "CUT" in bl.logo_org("CUT")["url"] and "PCdoB" in bl.logo_org("PCdoB Recife")["url"]
+    assert bl.logo_org("Sergipe pela Democracia") is None
+    assert bl.logo_org("Comitê Popular") is None
+    assert bl.logo_org("Apto 13") is None  # "pt" só como palavra inteira
+    assert bl.logo_org("") is None
+    assert bl.logo_org("PT de Diadema")["pagina"].startswith("https://commons.wikimedia.org/wiki/File:")
+
+
+def test_converter_com_geocodificador_marca_precisao_e_logo():
+    feed = {"hoje": "2026-10-08", "acoes": [
+        {"id": 1, "data": "2026-10-10", "hora": "9h", "hora_ord": 9, "uf": "SP", "cidade": "Diadema", "local": "Praça da Moça",
+         "endereco": "Praça da Moça, 10 - Centro", "atividade": "Panfletagem", "tipo": "Panfletagem", "organizacao": "PT de Diadema",
+         "link": "", "online": False, "plataforma": ""}]}
+    predio = [{"lat": "-23.6900", "lon": "-46.6200", "category": "amenity", "name": "Praça da Moça", "address": {"city": "Diadema", "ISO3166-2-lvl4": "BR-SP"}}]
+    d = bl.converter(feed, bl.carregar_lugares(), hoje="2026-10-08", geo=geo_falso({"Praça da Moça, 10 - Centro, Diadema, SP, Brasil": predio}))
+    assert d["acoes"][0]["lugar"]["precisao"] == "endereco" and d["acoes"][0]["lugar"]["lat"] == -23.69
+    assert d["organizacoes"][0]["foto"]["url"].startswith("https://commons.wikimedia.org/wiki/Special:Redirect/file/")
+    sem = bl.converter(feed, bl.carregar_lugares(), hoje="2026-10-08")
+    assert sem["acoes"][0]["lugar"]["precisao"] == "cidade"
+    assert "1 com ponto exato" in bl.resumo(d) and "1 com logo" in bl.resumo(d)

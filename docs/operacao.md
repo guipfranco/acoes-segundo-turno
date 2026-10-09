@@ -66,8 +66,10 @@ Sem dado real de terceiros: o organizador é o próprio dono do projeto.
 
 ## Importar ações de fontes públicas (agenda Bora Lula e redes)
 
-Migração `20261009000001_origem_importacao.sql` (pessoa de sistema, campos `fonte`/`fonte_id`/`lugar_aproximado`,
-contato `divulgacao`, função `importar_acoes`). Em produção ela ainda precisa ser aplicada: `python scripts/ir_ao_ar.py migrar`
+Migrações `20261009000001_origem_importacao.sql` (pessoa de sistema, campos `fonte`/`fonte_id`/`lugar_aproximado`,
+contato `divulgacao`, função `importar_acoes`) e `20261009000002_logo_organizacao.sql` (logo da organização:
+`foto_url`/`foto_credito`/`foto_pagina` em `organizacao` e na view pública; `importar_acoes` aceita `organizacao_foto`
+e nunca apaga um logo já gravado). Em produção elas ainda precisam ser aplicadas: `python scripts/ir_ao_ar.py migrar`
 (pede `SUPABASE_ACCESS_TOKEN` e `SUPABASE_DB_PASSWORD`) ou colar o arquivo no SQL Editor e registrar em
 `supabase_migrations.schema_migrations`. Se a senha do banco se perdeu, `python scripts/ir_ao_ar.py senha`
 redefine pela Management API e guarda em `.env` na raiz (fora do git); os scripts leem o `.env`.
@@ -87,6 +89,15 @@ Tipos de ação: a migração `20261009000010_tipos_acao.sql` troca "roda de con
 "caminhada" e "cultural". Depois de aplicá-la em produção, rode `python scripts/publicar_acoes.py bora-lula --aplicar`
 de novo: o importador agora usa o título quando o feed diz "Outro" (no feed de 2026-10-09, "outro" cai de 241 para
 11 das 427 ações). O app aceita "roda de conversa" enquanto a migração não chega.
+
+Ponto exato e logo (2026-10-09): o endereço (ou o nome do local) do feed é geocodificado no Nominatim do
+OpenStreetMap (1 consulta/s, `User-Agent` do projeto) e só vira ponto exato (`lugar_aproximado = false`) se o
+resultado for prédio, número ou via dentro do município; senão fica o centro da cidade, marcado como aproximado.
+O cache fica em `levantamento/geocache.json` (fora do git): a primeira rodada leva uns minutos, as seguintes só
+consultam endereço novo. `--sem-geocodificar` pula tudo. Organização reconhecível (PT, PSOL, PCdoB, CUT, UNE, MST,
+MTST, Levante) ganha o logo do Wikimedia Commons, com crédito, pelo mapa `LOGOS` em `scripts/bora_lula.py`; a
+tela mostra o logo como avatar de quem divulga e como capa quando a ação não tem foto própria. Ação do feed sem
+organização mostra a marca da Agenda Bora Lula (Comitê Popular) como avatar.
 
 Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capturas em
 `docs/capturas/2026-10-09-acao-importada.png` e `2026-10-09-mapa-importadas.png`.

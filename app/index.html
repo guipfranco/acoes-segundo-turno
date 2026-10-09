@@ -71,6 +71,10 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 78px;font-size:14px}nav
 .cubo.com-foto{background-size:cover;background-position:center}
 .foto .data,.foto .online{position:absolute;top:10px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;z-index:1}
 .foto .data{left:10px;background:#fff;box-shadow:0 1px 5px rgba(23,23,26,.2)}.foto .online{right:10px;background:var(--tinta);color:#fff}
+.foto .logo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:54%;height:58%;object-fit:contain;background:#fff;border-radius:14px;padding:10px;box-sizing:border-box;z-index:1;box-shadow:0 2px 10px rgba(23,23,26,.18)}
+.foto.capa .logo{width:40%;height:56%}
+.quem{display:inline-flex;align-items:center;gap:6px;min-width:0}.quem>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avatar{flex:none;width:22px;height:22px;border-radius:50%;object-fit:contain;background:#fff;border:1px solid var(--nevoa);padding:1px;box-sizing:border-box}
 .evento .tit{font-weight:600;font-size:16px;line-height:1.25;margin:10px 0 2px}
 .evento .meta{font-size:14px;color:var(--cinza)}.evento .meta b{color:var(--tinta);font-weight:600}
 .f-panfletagem{background:linear-gradient(135deg,#fde7e9,#f3a9b0)}.f-adesivaco{background:linear-gradient(135deg,#fff1d6,#f7c978)}.f-encontro{background:linear-gradient(135deg,#e6f0ff,#a9c4f5)}
@@ -259,6 +263,15 @@ function botaoDivulgacao(a){return a.linkDivulgacao?`<a class="btn" href="${esc(
 function lugarAproximadoNota(l){return l.aproximado?`<div class="sec" style="font-size:14px;margin-top:4px">📍 Ponto aproximado: o mapa marca o centro de ${esc(l.cidade)}. O local exato está na divulgação.</div>`:''}
 // pinos no centro da mesma cidade abrem em espiral para não se empilharem
 function espalhar(lista){const grupos={};return lista.map(x=>{const l=x.a.lugar;if(!l.aproximado)return [l.lat,l.lon];const k=l.lat.toFixed(3)+','+l.lon.toFixed(3);const i=grupos[k]=(grupos[k]||0)+1;if(i===1)return [l.lat,l.lon];const r=0.0025*Math.sqrt(i),ang=i*2.4;return [l.lat+r*Math.sin(ang),l.lon+r*Math.cos(ang)*1.1]})}
+// quem divulga: logo da organização (Wikimedia Commons) ou a marca da fonte de onde a ação veio
+const FONTES={'bora-lula':{nome:'Agenda Bora Lula',foto:{url:'https://comitepopular.org.br/wp-content/uploads/2026/07/logosembico-removebg-preview.png',credito:'Comitê Popular',pagina:'https://comitepopular.org.br/agenda'}}};
+function fotoQuem(a){const o=a.organizacao?org(a.organizacao):null;if(o&&o.foto&&o.foto.url)return o.foto;const f=a.fonte&&FONTES[a.fonte];return f?f.foto:null}
+const imgAvatar=f=>f&&f.url?`<img class="avatar" src="${esc(f.url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:'';
+function quemDivulga(a){return `<span class="quem">${imgAvatar(fotoQuem(a))}<span>${nomeOrganizador(a)}</span></span>`}
+// sem foto própria, o logo da organização vira a capa (sobre a cor do tipo)
+function logoCapa(a){const o=a.organizacao?org(a.organizacao):null;return !(a.foto&&a.foto.url)&&o&&o.foto&&o.foto.url?o.foto:null}
+const imgLogo=f=>`<img class="logo" src="${esc(f.url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`;
+function creditoLogo(f){return f.credito?`<p class="credito">Logo: ${f.pagina?`<a href="${esc(f.pagina)}" target="_blank" rel="noopener">${esc(f.credito)}</a>`:esc(f.credito)}</p>`:''}
 function nomeOrganizador(a){if(a.organizacao){const o=org(a.organizacao)||DADOS.organizacoes.find(x=>x.id===a.organizacao);return esc(o.nome)+(o.verificada?' <span class="selo">✓ verificada</span>':'')}return esc(a.organizadorNome!=null?a.organizadorNome:(pessoa(a.organizador)||{}).nome)}
 function somaDias(iso,n){const d=new Date(iso+'T00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -317,14 +330,14 @@ const PADRAO={rotulo:'São Paulo',lat:-23.55,lon:-46.63,chute:true};
 function acoesPerto(c,raio=60){return acoesVisiveis().filter(x=>!ehOnline(x.a)&&distanciaKm(c,x.a.lugar)<=raio)}
 // foto da ação sobre um fundo com a cor do tipo e o ícone; se a imagem falhar, fica só o fundo
 const imgFoto=a=>a.foto&&a.foto.url?`<img class="img" src="${esc(a.foto.url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:'';
-function fotoEvento(x){const a=x.a;return `<div class="foto f-${CLASSE[a.tipo].slice(2)}" role="img" aria-label="${esc(a.tipo)}">${ICONES[a.tipo]}${imgFoto(a)}<span class="data">${fmtCurta(x.t.inicio)}</span>${ehOnline(a)?'<span class="online">Online</span>':''}</div>`}
+function fotoEvento(x){const a=x.a,lg=logoCapa(a);return `<div class="foto f-${CLASSE[a.tipo].slice(2)}" role="img" aria-label="${esc(a.tipo)}">${ICONES[a.tipo]}${lg?imgLogo(lg):''}${imgFoto(a)}<span class="data">${fmtCurta(x.t.inicio)}</span>${ehOnline(a)?'<span class="online">Online</span>':''}</div>`}
 function creditoFoto(a){return a.foto&&a.foto.credito?`<p class="credito">Foto: ${a.foto.pagina?`<a href="${esc(a.foto.pagina)}" target="_blank" rel="noopener">${esc(a.foto.credito)}</a>`:esc(a.foto.credito)}</p>`:''}
 const cuboAcao=(a,extra='')=>a.foto&&a.foto.url?`<div class="cubo ${CLASSE[a.tipo]} com-foto" style="background-image:url('${esc(a.foto.url)}');${extra}"></div>`:`<div class="cubo ${CLASSE[a.tipo]}" style="${extra}">${ICONES[a.tipo]}</div>`;
 function cardEvento(x){const a=x.a;return `<a class="evento" href="#/acao/${a.id}">${fotoEvento(x)}
   <div class="tit">${esc(a.titulo)}</div>
   <div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
   <div class="meta">${esc(lugarCurto(a.lugar))}</div>
-  <div class="meta">${nomeOrganizador(a)}, ${quantosVao(vaoNa(a.id))}</div></a>`}
+  <div class="meta">${quemDivulga(a)}, ${quantosVao(vaoNa(a.id))}</div></a>`}
 function blocoVitrine(titulo,lista,link,sub,extra){return `<section class="bloco"><div class="cab${extra?' cab-cidade':''}"><h2>${titulo}</h2>${link||''}${extra||''}</div>${sub?`<p class="sub">${sub}</p>`:''}
   ${lista.length?`<div class="trilho">${lista.map(cardEvento).join('')}</div>`:'<p class="vitrine-vazia">Nenhuma ação com esses filtros por aqui.</p>'}</section>`}
 function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='online';
@@ -362,7 +375,7 @@ function localizarCidade(){if(!navigator.geolocation)return;navigator.geolocatio
 function cardAcao(x){const a=x.a;return `<a class="card ${estado.foco===a.id?'foco':''} ${estado.sel===a.id?'sel':''}" id="card-${a.id}" href="#/acao/${a.id}" onmouseenter="focar(${a.id})" onmouseleave="focar(null)">
   ${cuboAcao(a)}
   <div><div class="tit">${esc(a.titulo)}</div>
-  <div class="meta">${nomeOrganizador(a)}</div>
+  <div class="meta">${quemDivulga(a)}</div>
   <div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
   <div class="meta">${esc(lugarCurto(a.lugar))}${x.km!=null?`, a ${fmtKm(x.km)} km`:''}${a.lugar.aproximado?' <span class="sec">(ponto aproximado)</span>':''}</div>
   <div class="meta">${semInscricao(a)?'Sem inscrição':quantosVao(vaoNa(a.id))}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div></div></a>`}
@@ -387,7 +400,7 @@ function etiquetaPino(x){return L.divIcon({html:`<span class="etiqueta ${estado.
 function previaHtml(x){const a=x.a;return `<a class="corpo" href="#/acao/${a.id}">${fotoEvento(x)}<div class="txt">
   <div class="tit">${esc(a.titulo)}</div><div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
   <div class="meta">${esc(lugarCurto(a.lugar))}${x.km!=null?`, a ${fmtKm(x.km)} km`:''}</div>
-  <div class="meta">${nomeOrganizador(a)}</div><span class="ver">Ver ação →</span></div></a>`}
+  <div class="meta">${quemDivulga(a)}</div><span class="ver">Ver ação →</span></div></a>`}
 let popupPrevia=null,rolarAteSel=false;
 const ehDesktop=()=>window.matchMedia('(min-width:900px)').matches;
 // selecionar (clique no pino) é diferente de focar (passar o mouse): fica marcado até fechar a prévia
@@ -496,9 +509,9 @@ function botaoTurno(a,t){const n=vaoNo(t);
 function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const a=ab.acao,fechada=a.status!=='publicada';
   const ts=ab.turnos,futuros=ts.filter(t=>t.inicio.slice(0,10)>=PUB.config.hoje),ins=estado.inscrevendo;
   return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a><div class="acao"><div class="acao-corpo">
-  ${a.foto&&a.foto.url?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a)}</div>${creditoFoto(a)}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
+  ${a.foto&&a.foto.url?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a)}</div>${creditoFoto(a)}`:logoCapa(a)?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgLogo(logoCapa(a))}</div>${creditoLogo(logoCapa(a))}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
   <h1>${esc(a.titulo)}</h1>
-  <div class="sec" style="font-size:15px">${nomeOrganizador(a)}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div>
+  <div class="sec" style="font-size:15px">${quemDivulga(a)}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div>
   ${fechada?`<p class="erro">Esta ação não está aberta a inscrições (${a.status}).</p>`:futuros.length?'':'<p class="erro">Esta ação já aconteceu.</p>'}
   <p style="margin-top:12px;white-space:pre-line">${esc(a.descricao)}</p>
   <h2>Onde</h2>${ehOnline(a)?`<div><strong>Online</strong></div><div class="sec" style="font-size:15px">Você participa de casa. O link da chamada vai para quem se inscreve.</div>`:
@@ -508,7 +521,7 @@ function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina
   ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${semInscricao(a)?'Sem inscrição':quantosVao(vaoNo(t))+(t.lotacao?` de ${t.lotacao} vagas`:'')}</div><div style="margin-top:8px">${fechada?'':botaoTurno(a,t)}</div>${fechada?'':botaoAgenda(a,t)}
     ${ins&&ins.turno===t.id?`<div class="sec" style="margin-top:8px">Você: <strong>${esc(estado.sessao.nome)}</strong></div><label>Seu WhatsApp</label><input id="vtel" value="${esc(ins.telefone)}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p>${ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}<div style="margin-top:8px"><button class="btn" onclick="confirmarVou(${t.id})">Confirmar</button> <button class="btn sec mini" onclick="estado.inscrevendo=null;render()">Cancelar</button></div>`:''}</div>`).join('')}</aside>
   <div class="acao-resto">${ab.combinado?blocoCombinado(a,ab.combinado):''}
-  <h2>Quem organiza</h2><div class="sec" style="font-size:15px">${nomeOrganizador(a)}</div></div></div></div>`}
+  <h2>Quem organiza</h2><div class="sec" style="font-size:15px">${quemDivulga(a)}</div></div></div></div>`}
 function blocoCombinado(a,c){const ct=c.contato;const tel=ct.whatsapp?ct.whatsapp.replace(/\D/g,''):'';
   const como=ct.tipo==='organizador_chama'?`<p><strong>${nomeOrganizador(a)}</strong> vai entrar em contato pelo seu WhatsApp.</p>`:
     ct.tipo==='whatsapp'?`<p>Chame quem organiza para combinar:</p><a class="btn" href="https://wa.me/55${tel}" target="_blank" rel="noopener">Chamar no WhatsApp</a> `:

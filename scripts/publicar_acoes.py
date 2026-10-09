@@ -1,6 +1,8 @@
 """Publica no Supabase as ações de fontes públicas: a agenda "Bora Lula" do Comitê Popular e o consolidado
 da varredura das redes. Idempotente: reimportar atualiza, o que sumiu da fonte vira "encerrada"
-(função SQL importar_acoes, migração 20261009000001).
+(função SQL importar_acoes, migrações 20261009000001 e 20261009000002). O endereço vira ponto exato pelo
+Nominatim (OpenStreetMap), com cache em levantamento/geocache.json; organização reconhecível ganha o logo
+(Wikimedia Commons, scripts/bora_lula.py LOGOS).
 
 Uso:
   python scripts/publicar_acoes.py bora-lula                       # baixa o feed e ENSAIA (não grava)
@@ -58,7 +60,7 @@ def descricao_de(atividade, plataforma, fonte):
     return d + "\n\nFonte: " + fonte + "."
 
 
-def item_do_feed(x, lugares):
+def item_do_feed(x, lugares, geo=None):
     """Converte um item do feed em item para importar_acoes. Devolve (item, None) ou (None, motivo)."""
     online = bool(x.get("online"))
     cidade, uf = (x.get("cidade") or "").strip(), (x.get("uf") or "").strip()
@@ -71,6 +73,7 @@ def item_do_feed(x, lugares):
         "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
     }
     item["organizacao_tipo"] = bl.tipo_org(item["organizacao"]) if item["organizacao"] else None
+    item["organizacao_foto"] = bl.logo_org(item["organizacao"]) if item["organizacao"] else None
     if online:
         item.update(online=True, lugar_nome=None, bairro=None, cidade=None, lat=None, lon=None, lugar_aproximado=False)
     else:
@@ -78,14 +81,15 @@ def item_do_feed(x, lugares):
         if not r:
             return None, "sem cidade reconhecida" if cidade else "sem cidade"
         cidade, bairro, c = r
+        lat, lon, precisao = bl.localizar(geo, endereco, local, cidade, uf, c)
         item.update(online=False, lugar_nome=(local or endereco or cidade)[:120],
                     bairro=(bairro or bl.bairro_do_endereco(endereco, cidade)) or None,
-                    cidade=cidade, lat=c[0], lon=c[1], lugar_aproximado=True)
+                    cidade=cidade, lat=lat, lon=lon, lugar_aproximado=precisao == "cidade")
     item["descricao"] = descricao_de(x.get("atividade"), x.get("plataforma"), bl.FONTE)
     return item, None
 
 
-def itens_do_feed(feed, lugares, hoje=None, ate=ATE):
+def itens_do_feed(feed, lugares, hoje=None, ate=ATE, geo=None):
     """(itens, revisao). revisao: lista de (fonte_id, título, motivo) do que ficou de fora."""
     hoje = hoje or feed.get("hoje") or date.today().isoformat()
     itens, revisao, vistos = [], [], {}
@@ -93,7 +97,7 @@ def itens_do_feed(feed, lugares, hoje=None, ate=ATE):
         data = x.get("data") or ""
         if not (hoje <= data <= ate):
             continue
-        item, motivo = item_do_feed(x, lugares)
+        item, motivo = item_do_feed(x, lugares, geo)
         if not item:
             revisao.append((str(x["id"]), x.get("atividade") or "", motivo))
             continue
@@ -153,7 +157,7 @@ def limpar_org(texto):
     return org[:120]
 
 
-def item_da_rede(r, lugares):
+def item_da_rede(r, lugares, geo=None):
     if "bora lula" in bl.sem_acento(r.get("texto_original")):
         return None, "já vem do feed Bora Lula"
     if bl.sem_acento(r.get("lula_explicito")) != "sim":
@@ -170,7 +174,7 @@ def item_da_rede(r, lugares):
     item = {
         "fonte_id": id_redes(r), "titulo": (r.get("titulo") or "Ação")[:120], "tipo": tipo_redes(r.get("tipo"), r.get("titulo")),
         "organizacao": org or None, "organizacao_tipo": bl.tipo_org(org) if org else None,
-        "link": (r.get("link") or "").strip(), "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
+        "organizacao_foto": bl.logo_org(org) if org else None, "link": (r.get("link") or "").strip(), "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
     }
     if online:
         item.update(online=True, lugar_nome=None, bairro=None, cidade=None, lat=None, lon=None, lugar_aproximado=False)
@@ -179,9 +183,10 @@ def item_da_rede(r, lugares):
         if not res:
             return None, "sem cidade reconhecida" if cidade else "sem cidade"
         cidade, bairro_df, c = res
+        lat, lon, precisao = bl.localizar(geo, endereco, "", cidade, uf, c)
         item.update(online=False, lugar_nome=(endereco or bairro or bairro_df or cidade)[:120],
                     bairro=(bairro or bairro_df or bl.bairro_do_endereco(endereco, cidade)) or None,
-                    cidade=cidade, lat=c[0], lon=c[1], lugar_aproximado=True)
+                    cidade=cidade, lat=lat, lon=lon, lugar_aproximado=precisao == "cidade")
     item["descricao"] = descricao_de(r.get("titulo"), "", FONTE_REDES)
     return item, None
 
@@ -207,14 +212,14 @@ def repetido_no_feed(item, itens_feed):
     return None
 
 
-def itens_do_consolidado(linhas, lugares, itens_feed=(), hoje=None, ate=ATE):
+def itens_do_consolidado(linhas, lugares, itens_feed=(), hoje=None, ate=ATE, geo=None):
     hoje = hoje or date.today().isoformat()
     itens, revisao, vistos = [], [], set()
     for r in linhas:
         data = r.get("data") or ""
         if not (hoje <= data <= ate):
             continue
-        item, motivo = item_da_rede(r, lugares)
+        item, motivo = item_da_rede(r, lugares, geo)
         if not item:
             revisao.append((r.get("frente", ""), r.get("titulo", ""), motivo))
             continue
@@ -293,6 +298,9 @@ def resumo(itens, revisao):
         k = "online" if i["online"] else i["cidade"]
         por_uf[k] = por_uf.get(k, 0) + 1
     top = ", ".join(f"{k} {v}" for k, v in sorted(por_uf.items(), key=lambda kv: -kv[1])[:8])
+    exatas = sum(1 for i in itens if not i["online"] and not i["lugar_aproximado"])
+    com_logo = sum(1 for i in itens if i.get("organizacao_foto"))
+    top += f"; {exatas} com ponto exato, {com_logo} com logo da organização"
     motivos = {}
     for _, _, m in revisao:
         m = re.sub(r"\s*\(.*|\s*\d+$", "", m)
@@ -325,8 +333,10 @@ def main(argv=None):
     p.add_argument("--aplicar", action="store_true", help="grava no banco (sem isso só ensaia)")
     p.add_argument("--sem-encerrar", action="store_true", help="não encerra o que sumiu da fonte")
     p.add_argument("--ref", help="ref do projeto (Management API)")
+    p.add_argument("--sem-geocodificar", action="store_true", help="não consulta o Nominatim: tudo no centro da cidade")
     args = p.parse_args(argv)
     lugares = bl.carregar_lugares()
+    geo = None if args.sem_geocodificar else bl.Geocodificador()
     try:
         if args.fonte == "bora-lula":
             if args.de:
@@ -334,7 +344,7 @@ def main(argv=None):
             else:
                 arq, feed = bl.baixar()
                 print(f"feed guardado em {arq}")
-            itens, revisao = itens_do_feed(feed, lugares, hoje=args.hoje, ate=args.ate)
+            itens, revisao = itens_do_feed(feed, lugares, hoje=args.hoje, ate=args.ate, geo=geo)
         else:
             if not args.de:
                 p.error("redes precisa de --de ARQ.csv")
@@ -344,7 +354,10 @@ def main(argv=None):
             if args.feed:
                 feed = json.loads(Path(args.feed).read_text(encoding="utf-8"))
                 itens_feed, _ = itens_do_feed(feed, lugares, hoje=args.hoje, ate=args.ate)
-            itens, revisao = itens_do_consolidado(linhas, lugares, itens_feed, hoje=args.hoje, ate=args.ate)
+            itens, revisao = itens_do_consolidado(linhas, lugares, itens_feed, hoje=args.hoje, ate=args.ate, geo=geo)
+        if geo:
+            geo.salvar()
+            print(f"geocodificação: {geo.consultas} consultas novas ao Nominatim, cache em {bl.GEOCACHE}")
         print(resumo(itens, revisao))
         arq_itens, arq_rev = gravar_ensaio(args.fonte, itens, revisao)
         print(f"itens: {arq_itens}\nrevisão: {arq_rev}")
