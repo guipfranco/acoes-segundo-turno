@@ -143,6 +143,9 @@ Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capt
 - Em 2026-10-09 (noite): merge da branch `ajustes-feedback-1009` e migração 20261009000040 (canceladas visíveis,
   `acao.publicada_em`, desistências no histórico) aplicada com `ir_ao_ar.py migrar` (conferida com
   `npx supabase migration list --linked`).
+- Em 2026-10-09 (noite): merge da branch `cards-verticais` (card 4:5 com a arte inteira); `refazer` trocou 224
+  imagens recortadas pela arte inteira do embed (343 das 356 ações com foto de divulgação; ficaram 3 vídeos que não
+  deixam incorporar: DeMS8kWi0jE, DePGosYRM0X, DePeocbkbRR); `previa-instagram` republicada com o embed.
 
 ## O que falta para ir ao ar
 
