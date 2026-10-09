@@ -1,4 +1,4 @@
-# Ações do 2º turno
+# Eleja o Lula
 
 Plataforma onde quem organiza ações para eleger o Lula no 2º turno (panfletagem, adesivaço, roda de
 conversa, ligatona...) cadastra a ação, e quem quer ajudar acha uma perto de si e se inscreve.
