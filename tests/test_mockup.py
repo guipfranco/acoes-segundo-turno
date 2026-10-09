@@ -297,9 +297,12 @@ def test_workflow_do_pages_monta_o_site_com_previas_snapshot_e_fotos():
     assert "path: app" not in WORKFLOW
     assert 'cron: "7 * * * *"' in WORKFLOW  # snapshot de hora em hora
     assert '"fotos/**"' in WORKFLOW and '"app/**"' in WORKFLOW
-    i = WORKFLOW.index("python3 scripts/snapshot_publico.py _site/publico.json")
+    i = WORKFLOW.index("python3 scripts/snapshot_publico.py _site/publico.json --config /tmp/config-master.js")
     assert WORKFLOW.index("montar_pages.sh") < i < WORKFLOW.index("upload-pages-artifact")
     assert "continue-on-error: true" in WORKFLOW[i:]  # sem snapshot o app lê direto do Supabase
+    # o snapshot lê o config.js da master (produção), não o da branch que disparou
+    j = WORKFLOW.index("git show origin/master:app/config.js > /tmp/config-master.js")
+    assert WORKFLOW.index("montar_pages.sh") < j < i and "fetch-depth: 0" in WORKFLOW[:j]
     assert 'extrair origin/master "$saida"' in MONTAR_PAGES and "origin/master:fotos" in MONTAR_PAGES
     assert 'cp -r "$tmp/f/fotos" "$saida/fotos"' in MONTAR_PAGES
     assert 'destino="$saida/previa/$nome"' in MONTAR_PAGES

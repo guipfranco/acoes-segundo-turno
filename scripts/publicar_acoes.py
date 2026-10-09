@@ -21,9 +21,11 @@ banco e revisao-<fonte>-<data>.csv com o que ficou de fora e por quê.
 
 Fotos (desde 2026-10-09): a arte dos posts novos é gravada em fotos/divulgacao/ (raiz do repo) e servida pelo
 GitHub Pages, não pelo bucket do Supabase. O endereço gravado no banco só pode apontar para arquivo que o Pages já
-serve, então `--aplicar` busca as fotos novas e, se houver alguma ainda não commitada e enviada para a master,
-PARA sem gravar: faça commit + push de fotos/, espere o workflow do Pages e rode de novo (`--sem-fotos` pula a
-busca e a trava). Rotina: `publicar_acoes.py <fonte> --aplicar` -> commit + push de fotos/ -> rodar de novo.
+serve, então `--aplicar` busca as fotos novas e, sempre que algum item leve foto do Pages, confere antes de gravar
+que nada em fotos/ está sem commit ou sem push para a master e que o Pages já responde (HEAD 200) a mini de cada
+foto que vai para o banco; se faltar algo, PARA sem gravar: faça commit + push de fotos/, espere o workflow do Pages
+e rode de novo. `--sem-fotos` só pula a BUSCA de fotos novas no Instagram (usa as já coletadas); a conferência
+roda de qualquer jeito. Rotina: `publicar_acoes.py <fonte> --aplicar` -> commit + push de fotos/ -> rodar de novo.
 """
 import argparse
 import csv
@@ -387,6 +389,22 @@ def com_foto(itens, mapa):
     return itens
 
 
+def conferir_pages(itens):
+    """O banco só pode apontar para foto que o Pages já serve (veja o docstring): se algum item leva foto do Pages,
+    falha se há foto em fotos/ sem commit ou sem push para a master, ou se o Pages ainda não responde a mini de
+    algum desses códigos. Sem item com foto do Pages não há o que conferir."""
+    cods = fd.codigos_no_pages(itens)
+    if not cods:
+        return
+    pend = fd.fotos_pendentes()
+    if pend:
+        raise Falha(pend)
+    try:
+        fd.exigir_no_pages(cods)
+    except fd.Falha as e:
+        raise Falha(str(e))
+
+
 def resumo(itens, revisao):
     por_uf = {}
     for i in itens:
@@ -436,7 +454,8 @@ def main(argv=None):
     p.add_argument("--sem-encerrar", action="store_true", help="não encerra o que sumiu da fonte")
     p.add_argument("--ref", help="ref do projeto (Management API)")
     p.add_argument("--sem-geocodificar", action="store_true", help="não consulta o Nominatim: tudo no centro da cidade")
-    p.add_argument("--sem-fotos", action="store_true", help="não busca a imagem dos posts novos (usa só as já coletadas)")
+    p.add_argument("--sem-fotos", action="store_true",
+                   help="não busca a imagem dos posts novos no Instagram (usa só as já coletadas); a conferência de que o Pages já serve as fotos roda mesmo assim")
     p.add_argument("--forcar", action="store_true", help="encerra mesmo ação com inscrição ativa (quem marcou Eu vou perde)")
     args = p.parse_args(argv)
     lugares = bl.carregar_lugares()
@@ -484,10 +503,7 @@ def main(argv=None):
         if not args.aplicar:
             print("ensaio: nada gravado (use --aplicar)")
             return 0
-        if not args.sem_fotos:  # o banco só pode apontar para foto que o Pages já serve (veja o docstring)
-            pend = fd.fotos_pendentes()
-            if pend:
-                raise Falha(pend)
+        conferir_pages(itens)
         r = publicar(args.fonte, itens, encerrar=not args.sem_encerrar, ref=args.ref)
         print(f"gravado: {r}")
     except Falha as e:

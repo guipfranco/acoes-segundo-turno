@@ -52,19 +52,11 @@ create or replace function minhas_inscricoes() returns json language sql stable 
   where i.pessoa = auth.uid()
 $$;
 
--- 4. importar_acoes. Há duas migrações 20261009000050 que a redefinem, em branches diferentes: `seguranca`
---    (link/foto/logo só http(s)) e `feedback_e_hora_aproximada` (turno.hora_aproximada). Esta é a UNIÃO das duas,
---    mais foto.mini (mesma regra de https), e vale seja qual for a ordem do merge porque 60 roda depois das duas.
---    A coluna e a view de hora aproximada são criadas aqui se ainda não existem, para a função rodar nas duas árvores.
+-- 4. importar_acoes. Esta migração roda depois da 20261009000050 (feedback_e_hora_aproximada: turno.hora_aproximada
+--    e turno_publico com a coluna) e da 20261009000051 (seguranca: link/foto/logo só http(s)). A função abaixo é a
+--    UNIÃO das duas versões, mais foto.mini (mesma regra de https). A coluna e a view de hora aproximada já existem
+--    (vieram da 50): nada disso é recriado aqui.
 --    Item com foto nova sobrescreve a mini (inclusive para null, se vier sem); item sem foto não apaga nem a foto nem a mini.
-alter table turno add column if not exists hora_aproximada boolean not null default false;
-create or replace view turno_publico as
-  select t.id, t.acao, t.inicio, t.fim, t.lotacao,
-         (select count(*) from inscricao i where i.turno = t.id and i.cancelada_em is null)::int as vao,
-         t.hora_aproximada
-  from turno t join acao a on a.id = t.acao
-  where a.status = 'publicada';
-
 create or replace function importar_acoes(fonte text, itens jsonb, encerrar_faltantes boolean default true)
 returns json language plpgsql security definer set search_path = public as $$
 #variable_conflict use_column

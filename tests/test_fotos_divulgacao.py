@@ -128,7 +128,34 @@ def test_buscar_fotos_so_le_o_que_falta(tmp_path, monkeypatch):
 def test_publicar_busca_fotos_ao_aplicar_e_trava_se_houver_pendentes():
     src = (RAIZ / "scripts" / "publicar_acoes.py").read_text(encoding="utf-8")
     assert "if args.aplicar and not args.sem_fotos:" in src and "fd.buscar_fotos(itens, mapa)" in src
-    assert "fd.fotos_pendentes()" in src and src.index("fd.fotos_pendentes()") < src.index("r = publicar(")
+    # a trava (git + HEAD no Pages) roda sempre que algum item leva foto do Pages, com ou sem --sem-fotos
+    assert "conferir_pages(itens)" in src and src.index("conferir_pages(itens)\n") < src.index("r = publicar(")
+    assert "fd.fotos_pendentes()" in src and "fd.exigir_no_pages(cods)" in src and "fd.codigos_no_pages(itens)" in src
+
+
+def test_codigos_no_pages_so_pega_item_com_foto_do_pages():
+    itens = [{"link": "https://www.instagram.com/p/AAA/", "foto": {"url": f"{fd.BASE_PAGES}/AAA.jpg", "mini": None}},
+             {"link": "https://www.instagram.com/p/BBB/", "foto": {"url": "https://proj.supabase.co/storage/v1/object/public/divulgacao/BBB.jpg", "mini": None}},
+             {"link": "https://www.instagram.com/p/CCC/", "foto": {"url": "https://x/c.jpg", "mini": f"{fd.BASE_PAGES}/CCC-mini.jpg"}},
+             {"link": "https://www.instagram.com/p/AAA/", "foto": {"url": f"{fd.BASE_PAGES}/AAA.jpg", "mini": f"{fd.BASE_PAGES}/AAA-mini.jpg"}},
+             {"link": "https://x.org", "foto": None}]
+    assert fd.codigos_no_pages(itens) == ["AAA", "CCC"]
+    assert fd.codigos_no_pages([]) == []
+
+
+def test_publicadas_no_pages_confere_a_mini_por_head():
+    pedidos = []
+
+    def head(url):
+        pedidos.append(url)
+        return 200 if "AAA" in url or "CCC" in url else 404
+    assert fd.publicadas_no_pages(["AAA", "BBB", "CCC", "DDD"], head=head) == ["BBB", "DDD"]
+    assert pedidos == [f"{fd.BASE_PAGES}/{c}-mini.jpg" for c in ["AAA", "BBB", "CCC", "DDD"]]
+    assert fd.publicadas_no_pages([], head=lambda u: _explode("sem código, sem HEAD")) == []
+    fd.exigir_no_pages(["AAA"], head=head)  # tudo servido: passa
+    import pytest
+    with pytest.raises(fd.Falha, match=r"o Pages ainda não serve 2 fotos \(ex\.: BBB\); espere o workflow terminar e rode de novo"):
+        fd.exigir_no_pages(["AAA", "BBB", "DDD"], head=head)
 
 
 def test_fotos_pendentes_olha_o_git():
@@ -164,10 +191,12 @@ def test_migrar_pages_ensaio_gera_arquivos_e_aplicar_troca_nas_acoes(tmp_path):
     assert baixados == [_bucket("AAA", "-inteira"), _bucket("BBB")] and trocas == []
     assert (tmp_path / "AAA.jpg").exists() and (tmp_path / "AAA-mini.jpg").exists()
     assert mapa["AAA"]["url"] == _bucket("AAA", "-inteira") and "mini" not in mapa["AAA"]
-    # aplicar: não baixa de novo o que já tem arquivo, troca url + mini nas ações e anota no mapa
-    geradas, trocadas, falhas = fd.migrar_pages(mapa, codigos=["AAA"], aplicar=True, base_chave=("https://proj", "k"),
+    # aplicar: não gera nada (BBB, sem os dois arquivos, fica listado como não gerado, sem download);
+    # AAA, que já tem os dois, ganha url + mini nas ações e no mapa
+    geradas, trocadas, falhas = fd.migrar_pages(mapa, codigos=["AAA", "BBB"], aplicar=True, base_chave=("https://proj", "k"),
                                                 pasta=tmp_path, baixar=baixar, trocar=lambda *a: trocas.append(a) or 3)
-    assert (geradas, trocadas, falhas) == (0, 1, []) and len(baixados) == 2
+    assert (geradas, trocadas, falhas) == (0, 1, [("BBB", fd.MSG_NAO_GERADO)]) and len(baixados) == 2
+    assert "rode sem --aplicar, commite e envie" in fd.MSG_NAO_GERADO and mapa["BBB"] == {"url": _bucket("BBB"), "perfil": None}
     assert trocas == [("https://proj", "k", _bucket("AAA", "-inteira"), f"{fd.BASE_PAGES}/AAA.jpg", f"{fd.BASE_PAGES}/AAA-mini.jpg")]
     assert mapa["AAA"] == {"url": f"{fd.BASE_PAGES}/AAA.jpg", "mini": f"{fd.BASE_PAGES}/AAA-mini.jpg", "perfil": "une", "inteira": True, "pages": True}
     assert fd.no_bucket(mapa) == ["BBB", "DDD"]
@@ -195,6 +224,36 @@ def test_migrar_pages_aplicar_exige_fotos_commitadas(tmp_path, monkeypatch, caps
     assert json.loads((tmp_path / "mapa.json").read_text(encoding="utf-8"))["AAA"]["url"] == _bucket("AAA")
 
 
+def test_migrar_pages_aplicar_so_troca_o_que_ja_existe_e_o_pages_serve(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(fd, "MAPA", tmp_path / "mapa.json")
+    monkeypatch.setattr(fd, "PASTA_PAGES", tmp_path / "fotos")
+    (tmp_path / "mapa.json").write_text(json.dumps({"AAA": {"url": _bucket("AAA")}, "BBB": {"url": _bucket("BBB")}}), encoding="utf-8")
+    (tmp_path / "fotos").mkdir()
+    for nome in ("AAA.jpg", "AAA-mini.jpg", "BBB.jpg"):  # BBB só tem a cheia: não está gerado
+        (tmp_path / "fotos" / nome).write_bytes(b"x")
+    monkeypatch.setattr(fd, "fotos_pendentes", lambda: None)
+    monkeypatch.setattr(fd, "baixar", lambda url: _explode("com --aplicar não se gera nada"))
+    trocas = []
+    monkeypatch.setattr(fd, "destino_storage", lambda: ("https://proj", "k"))
+    monkeypatch.setattr(fd, "trocar_nas_acoes", lambda *a: trocas.append(a) or 1)
+    # o Pages ainda não serve a mini de AAA: para antes do banco
+    pedidos = []
+    monkeypatch.setattr(fd, "_head", lambda url: pedidos.append(url) or 404)
+    assert fd.main(["migrar-pages", "--aplicar"]) == 1
+    assert "o Pages ainda não serve 1 fotos (ex.: AAA)" in capsys.readouterr().err
+    assert pedidos == [f"{fd.BASE_PAGES}/AAA-mini.jpg"] and trocas == []  # BBB nem é consultado: não está gerado
+    assert json.loads((tmp_path / "mapa.json").read_text(encoding="utf-8"))["AAA"]["url"] == _bucket("AAA")
+    # servido: troca AAA e lista BBB como ainda não gerado
+    monkeypatch.setattr(fd, "_head", lambda url: 200)
+    assert fd.main(["migrar-pages", "--aplicar"]) == 0
+    saida = capsys.readouterr().out
+    assert "0 geradas" in saida and "1 ações apontadas" in saida and "0 falhas" in saida
+    assert "1 ainda não gerados: rode sem --aplicar, commite e envie (BBB)" in saida
+    assert trocas == [("https://proj", "k", _bucket("AAA"), f"{fd.BASE_PAGES}/AAA.jpg", f"{fd.BASE_PAGES}/AAA-mini.jpg")]
+    mapa = json.loads((tmp_path / "mapa.json").read_text(encoding="utf-8"))
+    assert mapa["AAA"]["url"] == f"{fd.BASE_PAGES}/AAA.jpg" and mapa["BBB"]["url"] == _bucket("BBB")
+
+
 def test_migracao_60_poe_a_mini_na_view_nas_funcoes_e_na_importacao():
     sql = (RAIZ / "supabase" / "migrations" / "20261009000060_foto_mini.sql").read_text(encoding="utf-8")
     assert "alter table acao add column foto_mini_url text" in sql
@@ -203,6 +262,9 @@ def test_migracao_60_poe_a_mini_na_view_nas_funcoes_e_na_importacao():
     assert "it->'foto'->>'mini'" in sql and "foto_mini !~ re_https" in sql
     assert "foto_mini_url = case when excluded.foto_url is not null then excluded.foto_mini_url else acao.foto_mini_url end" in sql
     assert "create or replace function criar_acao" not in sql
+    # hora_aproximada e turno_publico vêm da migração 50 (e a 51 é a de segurança): a 60 roda depois das duas e não as recria
+    assert "alter table turno" not in sql and "create or replace view turno_publico" not in sql
+    assert "hora_aproximada = aprox" in sql and "20261009000050" in sql and "20261009000051" in sql
 
 
 def test_cards_do_app_usam_a_mini_e_a_pagina_a_cheia():

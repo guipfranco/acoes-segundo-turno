@@ -298,32 +298,54 @@ def test_com_foto_passa_a_mini_e_descarta_mini_que_nao_e_https(capsys):
     assert capsys.readouterr().err.count("AVISO: mini descartada") == 1
 
 
-def _rodar_aplicar(tmp_path, monkeypatch, pendentes, sem_fotos=False):
-    """Roda `bora-lula --de feed --aplicar` com o banco, a busca de fotos e o git simulados; devolve (código, erro, gravações)."""
+def _rodar_aplicar(tmp_path, monkeypatch, pendentes, sem_fotos=False, no_pages=True, head=200):
+    """Roda `bora-lula --de feed --aplicar` com o banco, a busca de fotos, o git e o HEAD no Pages simulados;
+    devolve (código, erro, gravações, buscas, heads). Com `no_pages` o item leva foto do Pages (mapa já coletado)."""
     feed = tmp_path / "feed.json"
     feed.write_text(json.dumps({"hoje": "2026-10-09", "acoes": [feed_item(id=1, data="2026-10-10")]}), encoding="utf-8")
     monkeypatch.setattr(pa, "RAIZ", tmp_path)  # o ensaio escreve em <RAIZ>/levantamento
     monkeypatch.setattr(pa, "destino", lambda: ("rest", "http://x", "s"))
-    gravacoes = []
+    gravacoes, buscas, heads = [], [], []
     monkeypatch.setattr(pa, "publicar", lambda *a, **k: gravacoes.append(a) or {"inseridas": 1})
-    monkeypatch.setattr(fd, "carregar_mapa", lambda *a: {})
-    monkeypatch.setattr(fd, "buscar_fotos", lambda itens, mapa: (mapa, 0, []))
+    mapa = {"x": {"url": f"{fd.BASE_PAGES}/x.jpg", "mini": f"{fd.BASE_PAGES}/x-mini.jpg", "pages": True}} if no_pages else {}
+    monkeypatch.setattr(fd, "carregar_mapa", lambda *a: mapa)
+    monkeypatch.setattr(fd, "buscar_fotos", lambda itens, mapa: buscas.append(len(itens)) or (mapa, 0, []))
     monkeypatch.setattr(fd, "fotos_pendentes", lambda: fd.MSG_PENDENTES if pendentes else None)
+    monkeypatch.setattr(fd, "_head", lambda url: heads.append(url) or head)
     args = ["bora-lula", "--de", str(feed), "--aplicar", "--sem-geocodificar"] + (["--sem-fotos"] if sem_fotos else [])
     import io, contextlib
     err = io.StringIO()
     with contextlib.redirect_stderr(err):
         codigo = pa.main(args)
-    return codigo, err.getvalue(), gravacoes
+    return codigo, err.getvalue(), gravacoes, buscas, heads
 
 
 def test_aplicar_para_sem_gravar_quando_ha_fotos_pendentes(tmp_path, monkeypatch):
-    codigo, erro, gravacoes = _rodar_aplicar(tmp_path, monkeypatch, pendentes=True)
-    assert codigo == 1 and gravacoes == []
+    codigo, erro, gravacoes, buscas, heads = _rodar_aplicar(tmp_path, monkeypatch, pendentes=True)
+    assert codigo == 1 and gravacoes == [] and buscas == [1] and heads == []
     assert "fotos novas em fotos/divulgacao ainda não foram commitadas e enviadas para a master" in erro
     assert list((tmp_path / "levantamento").glob("publicar-bora-lula-*.json"))  # o ensaio ficou gravado para conferir
-    codigo, erro, gravacoes = _rodar_aplicar(tmp_path, monkeypatch, pendentes=False)
+    codigo, erro, gravacoes, buscas, heads = _rodar_aplicar(tmp_path, monkeypatch, pendentes=False)
     assert codigo == 0 and len(gravacoes) == 1 and gravacoes[0][0] == "bora-lula"
-    # --sem-fotos ignora a trava
-    codigo, erro, gravacoes = _rodar_aplicar(tmp_path, monkeypatch, pendentes=True, sem_fotos=True)
-    assert codigo == 0 and len(gravacoes) == 1
+    assert heads == [f"{fd.BASE_PAGES}/x-mini.jpg"]  # conferiu no Pages a mini que vai para o banco
+    assert gravacoes[0][1][0]["foto"]["mini"] == f"{fd.BASE_PAGES}/x-mini.jpg"
+
+
+def test_sem_fotos_so_pula_a_busca_e_a_trava_roda_do_mesmo_jeito(tmp_path, monkeypatch):
+    codigo, erro, gravacoes, buscas, heads = _rodar_aplicar(tmp_path, monkeypatch, pendentes=True, sem_fotos=True)
+    assert codigo == 1 and gravacoes == [] and buscas == []
+    assert "ainda não foram commitadas" in erro
+    codigo, erro, gravacoes, buscas, heads = _rodar_aplicar(tmp_path, monkeypatch, pendentes=False, sem_fotos=True)
+    assert codigo == 0 and len(gravacoes) == 1 and buscas == [] and len(heads) == 1
+
+
+def test_aplicar_para_se_o_pages_ainda_nao_serve_a_mini(tmp_path, monkeypatch):
+    codigo, erro, gravacoes, buscas, heads = _rodar_aplicar(tmp_path, monkeypatch, pendentes=False, head=404)
+    assert codigo == 1 and gravacoes == [] and heads == [f"{fd.BASE_PAGES}/x-mini.jpg"]
+    assert "o Pages ainda não serve 1 fotos (ex.: x); espere o workflow terminar e rode de novo" in erro
+
+
+def test_sem_item_com_foto_do_pages_nao_ha_trava(tmp_path, monkeypatch):
+    # nada aponta para o Pages (mapa vazio): nem git nem HEAD são consultados, mesmo com pendência
+    codigo, erro, gravacoes, buscas, heads = _rodar_aplicar(tmp_path, monkeypatch, pendentes=True, no_pages=False)
+    assert codigo == 0 and len(gravacoes) == 1 and heads == []

@@ -31,8 +31,11 @@ jobs:
         with:
           fetch-depth: 0
       - run: bash scripts/montar_pages.sh _site
+      # O snapshot lê o config.js da master (produção), não o da branch que disparou o workflow.
       # Se o Supabase falhar, publica sem o arquivo: o app cai no plano B (lê direto do Supabase)
-      - run: python3 scripts/snapshot_publico.py _site/publico.json
+      - run: |
+          git show origin/master:app/config.js > /tmp/config-master.js
+          python3 scripts/snapshot_publico.py _site/publico.json --config /tmp/config-master.js
         continue-on-error: true
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

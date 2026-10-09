@@ -5,11 +5,14 @@ Quem só olha a vitrine lê esse arquivo em vez de bater no Supabase (plano Free
 Roda no workflow .github/workflows/pages.yml de hora em hora e a cada push; o app (app/api-supabase.js)
 usa o arquivo se ele tiver menos de 3 h e cai no Supabase se não tiver.
 
-    python scripts/snapshot_publico.py _site/publico.json
+    python scripts/snapshot_publico.py _site/publico.json [--config app/config.js]
 
-Só leitura, com a chave anon de app/config.js (pública por desenho; o RLS protege o banco). Só urllib.
+Só leitura, com a chave anon de app/config.js (pública por desenho; o RLS protege o banco). O workflow passa
+`--config` com o config.js da origin/master, para o snapshot ler sempre o banco de produção, seja qual for a branch
+que disparou. Só urllib.
 As linhas vão CRUAS, como as views entregam: o app mapeia com deAcao/deTurno/deOrg.
 """
+import argparse
 import json
 import re
 import sys
@@ -20,7 +23,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
 CONFIG_JS = RAIZ / "app" / "config.js"
-PAGINA = 1000  # a REST corta em 1000 linhas; paginamos pelo cabeçalho Range
+PAGINA = 1000  # pedimos 1000 por vez pelo cabeçalho Range; o servidor pode devolver menos (max-rows), então só paramos na página vazia
 BRASILIA = timezone(timedelta(hours=-3))  # sem horário de verão desde 2019
 
 # view -> (select, order); o order garante paginação estável
@@ -58,7 +61,8 @@ def buscar_http(url, cabecalhos):
 
 
 def baixar_view(buscar, base, anon, view, select, order, filtros=(), pagina=PAGINA):
-    """Lê a view inteira, uma página de `pagina` linhas por vez, até vir uma página curta."""
+    """Lê a view inteira pedindo `pagina` linhas por vez, até vir uma página VAZIA. Página curta não encerra: o
+    servidor pode limitar em menos linhas que o pedido (max-rows), e o próximo Range começa onde a anterior parou."""
     params = [("select", select), ("order", order)] + list(filtros)
     url = f"{base}/rest/v1/{view}?" + "&".join(f"{k}={v}" for k, v in params)
     linhas = []
@@ -73,10 +77,10 @@ def baixar_view(buscar, base, anon, view, select, order, filtros=(), pagina=PAGI
         lote = json.loads(corpo or b"[]")
         if not isinstance(lote, list):
             raise RuntimeError(f"{view}: resposta inesperada: {str(lote)[:200]}")
-        linhas.extend(lote)
-        if len(lote) < pagina:
+        if not lote:
             return linhas
-        inicio += pagina
+        linhas.extend(lote)
+        inicio += len(lote)
 
 
 def montar_snapshot(buscar, base, anon, hoje=None, agora=None):
@@ -90,12 +94,13 @@ def montar_snapshot(buscar, base, anon, hoje=None, agora=None):
 
 
 def main(argv):
-    if len(argv) != 2:
-        print("uso: python scripts/snapshot_publico.py <caminho/publico.json>", file=sys.stderr)
-        return 2
-    base, anon = ler_config(CONFIG_JS.read_text(encoding="utf-8"))
+    p = argparse.ArgumentParser(description="grava o publico.json da vitrine a partir das views públicas do Supabase")
+    p.add_argument("destino", help="caminho do publico.json (ex.: _site/publico.json)")
+    p.add_argument("--config", default=str(CONFIG_JS), help="config.js de onde ler url e anonKey (padrão: app/config.js)")
+    args = p.parse_args(argv[1:])
+    base, anon = ler_config(Path(args.config).read_text(encoding="utf-8"))
     snapshot = montar_snapshot(buscar_http, base, anon)
-    destino = Path(argv[1])
+    destino = Path(args.destino)
     destino.parent.mkdir(parents=True, exist_ok=True)
     destino.write_text(json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"{destino}: {len(snapshot['acoes'])} ações, {len(snapshot['turnos'])} turnos, "

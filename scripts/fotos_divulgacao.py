@@ -17,11 +17,13 @@ Onde as imagens ficam (desde 2026-10-09): em fotos/divulgacao/ na RAIZ do repo, 
 BASE_PAGES/<código>.jpg (arte inteira, até 1080 px) e BASE_PAGES/<código>-mini.jpg (480 px, para os cards). Assim o
 tráfego de imagens não passa pelo Supabase (plano Free, 5 GB/mês de saída). O endereço gravado no banco só pode
 apontar para arquivo que o Pages já serve: por isso `publicar_acoes.py --aplicar` e `migrar-pages --aplicar` param se
-houver foto nova ainda não commitada e enviada para a master (`fotos_pendentes`). Rotina: rodar, commit + push de
-fotos/, esperar o workflow do Pages, rodar de novo.
+houver foto nova ainda não commitada e enviada para a master (`fotos_pendentes`) e conferem por HEAD que o Pages já
+responde cada mini que vai para o banco (`publicadas_no_pages`). Rotina: rodar, commit + push de fotos/, esperar o
+workflow do Pages, rodar de novo.
 
-O bucket público `divulgacao` (migração 20261009000003) só segue para o que ainda não migrou; `migrar-pages` baixa
-cada imagem de lá (não do Instagram), gera os dois arquivos e, com --aplicar, aponta as ações para o Pages.
+O bucket público `divulgacao` (migração 20261009000003) só segue para o que ainda não migrou; `migrar-pages` sem
+--aplicar baixa cada imagem de lá (não do Instagram) e gera os dois arquivos; com --aplicar NÃO gera nada: só aponta
+para o Pages as ações cujos dois arquivos já existem em fotos/divulgacao/ (os demais ficam para a rodada sem --aplicar).
 O mapa código -> foto fica em levantamento/fotos-divulgacao.json (fora do git) e é lido pelo publicar_acoes.py, que
 manda a foto junto com a ação. Entrada do mapa: {url, mini, perfil, inteira, pages}.
 """
@@ -57,6 +59,7 @@ RE_PERFIL = re.compile(r"instagram\.com/([A-Za-z0-9_.]+)/(?:p|reel|tv)/")
 RE_BUCKET = re.compile(r"/storage/v1/object/public/" + BUCKET + "/")  # bucket do Supabase (produção ou pilha local)
 MSG_PENDENTES = ("fotos novas em fotos/divulgacao ainda não foram commitadas e enviadas para a master; "
                  "faça commit + push e rode de novo")
+MSG_NAO_GERADO = "ainda não gerado: rode sem --aplicar, commite e envie"
 
 
 class Falha(Exception):
@@ -230,6 +233,44 @@ def fotos_pendentes(git=_git):
     return None
 
 
+def _head(url):
+    """Status HTTP de um HEAD (0 se a rede falhar)."""
+    req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": AGENTE_PREVIA})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.status
+    except urllib.error.HTTPError as e:
+        return e.code
+    except (urllib.error.URLError, OSError):
+        return 0
+
+
+def publicadas_no_pages(codigos, head=None):
+    """Confere por HEAD que BASE_PAGES/<código>-mini.jpg responde 200 para cada código; devolve os que não respondem.
+    O git diz que a foto está na master, mas o workflow do Pages pode ainda não ter terminado."""
+    head = head or sys.modules[__name__]._head
+    return [cod for cod in codigos if head(urls_pages(cod)[1]) != 200]
+
+
+def exigir_no_pages(codigos, head=None):
+    """Falha se o Pages ainda não serve alguma das minis."""
+    faltam = publicadas_no_pages(codigos, head=head)
+    if faltam:
+        raise Falha(f"o Pages ainda não serve {len(faltam)} fotos (ex.: {faltam[0]}); espere o workflow terminar e rode de novo")
+
+
+def codigos_no_pages(itens):
+    """Códigos de post dos itens cuja foto (url ou mini) aponta para o Pages: são os que o banco vai referenciar."""
+    cods = []
+    for it in itens:
+        f = it.get("foto") or {}
+        if any(str(f.get(k) or "").startswith(BASE_PAGES + "/") for k in ("url", "mini")):
+            cod = codigo_do_link(it.get("link"))
+            if cod and cod not in cods:
+                cods.append(cod)
+    return cods
+
+
 def processar_coleta(coleta, mapa, pasta=None, baixar=None):
     """Baixa, reduz e grava em fotos/divulgacao/ cada imagem coletada; devolve (novas, falhas). Atualiza `mapa` no lugar."""
     mod = sys.modules[__name__]
@@ -256,17 +297,27 @@ def no_bucket(mapa):
     return [c for c, f in mapa.items() if f.get("url") and RE_BUCKET.search(f["url"])]
 
 
+def gerados(cod, pasta=None):
+    """True se os dois arquivos (<código>.jpg e <código>-mini.jpg) já existem em fotos/divulgacao/."""
+    pasta = Path(pasta or sys.modules[__name__].PASTA_PAGES)
+    return (pasta / f"{cod}.jpg").exists() and (pasta / f"{cod}-mini.jpg").exists()
+
+
 def migrar_pages(mapa, codigos=None, aplicar=False, base_chave=None, pasta=None, baixar=None, trocar=None):
-    """Para cada foto ainda no bucket: baixa de lá, grava os dois arquivos em fotos/divulgacao/ (pula o que já existe)
-    e, com aplicar, aponta as ações (foto_url + foto_mini_url) para o Pages e atualiza o mapa. Sem aplicar é ensaio:
-    só gera os arquivos, para o commit + push. Devolve (geradas, trocadas, falhas)."""
+    """Sem aplicar (ensaio): para cada foto ainda no bucket, baixa de lá e grava os dois arquivos em fotos/divulgacao/
+    (pula o que já existe), para o commit + push. Com aplicar NÃO gera nada: só aponta as ações (foto_url +
+    foto_mini_url) para o Pages e atualiza o mapa para os códigos cujos dois arquivos já existem; os demais entram em
+    falhas com MSG_NAO_GERADO. Devolve (geradas, trocadas, falhas)."""
     mod = sys.modules[__name__]
     pasta = Path(pasta or mod.PASTA_PAGES)
     baixar, trocar = baixar or mod.baixar, trocar or mod.trocar_nas_acoes
     geradas, trocadas, falhas = 0, 0, []
     for cod in (no_bucket(mapa) if codigos is None else codigos):
         velha = mapa[cod]["url"]
-        if not (pasta / f"{cod}.jpg").exists() or not (pasta / f"{cod}-mini.jpg").exists():
+        if not gerados(cod, pasta):
+            if aplicar:
+                falhas.append((cod, MSG_NAO_GERADO))
+                continue
             try:
                 gravar_pages(cod, baixar(velha), pasta)
             except Exception as e:  # noqa: BLE001 - imagem sumiu do bucket: fica como está
@@ -390,7 +441,8 @@ def main(argv=None):
     pr.add_argument("--max", type=int, default=0, help="no máximo N posts nesta rodada")
     pm = sub.add_parser("migrar-pages", help="baixa do bucket o que ainda está lá e gera fotos/divulgacao/; --aplicar troca no banco")
     pm.add_argument("--max", type=int, default=0, help="no máximo N fotos nesta rodada")
-    pm.add_argument("--aplicar", action="store_true", help="aponta as ações para o Pages (exige fotos commitadas e enviadas)")
+    pm.add_argument("--aplicar", action="store_true",
+                    help="não gera nada: aponta para o Pages as ações cujos dois arquivos já existem (commitados, enviados e servidos)")
     pz = sub.add_parser("refazer")
     pz.add_argument("--max", type=int, default=0, help="no máximo N posts nesta rodada")
     args = p.parse_args(argv)
@@ -405,15 +457,20 @@ def main(argv=None):
                 pend = fotos_pendentes()
                 if pend:
                     raise Falha(pend)
+                exigir_no_pages([c for c in cods if gerados(c)])  # o workflow do Pages precisa ter terminado
                 base_chave = destino_storage()
             try:
                 geradas, trocadas, falhas = migrar_pages(mapa, codigos=cods, aplicar=args.aplicar, base_chave=base_chave)
             finally:
                 if args.aplicar:
                     gravar_mapa(mapa)
+            nao_gerados = [cod for cod, motivo in falhas if motivo == MSG_NAO_GERADO]
+            falhas = [f for f in falhas if f[1] != MSG_NAO_GERADO]
             print(f"{geradas} geradas em fotos/divulgacao; {trocadas} ações apontadas para o Pages; {len(falhas)} falhas")
             for cod, motivo in falhas:
                 print(f"  {cod}: {motivo}")
+            if nao_gerados:
+                print(f"{len(nao_gerados)} ainda não gerados: rode sem --aplicar, commite e envie ({', '.join(nao_gerados)})")
             if not args.aplicar:
                 print("ensaio: nada mudou no banco. Faça commit + push de fotos/, espere o Pages e rode com --aplicar")
             return 0

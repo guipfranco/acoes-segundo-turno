@@ -22,8 +22,9 @@ def test_hoje_em_brasilia():
     assert sp.hoje_brasilia(datetime(2026, 10, 10, 3, 0, tzinfo=timezone.utc)) == "2026-10-10"
 
 
-def servidor_falso(tabelas):
-    """Simula a REST do Supabase: respeita select/order/filtro de inicio e o cabeçalho Range."""
+def servidor_falso(tabelas, max_linhas=None):
+    """Simula a REST do Supabase: respeita select/order/filtro de inicio e o cabeçalho Range. `max_linhas` imita o
+    servidor que corta a página em menos linhas do que o Range pediu (max-rows do PostgREST)."""
     chamadas = []
 
     def buscar(url, cabecalhos):
@@ -38,6 +39,8 @@ def servidor_falso(tabelas):
             linhas = [l for l in linhas if l["inicio"] >= filtro[4:]]
         ini, fim = (int(x) for x in cabecalhos["Range"].split("-"))
         pagina = linhas[ini:fim + 1]
+        if max_linhas:
+            pagina = pagina[:max_linhas]
         if ini and not pagina:
             return 416, b""
         return 206, json.dumps(pagina).encode()
@@ -46,12 +49,12 @@ def servidor_falso(tabelas):
     return buscar
 
 
-def test_pagina_de_1000_em_1000_ate_acabar():
+def test_pagina_de_1000_em_1000_ate_vir_pagina_vazia():
     acoes = [{"id": i} for i in range(2350)]
     buscar = servidor_falso({"acao_publica": acoes})
     assert sp.baixar_view(buscar, "https://x", "anon", "acao_publica", "*", "id") == acoes
     ranges = [c[1]["Range"] for c in buscar.chamadas]
-    assert ranges == ["0-999", "1000-1999", "2000-2999"]
+    assert ranges == ["0-999", "1000-1999", "2000-2999", "2350-3349"]  # página curta não encerra: só a vazia
     assert "order=id" in buscar.chamadas[0][0] and "select=*" in buscar.chamadas[0][0]
 
 
@@ -59,6 +62,14 @@ def test_pagina_exata_faz_uma_chamada_a_mais_e_para_no_vazio():
     buscar = servidor_falso({"organizacao_publica": [{"id": i} for i in range(2000)]})
     assert len(sp.baixar_view(buscar, "https://x", "anon", "organizacao_publica", "id", "id")) == 2000
     assert [c[1]["Range"] for c in buscar.chamadas] == ["0-999", "1000-1999", "2000-2999"]
+
+
+def test_servidor_que_corta_em_menos_linhas_nao_trunca():
+    # o PostgREST pode limitar a página (max-rows) abaixo do que o Range pediu: o próximo Range começa onde parou
+    acoes = [{"id": i} for i in range(250)]
+    buscar = servidor_falso({"acao_publica": acoes}, max_linhas=100)
+    assert sp.baixar_view(buscar, "https://x", "anon", "acao_publica", "*", "id") == acoes
+    assert [c[1]["Range"] for c in buscar.chamadas] == ["0-999", "100-1099", "200-1199", "250-1249"]
 
 
 def test_snapshot_filtra_turnos_a_partir_de_hoje_em_brasilia():
@@ -94,6 +105,21 @@ def test_main_grava_o_json_no_caminho_dado(tmp_path, monkeypatch, capsys):
     assert set(dados) == {"geradoEm", "configuracao", "organizacoes", "acoes", "turnos"}
     assert dados["acoes"] == [{"id": 9}]
     assert "1 ações" in capsys.readouterr().out
+
+
+def test_main_le_o_config_js_indicado_em_config(tmp_path, monkeypatch):
+    # o workflow passa o config.js da origin/master, para o snapshot ler produção seja qual for a branch
+    lidos = []
+    buscar = servidor_falso({"configuracao_publica": [], "organizacao_publica": [], "acao_publica": [], "turno_publico": []})
+    monkeypatch.setattr(sp, "buscar_http", lambda url, cab: lidos.append(url) or buscar(url, cab))
+    cfg = tmp_path / "config-master.js"
+    cfg.write_text("window.CONFIG = { supabase: { url: 'https://master.supabase.co', anonKey: 'anon' } };", encoding="utf-8")
+    assert sp.main(["snapshot_publico.py", str(tmp_path / "publico.json"), "--config", str(cfg)]) == 0
+    assert lidos and all(u.startswith("https://master.supabase.co/rest/v1/") for u in lidos)
+    assert sp.main(["snapshot_publico.py", str(tmp_path / "publico.json"), "--config", str(cfg)]) == 0
+    import pytest
+    with pytest.raises(SystemExit):
+        sp.main(["snapshot_publico.py"])  # destino é obrigatório
 
 
 def test_erro_http_derruba_o_script():

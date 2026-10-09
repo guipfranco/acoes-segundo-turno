@@ -3,9 +3,9 @@ const assert = require('node:assert/strict');
 const { criar, deAcao, deTurno, dePessoa, deOrg, hojeBrasilia } = require('../../app/api-supabase.js');
 
 // Supabase de mentira: cada from(view) devolve uma consulta encadeável que resolve com dados[view]
-function supabaseFalso(dados) {
+function supabaseFalso(dados, sessao) {
   const views = [];
-  const sb = { auth: {}, rpc: async () => null, from(v) {
+  const sb = { auth: { getSession: async () => ({ data: { session: sessao || null } }) }, rpc: async () => ({ data: null, error: null }), from(v) {
     views.push(v);
     const q = { then: (ok, erro) => Promise.resolve({ data: dados[v] || [], error: null }).then(ok, erro) };
     for (const m of ['select', 'gte', 'eq', 'order', 'maybeSingle']) q[m] = () => q;
@@ -13,8 +13,8 @@ function supabaseFalso(dados) {
   } };
   return { sb, views };
 }
-function comAmbiente(dados, fetchFalso) {
-  const { sb, views } = supabaseFalso(dados);
+function comAmbiente(dados, fetchFalso, sessao) {
+  const { sb, views } = supabaseFalso(dados, sessao);
   global.window = { supabase: { createClient: () => sb } };
   global.fetch = fetchFalso;
   return { api: criar({ url: 'https://x.supabase.co', anonKey: 'anon' }), views };
@@ -56,6 +56,33 @@ test('publico() cai no Supabase com snapshot velho, 404, JSON inválido ou incom
     assert.deepEqual(views.sort(), ['acao_publica', 'configuracao_publica', 'organizacao_publica', 'turno_publico']);
     assert.equal(p.config.frase, 'do banco'); assert.equal(p.acoes[0].titulo, 'Do banco'); assert.equal(p.organizacoes[0].nome, 'PT');
     assert.deepEqual(p.turnos.map(t => t.id), [20]);
+  }
+});
+
+const snapFresco = () => ({ geradoEm: new Date().toISOString(), configuracao: [{ chave: 'frase', valor: 'do arquivo' }], organizacoes: [], acoes: [], turnos: [] });
+
+test('publico() com sessão vai direto ao Supabase, sem ler o snapshot', async () => {
+  let fetches = 0;
+  const f = async (...a) => { fetches++; return resposta(200, snapFresco())(...a); };
+  const { api, views } = comAmbiente(bancoFalso, f, { user: { id: 'u1' } });
+  const p = await api.publico();
+  assert.equal(api.origemPublico, 'supabase'); assert.equal(fetches, 0);
+  assert.deepEqual(views.sort(), ['acao_publica', 'configuracao_publica', 'organizacao_publica', 'turno_publico']);
+  assert.equal(p.config.frase, 'do banco');
+  // sem sessão, quem só olha segue no snapshot
+  const semSessao = comAmbiente(bancoFalso, resposta(200, snapFresco()));
+  assert.equal((await semSessao.api.publico()).config.frase, 'do arquivo');
+  assert.equal(semSessao.api.origemPublico, 'snapshot'); assert.deepEqual(semSessao.views, []);
+});
+
+test('publico() deixa o snapshot depois que a página escreveu algo', async () => {
+  for (const escrever of [a => a.inscrever(1), a => a.desistir(1), a => a.criarAcao({}), a => a.encerrarAcao(1), a => a.aprovar(1),
+    a => a.recusar(1, 'm'), a => a.suspender(1), a => a.reativar(1), a => a.excluir(1), a => a.bloquear('p'), a => a.desbloquear('p')]) {
+    const { api, views } = comAmbiente(bancoFalso, resposta(200, snapFresco()));
+    assert.equal((await api.publico()).config.frase, 'do arquivo'); assert.deepEqual(views, []);
+    await escrever(api);
+    assert.equal((await api.publico()).config.frase, 'do banco');
+    assert.equal(api.origemPublico, 'supabase'); assert.ok(views.includes('acao_publica'));
   }
 });
 
