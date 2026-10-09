@@ -701,8 +701,8 @@ function validarFoto(){const c=estado.criar;if(!c.foto){c.erros={foto:MENSAGEM.s
 // ---------- organização: a minha (Perfil) e "Quem organiza?" no cadastro ----------
 const TIPOS_ORG=[['coletivo','Coletivo ou comitê'],['movimento','Movimento'],['mandato','Mandato'],['partido','Partido']];
 const minhaOrg=()=>estado.minhaOrg&&estado.minhaOrg.organizacao||null;
-// ação em nome de organização sem selo (outra, ou a minha ainda sem selo) pede o post oficial que anuncia a ação
-const precisaPost=c=>c.quem==='outra'||(c.quem==='minha'&&!!minhaOrg()&&!minhaOrg().verificada);
+// toda ação em nome de organização (a minha ou outra) pede o post oficial dela anunciando a ação
+const precisaPost=c=>c.quem==='outra'||(c.quem==='minha'&&!!minhaOrg());
 // link de perfil oficial: aceita sem o https:// e completa
 const normLink=l=>{l=String(l||'').trim();return l&&!/^https?:\/\//i.test(l)?'https://'+l:l};
 const linkOk=l=>/^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/i.test(normLink(l));
@@ -835,7 +835,7 @@ function telaFila(){const s=estado.sessao;if(!s||s.papel!=='moderador')return '<
    <p style="white-space:pre-line;font-size:15px;margin:4px 0 8px">${esc(a.descricao)}</p>
    <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome)}, ${esc(lugarCurto(a.lugar))}`}. Turnos: ${m.turnos.map(x=>fmtData(x.inicio)).join('; ')||'nenhum'}.${a.detalhe?` Detalhe: ${esc(a.detalhe)}.`:''}${a.contatoLink?` Grupo: ${esc(a.contatoLink)}.`:''}</div>
    ${a.organizacaoDados?`<div class="sec">Em nome de: <strong>${esc(a.organizacaoDados.nome)}</strong> ${a.organizacaoDados.verificada?'<span class="selo">✓ verificada</span>':'(sem selo)'} · ${a.organizacaoLink?linkExterno(a.organizacaoLink,'post da organização anunciando ↗'):'sem post da organização'}${a.organizacaoDados.link_oficial?` · ${linkExterno(a.organizacaoDados.link_oficial)}`:''}</div>
-   ${!a.organizacaoDados.verificada?'<div class="sec">Confira se o post é do perfil oficial da organização e anuncia esta ação (data e lugar).</div>':''}`:''}
+   <div class="sec">Confira se o post é do perfil oficial da organização e anuncia esta ação (data e lugar).</div>`:''}
    <div class="sec">Quem criou: ${esc(p.nome)}, ${esc(p.telefone||'sem telefone')}${p.email?`, ${esc(p.email)}`:''}. Já criou ${p.criadas} ações (${p.aprovadas} aprovadas, ${p.recusadas} recusadas).</div>
    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${aba==='analise'?`<button class="btn mini" onclick="aprovar(${a.id})">Aprovar</button> <button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Recusar</button>${o&&!o.verificada?` <button class="btn sec mini" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}`:
      `<button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Tirar do ar (recusar)</button>${ex?` <button class="btn sec mini" onclick="bloquear(${p.id})">Bloquear organizador</button>`:''}`}</div>

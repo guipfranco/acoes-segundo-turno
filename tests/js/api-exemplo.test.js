@@ -204,5 +204,6 @@ test('organização: nome novo liga na hora, nome existente vira pedido; ação 
   await apiMod.decidirPedido(p.id, true);
   assert.equal(eu.organizacao, verificada.id);
   d.config.eu = eu.id; const api2 = ApiExemplo.criar(d);
-  assert.equal((await api2.criarAcao(novaAcao(d, { organizacao: verificada.id }))).status, 'publicada');
+  await assert.rejects(api2.criarAcao(novaAcao(d, { organizacao: verificada.id })), { codigo: 'link_post' }); // com selo também
+  assert.equal((await api2.criarAcao(novaAcao(d, { organizacao: verificada.id, organizacao_link: 'https://www.instagram.com/p/x/' }))).status, 'publicada');
 });

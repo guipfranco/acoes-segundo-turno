@@ -348,9 +348,11 @@ def test_organizacao_nova_liga_existente_vira_pedido_e_selo_publica_direto(cenar
     assert any(x["id"] == org for x in fila["sem_selo"])
     assert sb.rpc("decidir_pedido_organizacao", {"pedido_id": pedido["id"], "aprovar": True}, jwt=cenario["jwt_org"]).status in (200, 204)
     assert sb.rpc("minha_organizacao", {}, jwt=cenario["jwt_a"]).corpo["organizacao"]["id"] == org
-    # minha organização ainda sem selo: sem o post da organização anunciando, não vai
+    # em nome da minha organização: sem o post da organização anunciando, não vai
     assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org)}, jwt=cenario["jwt_a"]).corpo["message"] == "link_post"
     assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org, organizacao_link="https://www.instagram.com/p/xyz/")},
                   jwt=cenario["jwt_a"]).corpo["status"] == "em análise"
     assert sb.rpc("dar_selo_organizacao", {"organizacao_id": org}, jwt=cenario["jwt_org"]).status in (200, 204)
-    assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org)}, jwt=cenario["jwt_a"]).corpo["status"] == "publicada"
+    assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org)}, jwt=cenario["jwt_a"]).corpo["message"] == "link_post"  # com selo também
+    assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org, organizacao_link="https://www.instagram.com/p/xyz/")},
+                  jwt=cenario["jwt_a"]).corpo["status"] == "publicada"

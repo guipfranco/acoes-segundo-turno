@@ -5,8 +5,8 @@
 -- organização verificada publica direto (regra de criar_acao, migração 20261009000021).
 -- No cadastro da ação, "Quem organiza?": eu mesmo(a), a minha organização ou outra, escrita à mão.
 -- Verificação: a organização cadastrada no Perfil vem com o link do perfil oficial dela (Instagram, Facebook, site).
--- A ação em nome de organização sem selo (a minha ou outra escrita à mão) vem com o link do POST oficial da
--- organização anunciando aquela ação: é por ele que a moderação confere que a organização está mesmo por trás.
+-- Toda ação em nome de organização (a minha, com ou sem selo, ou outra escrita à mão) vem com o link do POST oficial
+-- da organização anunciando aquela ação: é por ele que a moderação confere que a organização está mesmo por trás.
 
 alter table organizacao add column if not exists criada_por uuid references pessoa(id);
 alter table organizacao add column if not exists link_oficial text;
@@ -155,10 +155,8 @@ begin
   org_link := nullif(trim(coalesce(dados->>'organizacao_link', '')), '');
   if nullif(dados->>'organizacao', '')::bigint is not null and nullif(dados->>'organizacao', '')::bigint = p.organizacao then
     org_id := p.organizacao;
-    -- minha organização ainda sem selo: precisa do post dela anunciando a ação
-    if not exists (select 1 from organizacao o where o.id = org_id and o.verificada) and not link_oficial_valido(org_link) then
-      raise exception 'link_post';
-    end if;
+    -- em nome da minha organização: precisa do post dela anunciando a ação (com ou sem selo)
+    if not link_oficial_valido(org_link) then raise exception 'link_post'; end if;
   elsif org_nome is not null then
     if length(org_nome) < 3 or length(org_nome) > 80 then raise exception 'nome_organizacao'; end if;
     if not link_oficial_valido(org_link) then raise exception 'link_post'; end if;

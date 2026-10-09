@@ -158,8 +158,8 @@
         // quem organiza: a minha organização (só a minha) ou outra escrita à mão (criada sem selo se não existe)
         let orgId = null; const nomeOrg = String(d.organizacao_nome || '').trim(), orgLink = String(d.organizacao_link || '').trim() || null;
         if (d.organizacao && d.organizacao === p.organizacao) {
-          orgId = p.organizacao; // minha organização sem selo: precisa do post dela anunciando a ação
-          if (!(org(orgId) || {}).verificada && !linkValido(orgLink)) throw erro('link_post');
+          orgId = p.organizacao; // em nome da minha organização: precisa do post dela anunciando a ação
+          if (!linkValido(orgLink)) throw erro('link_post');
         }
         else if (nomeOrg) {
           if (nomeOrg.length < 3 || nomeOrg.length > 80) throw erro('nome_organizacao');

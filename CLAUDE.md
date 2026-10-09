@@ -44,8 +44,8 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   Organização (migração 20261009000023, branch `organizacao`): no Perfil a pessoa cadastra a sua (nome, tipo, logo);
   nome novo cria sem selo e liga na hora, nome que já existe vira pedido para a moderação; selo dado na Fila. No
   cadastro, "Quem organiza?": eu mesmo(a), minha organização ou outra escrita à mão (criada sem selo).
-  Verificação: no Perfil, link do perfil oficial da organização (`link_oficial`); na ação em nome de organização sem
-  selo (outra, ou a minha ainda sem selo), link do POST oficial da organização anunciando aquela ação
+  Verificação: no Perfil, link do perfil oficial da organização (`link_oficial`); em toda ação em nome de organização
+  (a minha, com ou sem selo, ou outra), link do POST oficial da organização anunciando aquela ação
   (`acao.organizacao_link`, erro `link_post`). A moderação confere pelos dois na Fila. Imagem obrigatória no cadastro (passo 3 de 4): enviada do celular,
   reduzida no navegador e guardada no bucket `fotos-acoes` (migração 20261009000022), ou puxada do link do post pela
   função `supabase/functions/previa-instagram` (precisa de `supabase functions deploy previa-instagram` em produção). Editar ação, selo, bloquear seguem só no modo exemplo.
