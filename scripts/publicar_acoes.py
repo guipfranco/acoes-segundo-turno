@@ -137,7 +137,6 @@ def limpar_org(texto):
     org = (texto or "").split(";")[0]
     org = re.split(r",?\s*divulgad[oa] por", org, flags=re.I)[0]
     org = re.sub(r"\s*\((página|perfil|canal|site oficial)[^)]*\)\s*$", "", org, flags=re.I).strip(" ,")
-    org = re.sub(r"\)\s*,.*$", ")", org)  # "Sigla (X), entidades e tal" -> "Sigla (X)"
     n = bl.sem_acento(org)
     if not org or any(k in n for k in ORG_RUIM):
         return None
@@ -147,6 +146,7 @@ def limpar_org(texto):
     fora = re.sub(r"\(.*?\)", "", org)
     if tipo == "mandato" and re.search(r",| e ", fora):
         return None  # lista de pessoas, não um mandato
+    org = re.sub(r"\)\s*,.*$", ")", org)  # "Sigla (X), entidades e tal" -> "Sigla (X)"
     if tipo != "mandato":  # parêntese final só fica se for sigla; "(com Fulana e Beltrano)" cai
         org = re.sub(r"\s*\((?=[^)]*[a-z]{2})[^)]*\)\s*$", "", org).strip(" ,")
     return org[:120]

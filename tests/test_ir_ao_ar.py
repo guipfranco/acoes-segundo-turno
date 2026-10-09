@@ -42,6 +42,7 @@ def test_semear_recusa_telefone_estranho():
 
 
 def test_sem_token_falha_com_mensagem(monkeypatch, capsys):
+    monkeypatch.setattr(m, "ARQ_ENV", m.RAIZ / "nao-existe.env")
     monkeypatch.delenv("SUPABASE_ACCESS_TOKEN", raising=False)
     monkeypatch.setenv("SUPABASE_DB_PASSWORD", "x")
     assert m.main(["criar"]) == 1
