@@ -19,7 +19,9 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   liberou dados reais de AÇÕES PÚBLICAS e de ORGANIZAÇÕES públicas (partidos, mandatos, movimentos, comitês) nos
   dados versionados e em produção, sempre com crédito à fonte (hoje: agenda Bora Lula do Comitê Popular). Pessoas
   de exemplo continuam inventadas; ação importada tem como organizador uma pessoa de sistema, nunca pessoa real.
-  A pasta `levantamento/` segue fora do git porque guarda a varredura bruta com nomes e telefones.
+  A pasta `levantamento/` segue fora do git deste repo porque guarda a varredura bruta com nomes e telefones.
+  Desde 2026-10-09 ela é um repo próprio, PRIVADO: https://github.com/guipfranco/acoes-levantamento (clonar dentro
+  de `levantamento/`; commit e push lá depois de cada rodada; nunca tornar público nem copiar para cá).
 - Estado em 2026-10-08: app navegável (modo exemplo completo; Supabase + login Google na v1 etapas 1-2).
 - Produção ligada em 2026-10-09: Supabase ref `ommitzndniqnmsjsjghb` e login Google; estado em `docs/operacao.md`.
 - Telas: inicial sem mapa (estilo Meetup): busca por cidade que chuta a cidade pela geolocalização, filtro
@@ -45,7 +47,7 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   arriscada vai numa branch, e o merge na `master` só acontece com OK do Gui. Sessões paralelas trabalham cada uma
   no seu worktree e na sua branch; a pasta principal fica na `master`, estável, para levantamento, publicação
   (`publicar_acoes.py --aplicar` grava em produção) e merges, um de cada vez (cada push na `master` republica o
-  Pages). `levantamento/` só existe na pasta principal (não vai para worktree). A pilha local do Supabase é
+  Pages). `levantamento/` só existe na pasta principal (não vai para worktree; noutra máquina, clonar o repo privado). A pilha local do Supabase é
   compartilhada: não rodar `test_supabase.py` nem migrações em duas sessões ao mesmo tempo. Remover o worktree
   (`git worktree remove`) depois do merge.
 - Levantamento de ações reais (2026-10-08): pasta `levantamento/` (no .gitignore, nunca versionar: tem nomes e links)
