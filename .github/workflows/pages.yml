@@ -1,9 +1,9 @@
-name: Publicar mockup no GitHub Pages
+name: Publicar app no GitHub Pages
 
 on:
   push:
     branches: [master]
-    paths: ["mockup/**", ".github/workflows/pages.yml"]
+    paths: ["app/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -26,6 +26,6 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: mockup
+          path: app
       - id: deploy
         uses: actions/deploy-pages@v4

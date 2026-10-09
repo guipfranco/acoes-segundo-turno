@@ -1,0 +1,27 @@
+{
+  "name": "acoes-segundo-turno",
+  "version": "1.0.0",
+  "description": "Plataforma onde quem organiza ações para eleger o Lula no 2º turno (panfletagem, adesivaço, roda de conversa, ligatona...) cadastra a ação, e quem quer ajudar acha uma perto de si e se inscreve. Desenho em `docs/superpowers/specs/2026-10-08-plataforma-acoes-design.md`.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guipfranco/acoes-segundo-turno.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/guipfranco/acoes-segundo-turno/issues"
+  },
+  "homepage": "https://github.com/guipfranco/acoes-segundo-turno#readme",
+  "devDependencies": {
+    "supabase": "1.200.3"
+  }
+}

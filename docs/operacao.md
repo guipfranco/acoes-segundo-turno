@@ -1,0 +1,97 @@
+# Operação (v1)
+
+- Produção: Supabase projeto `acoes-segundo-turno` (região São Paulo, plano grátis). Front no GitHub Pages
+  (`https://guipfranco.github.io/acoes-segundo-turno/`, só a pasta `app/`).
+- Migrações: `supabase/migrations/`. Aplicar com `npx supabase db push` depois de `npx supabase link`.
+- Moderador: por enquanto, `update pessoa set papel='moderador' where email='...'` no SQL Editor.
+- Organizador parceiro: `update pessoa set papel='organizador' where email='...'`.
+- Plano grátis pausa após 7 dias sem uso: o ping diário entra na etapa 5.
+- Segredos (service_role, senha do banco, segredo do Google) ficam fora do repo. A chave `anon` em
+  `app/config.js` é pública por desenho; o que protege os dados é o RLS.
+
+## Modo exemplo
+
+`app/config.js` com `supabase: null`, ou `?modo=exemplo` na URL, usa os dados fictícios em memória
+(`app/dados.js` via `app/api-exemplo.js`). Sem `supabase` configurado o app já abre assim. Criar ação,
+Minhas ações e Fila de moderação só existem neste modo até a próxima etapa.
+
+## Banco local
+
+Precisa de Docker. Na raiz do repo:
+
+```bash
+npx supabase start      # sobe a pilha local (mostra URL e as chaves anon e service_role)
+npx supabase db reset   # aplica as migrações e o supabase/seed.sql
+```
+
+Particularidades no Windows:
+
+- `[analytics]` está desligado em `supabase/config.toml`: o contêiner `vector` falha no Docker do Windows.
+- `npx supabase db reset` aplica migrações e seed, mas pode terminar com código diferente de zero e a
+  mensagem `Error status 502`. Se o banco está certo, é só o reinício dos serviços.
+- Depois de um reset, se `/auth/v1` responder 502, rode `docker restart supabase_kong_acoes-segundo-turno`.
+
+## Testes
+
+```bash
+python -m pytest tests -q            # telas (modo exemplo) e, se as variáveis abaixo existirem, regras do banco
+node --test "tests/js/*.test.js"     # camada de dados (api-exemplo e api-supabase)
+```
+
+As regras do banco (`tests/test_supabase.py`) só rodam com `SUPABASE_URL`, `SUPABASE_ANON_KEY` e
+`SUPABASE_SERVICE_KEY` apontando para a pilha **local** (`npx supabase start`); sem elas são puladas.
+Nunca aponte para produção. Exemplo:
+
+```bash
+export SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_ANON_KEY=<anon local> SUPABASE_SERVICE_KEY=<service_role local>
+python -m pytest tests -q
+```
+
+Roteiro de ponta a ponta do "Inscreva-se" (modo exemplo, sem Google): `tests/e2e/vou.spec.mjs`. Precisa do
+pacote `playwright` resolvível pelo Node (não está no `package.json`) e de
+`python -m http.server 8000 -d app` no ar; rode `node tests/e2e/vou.spec.mjs`.
+
+## Semear a primeira ação e promover pessoas
+
+Depois de entrar uma vez pelo site (isso cria a linha em `pessoa`), no SQL Editor do painel:
+
+```sql
+update pessoa set papel = 'organizador', telefone = '(11) 9xxxx-xxxx' where email = 'guilhermepereirafranco@gmail.com';
+insert into acao (titulo, tipo, descricao, organizador, lugar_nome, bairro, cidade, lat, lon, detalhe, contato_tipo, status)
+select 'Ação de teste', 'panfletagem', 'Só para testar o site.', id, 'Praça da Sé', 'Sé', 'São Paulo', -23.5505, -46.6333, 'Perto da catedral.', 'organizador_chama', 'publicada' from pessoa where email = 'guilhermepereirafranco@gmail.com';
+insert into turno (acao, inicio, fim) select id, (hoje_brasilia() + 2)::timestamp + time '10:00', (hoje_brasilia() + 2)::timestamp + time '12:00' from acao where titulo = 'Ação de teste';
+```
+
+Sem dado real de terceiros: o organizador é o próprio dono do projeto.
+
+## O que falta para ir ao ar
+
+Passos do dono do repo (nada disso está feito; `app/config.js` segue com `supabase: null`):
+
+- [ ] Criar o projeto no https://supabase.com/dashboard: nome `acoes-segundo-turno`, região South America
+      (São Paulo), plano Free. Guardar a senha do banco fora do repo.
+- [ ] `npx supabase login`, `npx supabase link --project-ref <ref>` e aplicar as migrações (inclui
+      `20261008000003_endurecimento.sql`) com `npx supabase db push`.
+- [ ] Depois do push, conferir com a chave anon que `PATCH /rest/v1/configuracao_publica?chave=eq.vaquinha`
+      responde 401/403 (views públicas só leitura).
+- [ ] Em Authentication > Providers > Email, desligar "Enable Email provider" (só login social).
+- [ ] Google Cloud Console: criar projeto; Tela de permissão OAuth, tipo Externo, nome "Ações do 2º turno",
+      e-mail de suporte, domínio autorizado `supabase.co`, escopos só `email`, `profile`, `openid`; publicar
+      o app (modo Produção; escopos básicos não pedem verificação).
+- [ ] Credenciais > ID do cliente OAuth, tipo Aplicativo da Web: origem JavaScript
+      `https://guipfranco.github.io` e URI de redirecionamento `https://<ref>.supabase.co/auth/v1/callback`.
+      Copiar ID e segredo.
+- [ ] No Supabase, Authentication > Providers > Google: ativar e colar ID e segredo.
+- [ ] Authentication > URL Configuration: Site URL `https://guipfranco.github.io/acoes-segundo-turno/`;
+      Redirect URLs `https://guipfranco.github.io/acoes-segundo-turno/**` e `http://localhost:8000/**`.
+- [ ] Em Settings > API, copiar `Project URL` e `anon public` e preencher `app/config.js`:
+
+      ```js
+      window.CONFIG = { supabase: { url: 'https://<ref>.supabase.co', anonKey: '<anon public>' } };
+      ```
+
+      Commit e push (`git add app/config.js`); o Pages publica sozinho.
+- [ ] Entrar uma vez pelo site e semear a primeira ação pelo SQL Editor (seção acima).
+- [ ] Conferir no site publicado: a ação de teste aparece; Entrar leva ao Google e volta; Inscreva-se pede
+      telefone e mostra "vai entrar em contato"; Minhas inscrições lista; desistir some; `?modo=exemplo` abre
+      os dados fictícios.

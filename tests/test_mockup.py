@@ -2,7 +2,7 @@ from pathlib import Path
 import re
 
 RAIZ = Path(__file__).resolve().parents[1]
-HTML = (RAIZ / "mockup" / "index.html").read_text(encoding="utf-8")
+HTML = (RAIZ / "app" / "index.html").read_text(encoding="utf-8")
 
 
 def test_tem_as_seis_telas():
@@ -16,7 +16,7 @@ def test_nav_e_doar():
     assert "Doar" in HTML
 import json
 
-DADOS_JS = (RAIZ / "mockup" / "dados.js").read_text(encoding="utf-8") if (RAIZ / "mockup" / "dados.js").exists() else ""
+DADOS_JS = (RAIZ / "app" / "dados.js").read_text(encoding="utf-8") if (RAIZ / "app" / "dados.js").exists() else ""
 
 
 def carregar_dados():
@@ -70,16 +70,17 @@ def test_acao_com_turno_passado_fica_fora_da_lista():
 
 
 def test_tela_acao_regras_de_inscricao():
-    for s in ["function telaAcao", "function inscrever", "function desistir", "lotado", "turno encerrado",
-              "Esta ação já aconteceu", "Você vai", "Seu nome e telefone vão para quem organiza esta ação",
-              "Receber código", "Entrar no grupo do WhatsApp", "minimapa"]:
+    for s in ["function telaAcao", "function inscrever", "function desistir", "lotado", "horário encerrado",
+              "Esta ação já aconteceu", "Inscrito", "Seu nome e telefone vão para quem organiza esta ação",
+              "Confirmar", "Entrar no grupo do WhatsApp", "minimapa"]:
         assert s in HTML, s
 
 
 def test_detalhe_e_grupo_so_para_inscritos():
-    # o bloco "Combinado" só é montado dentro do ramo que checa inscrição
+    # o bloco "Combinado" só é montado quando a API devolve o combinado, e a API só devolve a quem se inscreveu
     i = HTML.index("Combinado")
-    assert "inscritoEmAlgum" in HTML[i-400:i]
+    assert "ab.combinado?" in HTML[i-400:i]
+    assert "combinado: podeVer(a) ?" in (RAIZ / "app" / "api-exemplo.js").read_text(encoding="utf-8")
 
 
 def test_turno_lotado_e_inscricao_duplicada_nos_dados_e_no_codigo():
@@ -88,7 +89,7 @@ def test_turno_lotado_e_inscricao_duplicada_nos_dados_e_no_codigo():
     n5 = len([i for i in d["inscricoes"] if i["turno"] == 5 and not i["canceladaEm"]])
     assert t5["lotacao"] == n5 == 2
     assert any(i["turno"] == 7 and i["pessoa"] == d["config"]["eu"] for i in d["inscricoes"])
-    assert "if(estouInscrito(tid))return" in HTML  # não duplica
+    assert "if (!(ja && !ja.canceladaEm))" in (RAIZ / "app" / "api-exemplo.js").read_text(encoding="utf-8")  # não duplica
     assert "n>=t.lotacao" in HTML
 
 
@@ -169,7 +170,7 @@ def test_turno_no_passado_e_recusado_ao_criar():
 def test_turno_encerrado_vence_inscrito():
     i = HTML.index("function botaoTurno")
     corpo = HTML[i:i + 800]
-    assert corpo.index("turno encerrado") < corpo.index("Você vai")
+    assert corpo.index("horário encerrado") < corpo.index("Inscrito")
 
 
 def test_marcadores_sem_imagem_externa():
@@ -177,7 +178,7 @@ def test_marcadores_sem_imagem_externa():
 
 
 # Redesenho (Airbnb/Meetup): busca por lugar, lista acompanha o mapa, fundo da RMSP no artifact
-LUGARES_JS = (RAIZ / "mockup" / "lugares.js").read_text(encoding="utf-8")
+LUGARES_JS = (RAIZ / "app" / "lugares.js").read_text(encoding="utf-8")
 
 
 def test_lugares_tem_municipios_do_brasil_e_distritos_da_capital():
@@ -258,7 +259,7 @@ def test_formato_presencial_ou_online_em_toda_a_cadeia():
     for s in ["const FORMATOS", "'presencial'", "'online'", "const ehOnline", "acoesOnline", "LUGAR_ONLINE",
               "Ação online (ligatona", "O link da chamada vai para quem se inscreve", "if(!c.online){"]:
         assert s in HTML, s
-    assert "!ehOnline(acao(Number(arg)))" in HTML  # ação online não monta minimapa
+    assert "!ehOnline(ab.acao)" in HTML  # ação online não monta minimapa
     assert "if(l.online)return 'Online'" in HTML
 
 
@@ -267,9 +268,9 @@ def test_mapa_virou_rota_propria():
     assert "location.hash='#/mapa'" in HTML  # escolher cidade na inicial leva ao mapa
 
 
-def test_workflow_do_pages_publica_so_a_pasta_mockup():
+def test_workflow_do_pages_publica_so_a_pasta_app():
     assert "actions/upload-pages-artifact" in WORKFLOW and "actions/deploy-pages" in WORKFLOW
-    assert "path: mockup" in WORKFLOW
+    assert "path: app" in WORKFLOW
 
 
 # Fotos de verdade nos cards (Wikimedia Commons, licença livre), com o ícone de reserva
@@ -292,3 +293,49 @@ def test_mapa_ignora_acao_presencial_sem_coordenada():
     # ação importada sem cidade reconhecida tem lat/lon null e não pode quebrar o mapa
     assert "const temPino=" in HTML
     assert "function acoesNaArea(){const todas=acoesVisiveis().filter(x=>temPino(x.a))" in HTML
+
+
+def test_telas_de_participante_leem_pela_api():
+    for s in ['src="api.js"', 'src="api-exemplo.js"', 'src="config.js"', "async function render", "await API.acao(",
+              "API.publico()", "const vaoNo=", "estado.acaoAberta", "data-so-exemplo",
+              'src="api-supabase.js"', "supabase-js@2.45.4", "replaceState"]:
+        assert s in HTML, s
+    inicio = HTML[HTML.index("function acoesVisiveis"):HTML.index("function telaCriar")]
+    assert "DADOS.acoes" not in inicio and "DADOS.inscricoes" not in inicio and "DADOS.config" not in inicio
+
+
+def test_publicar_recarrega_antes_de_ir_para_minhas_sem_render_duplo():
+    # um render a mais apagaria o aviso de Minhas (telaMinhas zera estado.aviso)
+    corpo = HTML[HTML.index("function publicarAcao"):HTML.index("// ---------- minhas")]
+    assert "sincronizar();location.hash" not in corpo
+    assert corpo.count("recarregar().then(()=>{location.hash='#/minhas'})") == 2
+
+
+def test_vou_pede_telefone_uma_vez_e_mostra_a_forma_de_contato():
+    acao = HTML[HTML.index("function telaAcao"):HTML.index("function montarMiniMapa")]
+    assert "Receber código" not in HTML and "Código que chegou" not in HTML
+    for s in ["Seu nome e telefone vão para quem organiza esta ação", "vai entrar em contato", "Chamar no WhatsApp",
+              "Entrar no grupo do WhatsApp", "wa.me/55", "organizador_chama", "'whatsapp'", "link_grupo"]:
+        assert s in acao, s
+    assert "function continuarVouPendente" in HTML and "vouPendente" in HTML
+    assert ">Inscreva-se<" in HTML and "Inscrito ✓" in HTML and ">Vou<" not in HTML
+
+
+def test_entrar_sair_e_minhas_inscricoes():
+    for s in ["function telaInscricoes", "rota==='inscricoes'", 'data-rota="inscricoes"', "API.minhasInscricoes()",
+              "Entrar com Google", "function entrar", "function sair", "Você ainda não se inscreveu"]:
+        assert s in HTML, s
+
+
+def test_inscricoes_separa_passadas_e_permite_desistir():
+    corpo = HTML.split("function telaInscricoes", 1)[1].split("async function desistir", 1)[0]
+    for s in ["Próximas", "Passadas ou encerradas", "já aconteceu", "ação encerrada", "desistir(", "Você ainda não se inscreveu"]:
+        assert s in corpo, s
+
+
+def test_carregamento_inicial_tem_estado_e_erro():
+    assert '<main id="app"><p class="sec" style="padding:24px">Carregando…</p></main>' in HTML
+    sinc = HTML.split("async function sincronizar", 1)[1].split("</script>", 1)[0]
+    assert "catch" in sinc and "Não foi possível carregar" in sinc and "data-so-exemplo" in sinc
+    api = (RAIZ / "app" / "api.js").read_text(encoding="utf-8")
+    assert "window.supabase" in api and "Supabase indisponível; usando dados de exemplo" in api

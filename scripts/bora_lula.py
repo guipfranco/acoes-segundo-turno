@@ -21,8 +21,8 @@ RAIZ = Path(__file__).resolve().parents[1]
 URL_FEED = "https://comitepopular.org.br/wp-content/uploads/agenda-bora-lula/acoes.js"
 PASTA = RAIZ / "levantamento" / "bora-lula"
 SAIDA_PADRAO = RAIZ / "levantamento" / "dados-bora-lula.js"
-LUGARES_JS = RAIZ / "mockup" / "lugares.js"
-DADOS_JS = RAIZ / "mockup" / "dados.js"
+LUGARES_JS = RAIZ / "app" / "lugares.js"
+DADOS_JS = RAIZ / "app" / "dados.js"
 FONTE = "Agenda Bora Lula do Comitê Popular (comitepopular.org.br/agenda)"
 DURACAO_PADRAO_H = 2
 
@@ -67,7 +67,7 @@ def faixa(hora, hora_ord):
 
 
 def carregar_lugares():
-    """Índice (cidade sem acento, uf) -> (lat, lon) a partir de mockup/lugares.js (municípios do IBGE)."""
+    """Índice (cidade sem acento, uf) -> (lat, lon) a partir de app/lugares.js (municípios do IBGE)."""
     txt = LUGARES_JS.read_text(encoding="utf-8")
     txt = txt.split("LUGARES_BR", 1)[1]
     corpo = txt[txt.index("["): txt.rindex("]") + 1]
@@ -150,7 +150,7 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25"):
         acoes.append({
             "id": item["id"], "titulo": (item.get("atividade") or "Ação")[:120], "tipo": tipo_mapa(item.get("tipo")),
             "tipoOrigem": item.get("tipo") or "", "descricao": descricao, "organizador": pessoa_feed["id"],
-            "organizacao": org_id, "lugar": lugar, "detalhe": "", "grupo": None, "status": "publicada",
+            "organizacao": org_id, "lugar": lugar, "detalhe": "", "contatoTipo": "organizador_chama", "contatoWhatsapp": None, "contatoLink": None, "status": "publicada",
             "motivoRecusa": None, "prioritaria": False, "criadaEm": hoje, "foto": None, "fonte": "bora-lula", "link": link,
         })
         turnos.append({"id": len(turnos) + 1, "acao": item["id"], "inicio": inicio, "fim": fim, "lotacao": None})

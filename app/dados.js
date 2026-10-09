@@ -74,7 +74,8 @@ window.DADOS = {
    "papel": "moderador",
    "organizacao": null,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 2,
@@ -82,7 +83,8 @@ window.DADOS = {
    "papel": "organizador",
    "organizacao": null,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 3,
@@ -90,7 +92,8 @@ window.DADOS = {
    "papel": "organizador",
    "organizacao": 1,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 4,
@@ -98,7 +101,8 @@ window.DADOS = {
    "papel": "organizador",
    "organizacao": 4,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 5,
@@ -106,7 +110,8 @@ window.DADOS = {
    "papel": "participante",
    "organizacao": null,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 6,
@@ -114,7 +119,8 @@ window.DADOS = {
    "papel": "participante",
    "organizacao": null,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 7,
@@ -122,7 +128,8 @@ window.DADOS = {
    "papel": "participante",
    "organizacao": null,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 8,
@@ -130,7 +137,8 @@ window.DADOS = {
    "papel": "participante",
    "organizacao": null,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 9,
@@ -138,7 +146,8 @@ window.DADOS = {
    "papel": "organizador",
    "organizacao": 6,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 10,
@@ -146,7 +155,8 @@ window.DADOS = {
    "papel": "organizador",
    "organizacao": 7,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 11,
@@ -154,7 +164,8 @@ window.DADOS = {
    "papel": "organizador",
    "organizacao": 8,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 12,
@@ -162,7 +173,8 @@ window.DADOS = {
    "papel": "organizador",
    "organizacao": 9,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   },
   {
    "id": 13,
@@ -170,7 +182,8 @@ window.DADOS = {
    "papel": "organizador",
    "organizacao": 10,
    "telefone": "(11) 9xxxx-xxxx",
-   "bloqueada": false
+   "bloqueada": false,
+   "email": null
   }
  ],
  "acoes": [
@@ -189,7 +202,6 @@ window.DADOS = {
     "lon": -46.6978
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0001",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
@@ -198,7 +210,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Esta%C3%A7%C3%A3o_Graja%C3%BA_%E2%80%A2_Linha_9_Esmeralda_%E2%80%A2_S%C3%A3o_Paulo_%E2%80%A2_plataforma_%E2%80%A2_1.jpg?width=800",
     "credito": "Geogast, CC BY 4.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Esta%C3%A7%C3%A3o_Graja%C3%BA_%E2%80%A2_Linha_9_Esmeralda_%E2%80%A2_S%C3%A3o_Paulo_%E2%80%A2_plataforma_%E2%80%A2_1.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0001"
   },
   {
    "id": 2,
@@ -215,7 +230,6 @@ window.DADOS = {
     "lon": -46.7271
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0002",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
@@ -224,7 +238,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Di%C3%A1logos_com_o_Teatro_-_Roda_de_Conversa_%2818%29.jpg?width=800",
     "credito": "Ministério da Cultura, CC BY 2.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Di%C3%A1logos_com_o_Teatro_-_Roda_de_Conversa_%2818%29.jpg"
-   }
+   },
+   "contatoTipo": "whatsapp",
+   "contatoWhatsapp": "(11) 9xxxx-xxxx",
+   "contatoLink": null
   },
   {
    "id": 3,
@@ -241,7 +258,6 @@ window.DADOS = {
     "lon": -46.6333
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0003",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -250,7 +266,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/30.09.2022-LULA_NO_CEAR%C3%81-Lula_na_caminhada_Brasil_da_Esperan%C3%A7a%2C_em_Fortaleza_-_52396875937.jpg?width=800",
     "credito": "Ricardo Stuckert/Lula Oficial, CC BY-SA 4.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:30.09.2022-LULA_NO_CEAR%C3%81-Lula_na_caminhada_Brasil_da_Esperan%C3%A7a%2C_em_Fortaleza_-_52396875937.jpg"
-   }
+   },
+   "contatoTipo": "organizador_chama",
+   "contatoWhatsapp": null,
+   "contatoLink": null
   },
   {
    "id": 4,
@@ -267,7 +286,6 @@ window.DADOS = {
     "lon": -46.7609
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0004",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
@@ -276,7 +294,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Area_7_-_Term._Jardim_%C3%82ngela_%282%29.jpg?width=800",
     "credito": "MacGyver Santista, CC0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Area_7_-_Term._Jardim_%C3%82ngela_%282%29.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0004"
   },
   {
    "id": 5,
@@ -293,7 +314,6 @@ window.DADOS = {
     "lon": -46.7087
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0005",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -302,7 +322,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Bandeira%C3%A7o_13-09-2010_%284987417346%29.jpg?width=800",
     "credito": "Helio Costa, CC BY-SA 2.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Bandeira%C3%A7o_13-09-2010_%284987417346%29.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0005"
   },
   {
    "id": 6,
@@ -319,12 +342,14 @@ window.DADOS = {
     "lon": -46.6228
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0006",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
    "criadaEm": "2026-10-07",
-   "foto": null
+   "foto": null,
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0006"
   },
   {
    "id": 7,
@@ -341,7 +366,6 @@ window.DADOS = {
     "lon": -46.5654
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0007",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
@@ -350,7 +374,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/06.10.2022-Lula_faz_caminhada_em_S%C3%A3o_Bernardo_do_Campo_%2852409755043%29.jpg?width=800",
     "credito": "Ricardo Stuckert/Lula Oficial, CC BY-SA 4.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:06.10.2022-Lula_faz_caminhada_em_S%C3%A3o_Bernardo_do_Campo_%2852409755043%29.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0007"
   },
   {
    "id": 8,
@@ -367,7 +394,6 @@ window.DADOS = {
     "lon": -46.6895
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0008",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
@@ -376,7 +402,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Di%C3%A1logos_com_o_Teatro_-_Roda_de_Conversa_%2810%29.jpg?width=800",
     "credito": "Ministério da Cultura, CC BY 2.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Di%C3%A1logos_com_o_Teatro_-_Roda_de_Conversa_%2810%29.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0008"
   },
   {
    "id": 9,
@@ -393,7 +422,6 @@ window.DADOS = {
     "lon": -46.4103
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0009",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
@@ -402,7 +430,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Esta%C3%A7%C3%A3o_Guaianases_2011.jpg?width=800",
     "credito": "NickBr956, CC BY-SA 4.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Esta%C3%A7%C3%A3o_Guaianases_2011.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0009"
   },
   {
    "id": 10,
@@ -419,7 +450,6 @@ window.DADOS = {
     "lon": -46.4035
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0010",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": true,
@@ -428,7 +458,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Cidade_Tiradentes_-_S%C3%A3o_Paulo_City.jpg?width=800",
     "credito": "André Bonacin, CC BY 3.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Cidade_Tiradentes_-_S%C3%A3o_Paulo_City.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0010"
   },
   {
    "id": 11,
@@ -445,7 +478,6 @@ window.DADOS = {
     "lon": -46.6931
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0011",
    "status": "encerrada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -454,7 +486,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Bandeira%C3%A7o_13-09-2010_%284986814105%29.jpg?width=800",
     "credito": "Helio Costa, CC BY-SA 2.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Bandeira%C3%A7o_13-09-2010_%284986814105%29.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0011"
   },
   {
    "id": 12,
@@ -471,12 +506,14 @@ window.DADOS = {
     "lon": -46.669
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0012",
    "status": "em análise",
    "motivoRecusa": null,
    "prioritaria": true,
    "criadaEm": "2026-10-05",
-   "foto": null
+   "foto": null,
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0012"
   },
   {
    "id": 13,
@@ -493,7 +530,6 @@ window.DADOS = {
     "lon": -46.4625
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0013",
    "status": "em análise",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -502,7 +538,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Esta%C3%A7%C3%A3o_do_Metr%C3%B4_Corinthians-Itaquera.jpg?width=800",
     "credito": "Anderson Bueno Pereira, CC BY-SA 4.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Esta%C3%A7%C3%A3o_do_Metr%C3%B4_Corinthians-Itaquera.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0013"
   },
   {
    "id": 14,
@@ -519,7 +558,6 @@ window.DADOS = {
     "lon": -46.768
    },
    "detalhe": "Saída principal, perto do ponto de ônibus. Procure a camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0014",
    "status": "recusada",
    "motivoRecusa": "pede dinheiro para o material",
    "prioritaria": true,
@@ -528,7 +566,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Morro_do_S_do_Cap%C3%A3o_Redondo%2C_S%C3%A3o_Paulo.jpg?width=800",
     "credito": "Olivianawiki, CC BY-SA 4.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Morro_do_S_do_Cap%C3%A3o_Redondo%2C_S%C3%A3o_Paulo.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0014"
   },
   {
    "id": 15,
@@ -545,7 +586,6 @@ window.DADOS = {
     "lon": -34.8711
    },
    "detalhe": "Encontro em frente ao Centro de Artesanato. Camisa vermelha.",
-   "grupo": "https://chat.whatsapp.com/exemplo0015",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -554,7 +594,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pra%C3%A7a_do_Marco_Zero%2C_Recife%2C_Pernambuco%2C_Brasil.jpg?width=800",
     "credito": "Wilfredor, CC0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Pra%C3%A7a_do_Marco_Zero%2C_Recife%2C_Pernambuco%2C_Brasil.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0015"
   },
   {
    "id": 16,
@@ -571,7 +614,6 @@ window.DADOS = {
     "lon": -34.9039
    },
    "detalhe": "Perto do portão principal do parque.",
-   "grupo": "https://chat.whatsapp.com/exemplo0016",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -580,7 +622,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Praia_de_Boa_Viagem%2C_Recife-PE.jpg?width=800",
     "credito": "JKroz, CC BY 2.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Praia_de_Boa_Viagem%2C_Recife-PE.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0016"
   },
   {
    "id": 17,
@@ -597,7 +642,6 @@ window.DADOS = {
     "lon": -43.9386
    },
    "detalhe": "Na esquina da Afonso Pena com a Amazonas.",
-   "grupo": "https://chat.whatsapp.com/exemplo0017",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -606,7 +650,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pra%C3%A7a_Sete_de_Setembro_e_Obelisco_-_Belo_Horizonte_-_20191227144625.jpg?width=800",
     "credito": "Rafael Lemieszek, CC BY-SA 4.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Pra%C3%A7a_Sete_de_Setembro_e_Obelisco_-_Belo_Horizonte_-_20191227144625.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0017"
   },
   {
    "id": 18,
@@ -623,7 +670,6 @@ window.DADOS = {
     "lon": -43.9359
    },
    "detalhe": "Mesas perto do coreto.",
-   "grupo": "https://chat.whatsapp.com/exemplo0018",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -632,7 +678,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/P%C3%B4r_do_sol_na_Savassi%2C_Belo_Horizonte_MG.JPG?width=800",
     "credito": "HVL, CC BY 3.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:P%C3%B4r_do_sol_na_Savassi%2C_Belo_Horizonte_MG.JPG"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0018"
   },
   {
    "id": 19,
@@ -649,7 +698,6 @@ window.DADOS = {
     "lon": -51.2287
    },
    "detalhe": "Portão da Praça XV.",
-   "grupo": "https://chat.whatsapp.com/exemplo0019",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -658,7 +706,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Mercado_P%C3%BAblico_de_Porto_Alegre_2021_1.jpg?width=800",
     "credito": "Hedestad, CC BY-SA 4.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Mercado_P%C3%BAblico_de_Porto_Alegre_2021_1.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0019"
   },
   {
    "id": 20,
@@ -675,7 +726,6 @@ window.DADOS = {
     "lon": -51.1399
    },
    "detalhe": "Em frente ao terminal, lado da padaria.",
-   "grupo": "https://chat.whatsapp.com/exemplo0020",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -684,7 +734,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/%282020.03.16%29_Panfletagem_Conscientiza%C3%A7%C3%A3o_ao_Corona-Virus_%2849666417863%29.jpg?width=800",
     "credito": "Prefeitura de Itapevi, CC BY 2.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:%282020.03.16%29_Panfletagem_Conscientiza%C3%A7%C3%A3o_ao_Corona-Virus_%2849666417863%29.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0020"
   },
   {
    "id": 21,
@@ -701,7 +754,6 @@ window.DADOS = {
     "lon": -38.5204
    },
    "detalhe": "Lado do Teatro Castro Alves.",
-   "grupo": "https://chat.whatsapp.com/exemplo0021",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -710,7 +762,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pra%C3%A7a_Campo_Grande%2C_Salvador%2C_March_2014_%2813488613474%29.jpg?width=800",
     "credito": "Bryn Pinzgauer, CC BY 2.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Pra%C3%A7a_Campo_Grande%2C_Salvador%2C_March_2014_%2813488613474%29.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0021"
   },
   {
    "id": 22,
@@ -727,7 +782,6 @@ window.DADOS = {
     "lon": -38.5097
    },
    "detalhe": "Plataforma superior, saída da Avenida Joana Angélica.",
-   "grupo": "https://chat.whatsapp.com/exemplo0022",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -736,7 +790,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Esta%C3%A7%C3%A3o_da_Lapa.jpg?width=800",
     "credito": "Evandro Nascimento, CC BY 2.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Esta%C3%A7%C3%A3o_da_Lapa.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0022"
   },
   {
    "id": 23,
@@ -754,12 +811,14 @@ window.DADOS = {
     "online": true
    },
    "detalhe": "Link da chamada e roteiro no grupo.",
-   "grupo": "https://chat.whatsapp.com/exemplo0023",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
    "criadaEm": "2026-10-06",
-   "foto": null
+   "foto": null,
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0023"
   },
   {
    "id": 24,
@@ -777,7 +836,6 @@ window.DADOS = {
     "online": true
    },
    "detalhe": "Link da sala no grupo.",
-   "grupo": "https://chat.whatsapp.com/exemplo0024",
    "status": "publicada",
    "motivoRecusa": null,
    "prioritaria": false,
@@ -786,7 +844,10 @@ window.DADOS = {
     "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Corte_de_EE.UU._rechaza_apelaci%C3%B3n_de_NSO_Group_en_litigio_contra_WhatsApp.jpg?width=800",
     "credito": "Gibrán Aquino, CC BY-SA 4.0, via Wikimedia Commons",
     "pagina": "https://commons.wikimedia.org/wiki/File:Corte_de_EE.UU._rechaza_apelaci%C3%B3n_de_NSO_Group_en_litigio_contra_WhatsApp.jpg"
-   }
+   },
+   "contatoTipo": "link_grupo",
+   "contatoWhatsapp": null,
+   "contatoLink": "https://chat.whatsapp.com/exemplo0024"
   }
  ],
  "turnos": [
