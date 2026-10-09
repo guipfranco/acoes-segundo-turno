@@ -39,7 +39,7 @@ nav .barra{max-width:560px;margin:0 auto;height:100%;display:flex;align-items:st
 nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:var(--cinza);font-size:11px;font-weight:600}
 nav a span:first-child{font-size:20px;line-height:1}
 nav a.ativo{color:var(--tinta)}
-nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
+nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;font-weight:700}nav a.cta span:first-child{font-size:18px}nav a.cta.ativo{color:#fff}
 nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;font-weight:700}nav a.entrar span:first-child{font-size:18px}
 /* convite para entrar (inicial, ação, perfil) */
 .convite{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff5f5;border:1.5px solid #f6c9cc;border-radius:16px;padding:14px 16px;margin:18px auto 0;max-width:640px;text-align:left}
@@ -51,6 +51,13 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
 .perfil-topo h1{margin:0}.status{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;background:var(--nevoa);color:var(--tinta)}
 .status.publicada{background:#e8f4ec;color:var(--selo)}.status.analise{background:#fff1d6;color:#8a5a00}.status.recusada{background:#fde7e9;color:var(--vinho)}
 .cartao{border:1.5px solid var(--nevoa);border-radius:16px;padding:14px 16px;margin:10px 0}
+/* minhas inscrições: uma ação por linha */
+.insc{display:flex;align-items:center;gap:8px 14px;padding:12px 0;border-top:1px solid var(--nevoa);flex-wrap:wrap}.lista-insc .insc:first-child{border-top:0}
+.insc-link{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:center;flex:1 1 280px;min-width:0;text-decoration:none;color:inherit}
+.insc .tit{font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.insc-link:hover .tit{text-decoration:underline}
+.insc .meta{font-size:14px;color:var(--cinza);margin-top:3px}.insc .meta b{color:var(--tinta);font-weight:600}
+.insc-acoes{display:flex;align-items:center;gap:12px;margin-left:68px}.insc-acoes .agenda{margin-top:0}.insc-acoes .agenda .opcoes{left:auto;right:0}
+@media (min-width:900px){.insc-acoes{margin-left:0}}
 /* inicial: busca grande, filtros e vitrine de cidades */
 .inicio-pg{max-width:1100px;margin:0 auto;padding:22px 16px calc(var(--nav) + 24px)}
 .hero{max-width:640px;margin:8px auto 14px;text-align:center}
@@ -175,7 +182,7 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
   nav .marca em{font-style:normal;color:var(--vermelho)}
   nav a{flex:0 0 auto;flex-direction:row;gap:7px;font-size:14px;padding:0 14px;height:40px;border-radius:10px}
   nav a span:first-child{font-size:17px}nav a:hover{background:var(--nevoa)}nav a.ativo{color:var(--tinta);background:var(--nevoa)}
-  nav a.doar{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.doar:hover{background:var(--vinho)}
+  nav a.cta{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.cta:hover,nav a.cta.ativo{background:var(--vinho)}
   nav a.entrar{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.entrar:hover{background:#34343b}nav a.entrar span:first-child{display:none}
   /* páginas internas mais largas e com respiro */
   .pagina{max-width:760px;padding:32px 24px 56px}.pagina.estreita{max-width:620px}
@@ -205,11 +212,10 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
   <a class="marca" href="#/inicio">Ações do <em>2º turno</em></a>
   <a href="#/inicio" data-rota="inicio"><span>🔍</span><span>Ações</span></a>
   <a href="#/mapa" data-rota="mapa"><span>🗺️</span><span>Mapa</span></a>
-  <a href="#/criar" data-rota="criar" onclick="novaCriacao()"><span>＋</span><span>Criar</span></a>
   <a href="#/fila" data-rota="fila" data-so-moderador style="display:none"><span>✅</span><span>Fila</span></a>
   <a href="#/inscricoes" data-rota="inscricoes"><span>🙋</span><span>Inscrições</span></a>
   <a href="#/perfil" id="conta" data-rota="perfil" onclick="return contaClique()"><span id="conta-icone">👤</span><span id="conta-rotulo">Entrar</span></a>
-  <a class="doar" id="doar" href="#" target="_blank">Doar</a>
+  <a class="cta" href="#/criar" data-rota="criar" onclick="novaCriacao()"><span>＋</span><span>Criar ação</span></a>
 </div></nav>
 <script src="dados.js"></script>
 <script src="lugares.js"></script>
@@ -374,6 +380,7 @@ function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='o
   ${soOnline?'':VITRINE.filter(c=>c[0]!==perto.rotulo).map(c=>blocoVitrine(esc(c[0]),acoesPerto({lat:c[2],lon:c[3]}),linkMapa({rotulo:c[0],lat:c[2],lon:c[3]}))).join('')}
   <div id="bloco-online">${blocoVitrine('Online, de qualquer lugar',acoesOnline(),'','Ligatona e mutirão de mensagens: você participa de casa, pelo celular.')}</div>
   <section class="bloco"><div class="vazio"><p>Não achou ação na sua cidade?</p><a class="btn" href="#/criar" onclick="novaCriacao()">Criar a primeira ação</a></div></section>
+  <section class="bloco"><div class="vazio" style="padding-top:8px"><p style="font-size:15px;font-weight:600">Prefere ajudar com dinheiro?</p>${linkDoar()}</div></section>
   <p class="credito" style="text-align:center;margin-top:24px">Fotos de exemplo do Wikimedia Commons, com licenças livres. O crédito de cada uma está na página da ação.</p></div>`}
 function irParaCidade(lat,lon,rotulo){estado.onde={rotulo,lat,lon};estado.vista={lat,lon,zoom:11};location.hash='#/mapa'}
 // chute da cidade: pede a localização uma vez e escolhe o município mais próximo (capital se estiver a até 40 km)
@@ -472,13 +479,17 @@ async function entrar(){await API.entrar();await sincronizar()}
 async function sair(){await API.sair();localStorage.removeItem('vouPendente');estado.inscrevendo=null;await sincronizar()}
 // logado, o botão da conta leva ao Perfil (onde fica o Sair); deslogado, entra com o Google
 function contaClique(){if(estado.sessao)return true;entrar().catch(e=>console.error(e));return false}
+// a doação é uma só, geral, e aponta para a arrecadação oficial (configuracao.vaquinha)
+const linkDoar=()=>`<a class="btn sec" href="${esc(PUB.config.vaquinha||'#')}" target="_blank" rel="noopener">Doar para a campanha ↗</a>`;
 const botaoEntrar=()=>`<button class="btn google" onclick="entrar()"><span class="g" aria-hidden="true">G</span> Entrar com Google</button>`;
 function telaInscricoes(){
   if(!estado.sessao)return `<div class="pagina estreita"><h1>Minhas inscrições</h1><p>Entre para ver as ações em que você disse "Eu vou!".</p>${botaoEntrar()}</div>`;
   const lista=estado.minhasInscricoes||[],proxima=m=>m.acao.status==='publicada'&&m.turno.inicio.slice(0,10)>=PUB.config.hoje;
-  const card=m=>`<div>${cardEvento({a:m.acao,t:m.turno})}<div style="margin-top:6px">${proxima(m)?'':`<span class="selo">${m.acao.status==='publicada'?'já aconteceu':'ação encerrada'}</span> `}<button class="btn sec mini" onclick="desistir(${m.turno.id})">desistir</button>${proxima(m)?`<div>${botaoAgenda(m.acao,m.turno)}</div>`:''}</div></div>`;
-  const grupo=(t,l)=>l.length?`<h2>${t}</h2><div class="trilho">${l.map(card).join('')}</div>`:'';
-  return `<div class="pagina"><h1>Minhas inscrições</h1><p class="sec" style="font-size:15px">${esc(estado.sessao.nome)}${estado.sessao.telefone?`, ${esc(estado.sessao.telefone)}`:''}</p>
+  const linha=m=>`<div class="insc"><a class="insc-link" href="#/acao/${m.acao.id}">${cuboAcao(m.acao,'width:56px;height:56px;font-size:24px;border-radius:12px')}
+    <div style="min-width:0"><div class="tit">${esc(m.acao.titulo)}</div><div class="meta"><b>${fmtData(m.turno.inicio)}</b> · ${esc(lugarCurto(m.acao.lugar))}</div></div></a>
+    <div class="insc-acoes">${proxima(m)?`${botaoAgenda(m.acao,m.turno)}<button class="btn sec mini" onclick="desistir(${m.turno.id})">desistir</button>`:`<span class="selo">${m.acao.status==='publicada'?'já aconteceu':'ação encerrada'}</span>`}</div></div>`;
+  const grupo=(t,l)=>l.length?`<h2>${t}</h2><div class="lista-insc">${l.map(linha).join('')}</div>`:'';
+  return `<div class="pagina"><h1>Minhas inscrições</h1>
   ${lista.length?grupo('Próximas',lista.filter(proxima))+grupo('Passadas ou encerradas',lista.filter(m=>!proxima(m))):'<div class="vazio"><p>Você ainda não se inscreveu em nenhuma ação.</p><p class="sec">Abra uma ação e toque em "Eu vou!".</p><a class="btn" href="#/inicio">Ver ações</a></div>'}</div>`}
 async function desistir(tid){await API.desistir(tid);await sincronizar()}
 async function iniciarVou(tid){
@@ -669,6 +680,7 @@ function telaPerfil(){const s=estado.sessao;
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:22px"><h2 style="margin:0">Ações que criei</h2><a class="btn mini" href="#/criar" onclick="novaCriacao()">＋ Criar ação</a></div>
   ${minhas.length?minhas.map(itemMinha).join(''):'<p class="sec" style="font-size:15px;margin-top:10px">Você ainda não criou nenhuma ação. Toda ação nova passa por uma revisão rápida antes de aparecer, e a situação fica aqui.</p>'}
   ${s.papel==='moderador'?'<h2>Moderação</h2><a class="btn sec" href="#/fila">Abrir a fila de moderação</a>':''}
+  <h2>Doar</h2><p class="sec" style="font-size:14px;margin-top:-4px">Uma vaquinha só, apontando para a arrecadação oficial.</p>${linkDoar()}
   <div style="margin-top:40px;border-top:1px solid var(--nevoa);padding-top:16px"><button class="btn sec mini" onclick="sair().then(()=>{location.hash='#/inicio'})">Sair da conta</button></div></div>`}
 // ---------- fila ----------
 async function aprovar(id){try{await API.aprovar(id)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}await sincronizar()}
@@ -723,7 +735,6 @@ async function render(){
   document.getElementById('conta-rotulo').textContent=estado.sessao?'Perfil':'Entrar';
   document.getElementById('conta-icone').textContent=estado.sessao?'👤':'👋';
   document.getElementById('conta').classList.toggle('entrar',!estado.sessao); // "Entrar" com destaque, como o Doar
-  document.getElementById('doar').href=PUB.config.vaquinha||'#';
   if(rota==='mapa')montarMapa();
   if((rota||'inicio')==='inicio')chutarCidade();
   const ab=estado.acaoAberta;

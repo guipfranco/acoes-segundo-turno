@@ -415,3 +415,15 @@ def test_eu_vou_na_divulgacao_marca_presenca_sem_formulario():
     corpo = HTML[HTML.index("async function abrirVou"):HTML.index("const MENSAGEM")]
     assert "semInscricao(ab.acao)" in corpo and "await API.inscrever(tid)" in corpo
     assert "Ver a divulgação original" in HTML
+
+
+def test_criar_acao_e_o_cta_principal_e_doar_sai_da_barra():
+    nav = HTML[HTML.index("<nav>"):HTML.index("</nav>")]
+    assert 'class="cta" href="#/criar"' in nav and "Doar" not in nav
+    assert "const linkDoar=" in HTML and HTML.count("${linkDoar()}") == 2  # inicial e Perfil
+
+
+def test_inscricoes_em_lista_sem_nome_e_telefone():
+    corpo = HTML.split("function telaInscricoes", 1)[1].split("async function desistir", 1)[0]
+    assert 'class="insc"' in corpo and "cardEvento" not in corpo
+    assert "estado.sessao.telefone" not in corpo
