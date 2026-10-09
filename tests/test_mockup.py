@@ -461,3 +461,23 @@ def test_identidade_visual_da_campanha():
     for cor in ["#fd0000", "#a20301", "#ffd400", "#00b923", "#006820", "#0034d2"]:
         assert cor in marca, cor
     assert "?tema=" not in HTML and not list((RAIZ / "app").glob("tema-*.css"))
+
+
+def test_contagem_de_visitas_goatcounter_sem_dado_pessoal():
+    # GoatCounter: sem cookie; conta a tela pelo hash (sem a query, onde passa o code do login) e alguns cliques
+    assert 'data-goatcounter="https://acoes-segundo-turno.goatcounter.com/count"' in HTML
+    assert 'src="https://gc.zgo.at/count.js"' in HTML
+    assert "location.pathname+(location.hash||'#/inicio')" in HTML
+    assert "window.addEventListener('hashchange',contarTela)" in HTML
+    for evento in ["eu-vou-clique", "eu-vou-confirmado", "entrar", "cadastrar-acao-abrir", "cadastrar-acao-enviada",
+                   "agenda-google", "agenda-ics", "doar", "compartilhar"]:
+        assert f"contar('{evento}')" in HTML, evento
+    # o evento leva só o nome: nada de sessão, telefone ou e-mail
+    contar = HTML.split("function contar(", 1)[1].split("\n", 1)[0]
+    assert "sessao" not in contar and "telefone" not in contar
+
+
+def test_privacidade_fala_da_contagem_de_visitas():
+    priv = (RAIZ / "app" / "privacidade.html").read_text(encoding="utf-8")
+    assert "GoatCounter" in priv
+    assert "não guardamos nada sobre você" not in priv
