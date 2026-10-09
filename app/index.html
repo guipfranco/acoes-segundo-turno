@@ -107,6 +107,7 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 78px;font-size:14px}nav
 .previa .meta{font-size:13px;color:var(--cinza);line-height:1.4}.previa .meta b{color:var(--tinta);font-weight:600}
 .previa .ver{display:inline-block;margin-top:6px;font-size:13px;font-weight:700;color:var(--vinho)}
 .vitrine-vazia{color:var(--cinza);font-size:14px;padding:10px 0}
+.ver-todas{display:none}
 /* mapa: mapa + busca + gaveta */
 #tela-mapa{position:fixed;inset:0 0 var(--nav) 0;overflow:hidden}
 #mapa{position:absolute;inset:0;background:#e9ebee}#mapa .leaflet-tile-pane{filter:saturate(.75) contrast(.95)}
@@ -176,6 +177,10 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 78px;font-size:14px}nav
   .hero h1{font-size:44px}.hero p{font-size:18px}
   .filtros{flex-direction:row;flex-wrap:wrap;gap:8px 28px;align-items:center}.datas{margin-left:0}
   .trilho{grid-auto-flow:row;grid-template-columns:repeat(4,1fr);overflow:visible}
+  /* desktop: uma linha de cards por bloco; o resto abre no "Ver todas as ações" */
+  .trilho:not(.aberto) .evento:nth-child(n+5){display:none}
+  .ver-todas{display:block;margin:2px auto 0;background:#fff;border:1.5px solid var(--tinta);border-radius:999px;padding:9px 20px;font-weight:600;font-size:14px;cursor:pointer;color:var(--tinta)}
+  .ver-todas:hover{background:var(--nevoa)}
   .foto{transition:transform .2s ease,box-shadow .2s ease}.evento:hover .foto{transform:translateY(-2px);box-shadow:0 10px 24px rgba(23,23,26,.14)}
   .evento:hover .tit{text-decoration:underline}
   /* mapa: ocupa a área abaixo do cabeçalho */
@@ -220,7 +225,7 @@ const tipoAtual=t=>TIPO_ANTIGO[t]||(ICONES[t]?t:'outro');
 function normalizarTipos(acoes){(acoes||[]).forEach(a=>{if(a)a.tipo=tipoAtual(a.tipo)});return acoes}
 // filtros da inicial e do mapa são separados: cada tela tem o seu e ele não vaza para a outra
 const filtroNovo=()=>({quando:'breve',de:'',ate:'',formato:'qualquer',tipo:null});
-const estado={onde:null,filtros:{inicio:filtroNovo(),mapa:filtroNovo()},perto:null,geoTentada:false,gaveta:'baixa',vista:{lat:-23.62,lon:-46.62,zoom:10},foco:null,sel:null,filaAba:'analise',inscrevendo:null,minhasAberta:null,avisoTexto:null,recusando:null,erroRecusa:null,aviso:null,sessao:null,acaoAberta:null};
+const estado={onde:null,filtros:{inicio:filtroNovo(),mapa:filtroNovo()},perto:null,geoTentada:false,gaveta:'baixa',vista:{lat:-23.62,lon:-46.62,zoom:10},foco:null,sel:null,filaAba:'analise',inscrevendo:null,minhasAberta:null,avisoTexto:null,recusando:null,erroRecusa:null,aviso:null,sessao:null,acaoAberta:null,vitrineAberta:{}};
 let telaAtual='inicio',rotaAnterior=null,ultimaLista=null;
 const F=()=>estado.filtros[telaAtual==='mapa'?'mapa':'inicio'];
 let PUB={config:{hoje:'',frase:'',vaquinha:'#'},organizacoes:[],acoes:[],turnos:[]};
@@ -341,8 +346,14 @@ function cardEvento(x){const a=x.a;return `<a class="evento" href="#/acao/${a.id
   <div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
   <div class="meta">${esc(lugarCurto(a.lugar))}</div>
   <div class="meta">${quemDivulga(a)}, ${quantosVao(vaoNa(a.id))}</div></a>`}
-function blocoVitrine(titulo,lista,link,sub,extra){return `<section class="bloco"><div class="cab${extra?' cab-cidade':''}"><h2>${titulo}</h2>${link||''}${extra||''}</div>${sub?`<p class="sub">${sub}</p>`:''}
-  ${lista.length?`<div class="trilho">${lista.map(cardEvento).join('')}</div>`:'<p class="vitrine-vazia">Nenhuma ação com esses filtros por aqui.</p>'}</section>`}
+// no desktop o trilho mostra só a primeira linha (4 cards); o botão abre o resto e o estado sobrevive ao render
+const POR_LINHA=4;
+function verTodas(b,chave){const ab=estado.vitrineAberta||(estado.vitrineAberta={}),tr=b.previousElementSibling;ab[chave]=!ab[chave];
+  tr.classList.toggle('aberto',ab[chave]);b.textContent=ab[chave]?'Ver menos':b.dataset.rotulo}
+function blocoVitrine(titulo,lista,link,sub,extra,chave){const aberto=!!(estado.vitrineAberta&&estado.vitrineAberta[chave]),rot=`Ver todas as ações (${lista.length})`;
+  return `<section class="bloco"><div class="cab${extra?' cab-cidade':''}"><h2>${titulo}</h2>${link||''}${extra||''}</div>${sub?`<p class="sub">${sub}</p>`:''}
+  ${lista.length?`<div class="trilho${aberto?' aberto':''}">${lista.map(cardEvento).join('')}</div>`:'<p class="vitrine-vazia">Nenhuma ação com esses filtros por aqui.</p>'}
+  ${chave&&lista.length>POR_LINHA?`<button class="ver-todas" data-rotulo="${esc(rot)}" onclick="verTodas(this,'${esc(chave)}')">${aberto?'Ver menos':rot}</button>`:''}</section>`}
 function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='online';
   const linkMapa=c=>`<a href="#/mapa" onclick="irParaCidade(${c.lat},${c.lon},'${esc(c.rotulo)}');return false">Ver no mapa</a>`;
   const tituloPerto=`Perto de você: <button class="cidade" id="cidade-btn" aria-haspopup="true" aria-expanded="false" title="Trocar a cidade" onclick="abrirCidade(event)">${esc(perto.rotulo)}<span aria-hidden="true">▾</span></button>`;
@@ -354,9 +365,9 @@ function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='o
    ${soOnline?`<button class="link" onclick="F().formato='qualquer';render()">Ver também as ações presenciais</button>`:
      `<button class="link" onclick="F().formato='online';render();document.getElementById('bloco-online').scrollIntoView({behavior:'smooth'})">Prefiro ajudar online, de onde estiver</button>`}</header>
   ${filtrosHtml()}${tiposHtml()}
-  ${soOnline?'':blocoVitrine(tituloPerto,acoesPerto(perto),linkMapa(perto),'',popCidade)}
-  ${soOnline?'':VITRINE.filter(c=>c[0]!==perto.rotulo).map(c=>blocoVitrine(esc(c[0]),acoesPerto({lat:c[2],lon:c[3]}),linkMapa({rotulo:c[0],lat:c[2],lon:c[3]}))).join('')}
-  <div id="bloco-online">${blocoVitrine('Online, de qualquer lugar',acoesOnline(),'','Ligatona e mutirão de mensagens: você participa de casa, pelo celular.')}</div>
+  ${soOnline?'':blocoVitrine(tituloPerto,acoesPerto(perto),linkMapa(perto),'',popCidade,'perto')}
+  <div id="bloco-online">${blocoVitrine('Online, de qualquer lugar',acoesOnline(),'','Ligatona e mutirão de mensagens: você participa de casa, pelo celular.','','online')}</div>
+  ${soOnline?'':VITRINE.filter(c=>c[0]!==perto.rotulo).map(c=>blocoVitrine(esc(c[0]),acoesPerto({lat:c[2],lon:c[3]}),linkMapa({rotulo:c[0],lat:c[2],lon:c[3]}),'','',c[0])).join('')}
   <section class="bloco"><div class="vazio"><p>Não achou ação na sua cidade?</p><a class="btn" href="#/criar" onclick="novaCriacao()">Criar a primeira ação</a></div></section>
   <p class="credito" style="text-align:center;margin-top:24px">Fotos de exemplo do Wikimedia Commons, com licenças livres. O crédito de cada uma está na página da ação.</p></div>`}
 function irParaCidade(lat,lon,rotulo){estado.onde={rotulo,lat,lon};estado.vista={lat,lon,zoom:11};location.hash='#/mapa'}
