@@ -110,7 +110,7 @@ def test_criar_pela_api_e_so_verificado_publica_direto():
 
 def test_validacao_dos_campos_obrigatorios():
     for s in ["Dê um título.", "Diga o nome do ponto de encontro.", "Marque o lugar no mapa.", "Escolha o dia da ação.",
-              "Telefone no formato", "q.fim<=q.ini", "Diga quantas vagas.", "Vagas limitadas"]:
+              "Telefone no formato", "q.fim===q.ini", "diaSeguinte", "Diga quantas vagas (um número inteiro).", "vagasValidas", "Vagas limitadas"]:
         assert s in HTML, s
 
 

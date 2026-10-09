@@ -180,8 +180,16 @@ test('moderação: suspender tira do ar, reativar volta, excluir apaga (importad
   await mod.excluir(a.id);
   assert.equal(await mod.acao(a.id), null);
   assert.ok(!d.turnos.some(t => t.acao === a.id));
-  const imp = d.acoes.find(x => x.fonte);
-  if (imp) await assert.rejects(mod.excluir(imp.id), { codigo: 'importada' });
+  // importada: não se exclui, suspende e aparece em Suspensas
+  const imp = d.acoes.find(x => x.status === 'publicada' && x.id !== a.id); imp.fonte = 'bora-lula';
+  await assert.rejects(mod.excluir(imp.id), { codigo: 'importada' });
+  await mod.suspender(imp.id);
+  assert.ok((await mod.fila('rascunho')).some(m => m.acao.id === imp.id));
+  // em análise não se suspende (recusa); pessoa bloqueada não volta ao ar
+  const pend = d.acoes.find(x => x.status === 'em análise');
+  if (pend) await assert.rejects(mod.suspender(pend.id), { codigo: 'nao_pode' });
+  d.pessoas.find(p => p.id === imp.organizador).bloqueada = true;
+  await assert.rejects(mod.reativar(imp.id), { codigo: 'organizador_bloqueado' });
 });
 
 test('eu vou em ação de divulgação não pede telefone', async () => {

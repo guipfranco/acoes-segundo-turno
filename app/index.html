@@ -544,6 +544,7 @@ const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_inscricao:'Esta a�
   sem_titulo:'Dê um título.',sem_lugar:'Marque o lugar da ação.',turno_invalido:'Confira os horários: início antes do fim e nada no passado.',
   grupo_invalido:'O link do grupo precisa começar com https://chat.whatsapp.com/',
   importada:'Ação importada de outra agenda não se exclui (voltaria na próxima importação): suspenda.',
+  organizador_bloqueado:'Quem criou esta ação está bloqueado: ela não volta ao ar.',
   sem_foto:'A ação precisa de uma imagem: a arte da divulgação ou uma foto.',imagem_invalida:'Escolha um arquivo de imagem (foto ou arte).',
   imagem_grande:'Essa imagem é grande demais. Tente outra.',falha_envio:'Não deu para enviar a imagem. Tente de novo.',
   link_instagram_invalido:'Esse link não parece de um post do Instagram.',instagram_sem_imagem:'Não achamos a imagem desse post. Ele é público?',
@@ -592,12 +593,15 @@ function botaoTurno(a,t){const n=vaoNo(t);
 function ctaTopo(a,futuros){return `<div class="cta-topo">${futuros.length===1?botaoTurno(a,futuros[0]):`<a class="btn vou" href="#" onclick="document.querySelector('.acao-lado').scrollIntoView({behavior:'smooth'});return false">Eu vou!</a> <span class="sec">escolha o horário</span>`}</div>`}
 const FORA_DO_AR={'em análise':'Esta ação está em análise: só aparece para todo mundo depois que a moderação aprovar.',
   rascunho:'Esta ação foi suspensa pela moderação e está fora do ar.',recusada:'Esta ação foi recusada pela moderação.',encerrada:'Esta ação foi encerrada.'};
-function barraModerar(a){if(!estado.sessao||estado.sessao.papel!=='moderador')return '';const st=a.status;
-  const b=(st==='em análise'?`<button class="btn mini" onclick="aprovar(${a.id})">Aprovar</button> <a class="btn sec mini" href="#/fila">Recusar na fila</a>`:'')
-    +(['em análise','publicada'].includes(st)?` <button class="btn sec mini" onclick="suspender(${a.id})">Suspender</button>`:'')
-    +(st==='rascunho'?` <button class="btn mini" onclick="reativar(${a.id})">Reativar</button>`:'')
-    +(a.fonte?'':` <button class="btn sec mini perigo" onclick="excluir(${a.id})">Excluir</button>`);
-  return `<div class="moderar"><strong>Moderação · ${esc((ROTULO_STATUS[st]||[st])[0])}</strong>${b}</div>`}
+// o que a moderação faz em cada status: em análise aprova ou recusa; publicada suspende; suspensa reativa;
+// qualquer uma se exclui, menos a importada (voltaria na próxima importação)
+function botoesModerar(a,naFila){const st=a.status;
+  return (st==='em análise'?`<button class="btn mini" onclick="aprovar(${a.id})">Aprovar</button> `+(naFila?`<button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Recusar</button>`:`<a class="btn sec mini" href="#/fila">Recusar na fila</a>`):'')
+    +(st==='publicada'?`<button class="btn sec mini" onclick="suspender(${a.id})">Suspender</button>`:'')
+    +(st==='rascunho'?`<button class="btn mini" onclick="reativar(${a.id})">Reativar</button>`:'')
+    +(a.fonte?'':` <button class="btn sec mini perigo" onclick="excluir(${a.id})">Excluir</button>`)}
+function barraModerar(a){if(!estado.sessao||estado.sessao.papel!=='moderador')return '';
+  return `<div class="moderar"><strong>Moderação · ${esc((ROTULO_STATUS[a.status]||[a.status])[0])}</strong>${botoesModerar(a,false)}</div>`}
 function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const a=ab.acao,fechada=a.status!=='publicada';
   const ts=ab.turnos,futuros=ts.filter(t=>t.inicio.slice(0,10)>=PUB.config.hoje),ins=estado.inscrevendo;
   return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a>${barraModerar(a)}<div class="acao"><div class="acao-corpo">
@@ -648,15 +652,19 @@ function sugerirCriar(q){const box=document.getElementById('sug-criar');sugLugar
   box.innerHTML=sugLugarCriar.map((l,i)=>`<div onclick="escolherLugarCriar(${i})">${rotuloLugar(l)}</div>`).join('');box.style.display=sugLugarCriar.length?'block':'none'}
 function escolherLugarCriar(i){const l=sugLugarCriar[i];if(!l)return;const c=estado.criar;Object.assign(c.lugar,{bairro:l[0],cidade:l[4]==='d'?'São Paulo':l[0],lat:l[2],lon:l[3]});c.buscaLugar=nomeLugar(l);render()}
 // um horário por ação (dia, começa, termina) e, se quiser, vagas limitadas; outro horário vira outra ação
-function quandoDe(t){return t?{data:t.inicio.slice(0,10),ini:t.inicio.slice(11,16),fim:t.fim.slice(11,16),limitar:!!t.lotacao,vagas:t.lotacao?String(t.lotacao):''}
+// término antes do início = acaba no dia seguinte (vigília, festa que vira a noite)
+function quandoDe(t){return t?{data:t.inicio.slice(0,10),ini:t.inicio.slice(11,16),fim:t.fim.slice(11,16),limitar:!!t.lotacao,vagas:t.lotacao?String(t.lotacao):'',dataOriginal:t.inicio.slice(0,10)}
   :{data:'',ini:'',fim:'',limitar:false,vagas:''}}
-function turnosForm(c){const q=c.quando;return q.data&&q.ini&&q.fim?[{inicio:q.data+'T'+q.ini,fim:q.data+'T'+q.fim,lotacao:q.limitar&&Number(q.vagas)>0?Number(q.vagas):null}]:[]}
+function diaSeguinte(d){const x=new Date(d+'T12:00');x.setDate(x.getDate()+1);return x.toISOString().slice(0,10)}
+const vagasValidas=v=>/^\d+$/.test(String(v).trim())&&Number(v)>0;
+function turnosForm(c){const q=c.quando;if(!(q.data&&q.ini&&q.fim))return [];
+  return [{inicio:q.data+'T'+q.ini,fim:(q.fim<q.ini?diaSeguinte(q.data):q.data)+'T'+q.fim,lotacao:q.limitar&&vagasValidas(q.vagas)?Number(q.vagas):null}]}
 function telValido(t){return /^\(\d{2}\) 9[\dx]{4}-[\dx]{4}$/.test(t)||/^\d{11}$/.test(t.replace(/\D/g,''))}
 function validarPasso2(){const c=estado.criar,e={};if(!c.titulo.trim())e.titulo='Dê um título.';
   if(!c.online){if(!c.lugar.nome.trim())e.lugarNome='Diga o nome do ponto de encontro.';if(c.lugar.lat==null)e.lugar='Marque o lugar no mapa.'}
   const q=c.quando;if(!q.data)e.quando='Escolha o dia da ação.';else if(!q.ini||!q.fim)e.quando='Informe o horário de início e o de término.';
-  else if(q.fim<=q.ini)e.quando='O término precisa ser depois do início.';else if(q.data<PUB.config.hoje)e.quando='Esse dia já passou.';
-  if(q.limitar&&!(Number(q.vagas)>0))e.vagas='Diga quantas vagas.';
+  else if(q.fim===q.ini)e.quando='O término precisa ser depois do início.';else if(q.data<PUB.config.hoje&&q.data!==q.dataOriginal)e.quando='Esse dia já passou.';
+  if(q.limitar&&!vagasValidas(q.vagas))e.vagas='Diga quantas vagas (um número inteiro).';
   c.erros=e;if(!Object.keys(e).length)c.passo=3;render()}
 // editar mexe só no primeiro horário; ação antiga com mais de um horário guarda os outros
 function atualizarTurnos(c,acaoId){const atuais=turnosDaExemplo(acaoId);const t=turnosForm(c)[0];if(!t)return;
@@ -672,11 +680,12 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
    <label>Cidade ou bairro</label><div style="position:relative"><input id="busca-criar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(c.buscaLugar)}" oninput="sugerirCriar(this.value)"><div id="sug-criar" style="position:absolute;left:0;right:0;top:48px;background:#fff;border-radius:12px;box-shadow:0 8px 28px rgba(23,23,26,.2);z-index:5;display:none"></div></div>
    ${c.lugar.lat!=null?`<p class="sec" style="margin:8px 0 4px">Arraste o pino até o ponto exato do encontro.</p><div id="minimapa" style="height:220px;border-radius:14px"></div>`:''}${E('lugar')}`}
    <label>Dia</label><input type="date" min="${PUB.config.hoje}" value="${c.quando.data}" onchange="estado.criar.quando.data=this.value">
-   <div class="horarios"><div><label>Começa</label><input type="time" value="${c.quando.ini}" onchange="estado.criar.quando.ini=this.value"></div>
-     <div><label>Termina</label><input type="time" value="${c.quando.fim}" onchange="estado.criar.quando.fim=this.value"></div></div>${E('quando')}
+   <div class="horarios"><div><label>Começa</label><input type="time" value="${c.quando.ini}" onchange="estado.criar.quando.ini=this.value;render()"></div>
+     <div><label>Termina</label><input type="time" value="${c.quando.fim}" onchange="estado.criar.quando.fim=this.value;render()"></div></div>${E('quando')}
+   ${c.quando.ini&&c.quando.fim&&c.quando.fim<c.quando.ini?'<p class="sec" style="margin-top:6px;font-size:14px">Termina no dia seguinte.</p>':''}
    <p class="sec" style="margin-top:6px;font-size:14px">Mais de um horário? Cadastre cada um como uma ação.</p>
    <label class="marcar"><input type="checkbox" ${c.quando.limitar?'checked':''} onchange="estado.criar.quando.limitar=this.checked;render()"> Vagas limitadas</label>
-   ${c.quando.limitar?`<label>Quantas vagas</label><input type="number" min="1" inputmode="numeric" placeholder="ex.: 20" value="${esc(c.quando.vagas)}" oninput="estado.criar.quando.vagas=this.value">${E('vagas')}`:''}
+   ${c.quando.limitar?`<label>Quantas vagas</label><input type="number" min="1" step="1" inputmode="numeric" placeholder="ex.: 20" value="${esc(c.quando.vagas)}" oninput="estado.criar.quando.vagas=this.value">${E('vagas')}`:''}
    <label>Detalhe do encontro, só para inscritos</label><input placeholder="ex.: perto do ponto de ônibus, camisa vermelha" value="${esc(c.detalhe)}" oninput="cv('detalhe',this.value)">
    <label>Link do grupo de WhatsApp</label><input placeholder="https://chat.whatsapp.com/..." value="${esc(c.grupo)}" oninput="cv('grupo',this.value)">
    <p style="margin-top:18px">${c.editando?'<button class="btn sec" onclick="cancelarEdicao()">Cancelar</button>':'<button class="btn sec" onclick="estado.criar.passo=1;render()">Voltar</button>'} <button class="btn" onclick="validarPasso2()">Continuar</button></p></div>`;
@@ -776,10 +785,11 @@ async function recusar(id){const m=(document.getElementById('motivo'+id)||{}).va
   try{await API.recusar(id,m)}catch(e){estado.erroRecusa=MENSAGEM[e.codigo]||'Não deu.';render();return}
   estado.recusando=null;estado.erroRecusa=null;await sincronizar()}
 // suspender tira do ar e dá para reativar; excluir apaga a ação com turnos e inscrições
-async function moderar(fazer,id,pergunta,feito){if(pergunta&&!confirm(pergunta))return
-  try{await API[fazer](id)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}
+async function moderar(fazer,id,pergunta,feito,motivo){if(pergunta&&!confirm(pergunta))return
+  try{await API[fazer](id,motivo)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}
   recado(feito);if(fazer==='excluir'&&(location.hash||'').startsWith('#/acao/'))location.hash='#/fila';await sincronizar()}
-const suspender=id=>moderar('suspender',id,'Suspender esta ação? Ela sai do ar até alguém da moderação reativar.','Ação suspensa');
+function suspender(id){const m=prompt('Suspender esta ação? Ela sai do ar até alguém da moderação reativar.\nMotivo (vai para quem criou; pode deixar em branco):','');
+  if(m!==null)moderar('suspender',id,null,'Ação suspensa',m)}
 const reativar=id=>moderar('reativar',id,null,'Ação de volta ao ar');
 const excluir=id=>moderar('excluir',id,'Excluir esta ação de vez? Some junto a lista de quem disse que vai. Não dá para desfazer.','Ação excluída');
 // só no modo exemplo (ainda sem função no banco): selo e bloquear
@@ -796,9 +806,7 @@ function telaFila(){const s=estado.sessao;if(!s||s.papel!=='moderador')return '<
    <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome)}, ${esc(lugarCurto(a.lugar))}`}. Turnos: ${m.turnos.map(x=>fmtData(x.inicio)).join('; ')||'nenhum'}.${a.detalhe?` Detalhe: ${esc(a.detalhe)}.`:''}${a.contatoLink?` Grupo: ${esc(a.contatoLink)}.`:''}</div>
    <div class="sec">Quem criou: ${esc(p.nome)}, ${esc(p.telefone||'sem telefone')}${p.email?`, ${esc(p.email)}`:''}. Já criou ${p.criadas} ações (${p.aprovadas} aprovadas, ${p.recusadas} recusadas).</div>
    ${aba==='suspensas'&&a.motivoRecusa?`<div class="sec">Motivo da suspensão: ${esc(a.motivoRecusa)}</div>`:''}
-   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${aba==='analise'?`<button class="btn mini" onclick="aprovar(${a.id})">Aprovar</button> <button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Recusar</button>${ex&&o&&!o.verificada?` <button class="btn sec mini" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}`:
-     aba==='publicadas'?`<button class="btn sec mini" onclick="suspender(${a.id})">Suspender</button>${ex?` <button class="btn sec mini" onclick="bloquear(${p.id})">Bloquear organizador</button>`:''}`:
-     `<button class="btn mini" onclick="reativar(${a.id})">Reativar</button>`} <button class="btn sec mini perigo" onclick="excluir(${a.id})">Excluir</button></div>
+   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${botoesModerar(a,true)}${aba==='analise'&&ex&&o&&!o.verificada?` <button class="btn sec mini" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}${aba==='publicadas'&&ex?` <button class="btn sec mini" onclick="bloquear(${p.id})">Bloquear organizador</button>`:''}</div>
    ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: pede dinheiro para o material">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="recusar(${a.id})">Confirmar recusa</button></div>`:''}</div>`}).join('')}</div>`}
 // ---------- roteamento ----------
 async function recarregar(){PUB=await API.publico();normalizarTipos(PUB.acoes);estado.sessao=await API.sessao()}

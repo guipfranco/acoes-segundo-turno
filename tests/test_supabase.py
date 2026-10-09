@@ -335,3 +335,16 @@ def test_moderador_suspende_reativa_e_exclui(cenario):
     # importada não se exclui (voltaria na próxima importação): suspende
     sb.admin("PATCH", f"/rest/v1/acao?id=eq.{cenario['acao']}", {"fonte": "bora-lula", "fonte_id": f"x-{novo}"})
     assert sb.rpc("excluir_acao", {"acao_id": cenario["acao"]}, jwt=cenario["jwt_a"]).corpo["message"] == "importada"
+    # importada suspensa aparece em Suspensas; ação de pessoa bloqueada não volta ao ar
+    assert sb.rpc("suspender_acao", {"acao_id": cenario["acao"]}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert any(m["acao"]["id"] == cenario["acao"] for m in sb.rpc("fila_moderacao", {"situacao": "rascunho"}, jwt=cenario["jwt_a"]).corpo)
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['org']}", {"bloqueada": True})
+    assert sb.rpc("reativar_acao", {"acao_id": cenario["acao"]}, jwt=cenario["jwt_a"]).corpo["message"] == "organizador_bloqueado"
+
+
+def test_so_se_suspende_acao_publicada(cenario):
+    sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
+    r = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"])
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    assert r.corpo["status"] == "em análise"
+    assert sb.rpc("suspender_acao", {"acao_id": r.corpo["id"]}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
