@@ -145,3 +145,33 @@ def test_limpar_org_so_deixa_organizacao_publica():
     for ruim in ["não identificado", "perfil local (criador de conteúdo)", "Fulano de Tal", "Fulano (governador), Beltrano e Sicrano",
                  "Moradores do Catete e criador de conteúdo", "", None]:
         assert pa.limpar_org(ruim) is None, ruim
+
+
+def test_mesma_cidade_data_e_hora_com_algo_em_comum_e_o_mesmo_ato():
+    feed_itens, _ = pa.itens_do_feed({"hoje": "2026-10-09", "acoes": [
+        feed_item(id=1, data="2026-10-09", hora="17h", hora_ord=17, uf="MG", cidade="Belo Horizonte",
+                  atividade="Estudantes nas ruas contra Bolsonaro", local="Praça Afonso Arinos", endereco="", link="https://x/1"),
+        feed_item(id=2, data="2026-10-09", hora="17h30", hora_ord=17.5, uf="MG", cidade="São João del-Rei",
+                  atividade="Estudantes de MG contra Bolsonaro", local="UFSJ | Universidade Federal de São João del-Rei",
+                  endereco="", link="https://x/2"),
+    ]}, LUGARES)
+    base = dict(data="2026-10-09", uf="MG", bairro="")
+    linhas = [
+        # outro título, mesmo lugar e hora: duplicata pelo local
+        linha(titulo="Ato Estudantes com Lula em Belo Horizonte", cidade="Belo Horizonte", hora="17:00",
+              endereco="Praça Afonso Arinos, em frente à Faculdade de Direito", link="https://x/a", **base),
+        # outro título, local diz UFSJ: duplicata
+        linha(titulo="Caminhada pela democracia em São João del-Rei", cidade="São João del-Rei", hora="17:30",
+              endereco="Concentração em frente ao Campus Dom Bosco da UFSJ", link="https://x/b", **base),
+        # mesma cidade e hora, nada em comum: é outro ato
+        linha(titulo="Panfletagem com Lula na feira", cidade="Belo Horizonte", hora="17:00",
+              endereco="Feira do Barreiro", link="https://x/c", **base),
+        # mesma cidade, título parecido, outra hora: segue a regra antiga (título parecido derruba)
+        linha(titulo="Plenária com Lula no Barreiro", cidade="Belo Horizonte", hora="10:00",
+              endereco="Praça Afonso Arinos", link="https://x/d", **base),
+    ]
+    itens, revisao = pa.itens_do_consolidado(linhas, LUGARES, feed_itens, hoje="2026-10-09")
+    motivos = {t: m for _, t, m in revisao}
+    assert motivos["Ato Estudantes com Lula em Belo Horizonte"] == "já está no feed Bora Lula (id 1)"
+    assert motivos["Caminhada pela democracia em São João del-Rei"] == "já está no feed Bora Lula (id 2)"
+    assert [i["titulo"] for i in itens] == ["Panfletagem com Lula na feira", "Plenária com Lula no Barreiro"]
