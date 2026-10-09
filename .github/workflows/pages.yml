@@ -1,9 +1,11 @@
 name: Publicar app no GitHub Pages
 
+# A raiz é sempre a master (produção); cada outra branch vira prévia em /previa/<branch>/.
+# Qualquer push que toque o app republica tudo; apagar uma branch tira a prévia dela.
 on:
   push:
-    branches: [master]
-    paths: ["app/**", ".github/workflows/pages.yml"]
+    paths: ["app/**", ".github/workflows/pages.yml", "scripts/montar_pages.sh"]
+  delete:
   workflow_dispatch:
 
 permissions:
@@ -23,9 +25,12 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash scripts/montar_pages.sh _site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: app
+          path: _site
       - id: deploy
         uses: actions/deploy-pages@v4
