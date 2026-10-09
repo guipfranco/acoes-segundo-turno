@@ -28,9 +28,12 @@
     const inscritaEm = aid => dados.turnos.filter(t => t.acao === aid && sessao != null && ativas(t.id).some(i => i.pessoa === sessao)).map(t => t.id);
     const podeVer = a => sessao != null && (a.organizador === sessao || (pessoa(sessao) || {}).papel === 'moderador' || (a.status === 'publicada' && inscritaEm(a.id).length > 0));
     const pedidos = () => dados.pedidos || (dados.pedidos = []);
+    const linkValido = l => /^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/i.test(String(l || '').trim()) && String(l).trim().length <= 300;
     const orgPorNome = n => dados.organizacoes.find(o => o.nome.trim().toLowerCase() === String(n).trim().toLowerCase());
     const ehModerador = () => sessao != null && (pessoa(sessao) || {}).papel === 'moderador' && !(pessoa(sessao) || {}).bloqueada;
-    const completa = a => Object.assign(publica(a), { motivoRecusa: a.motivoRecusa || null, detalhe: a.detalhe || null, contatoLink: a.contatoLink || null });
+    const completa = a => { const o = a.organizacao ? org(a.organizacao) : null;
+      return Object.assign(publica(a), { motivoRecusa: a.motivoRecusa || null, detalhe: a.detalhe || null, contatoLink: a.contatoLink || null,
+        organizacaoLink: a.organizacaoLink || null, organizacaoDados: o ? { nome: o.nome, verificada: !!o.verificada, link_oficial: o.linkOficial || null } : null }); };
     const comInscritos = aid => turnosDa(aid).map(t => Object.assign(t, { inscritos: ativas(t.id).map(i => { const q = pessoa(i.pessoa) || {}; return { nome: q.nome, telefone: q.telefone || null }; }) }));
     const sessaoObj = () => { if (sessao == null) return null; const p = pessoa(sessao); return { id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, papel: p.papel, bloqueada: !!p.bloqueada, organizacao: p.organizacao || null }; };
     return {
@@ -89,23 +92,24 @@
         if (sessao == null) return { organizacao: null, pedido: null };
         const p = pessoa(sessao), o = p.organizacao ? org(p.organizacao) : null;
         const ped = pedidos().filter(d => d.pessoa === sessao).slice(-1)[0];
-        return { organizacao: o ? { id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada, foto: o.foto ? Object.assign({}, o.foto) : null, minha: o.criadaPor === sessao } : null,
+        return { organizacao: o ? { id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada, foto: o.foto ? Object.assign({}, o.foto) : null, link: o.linkOficial || null, minha: o.criadaPor === sessao } : null,
           pedido: ped ? { id: ped.id, nome: (org(ped.organizacao) || {}).nome, status: ped.status, motivo: ped.motivo || null } : null };
       },
       // nome novo cria a organização e liga a pessoa; nome que já existe vira pedido para a moderação
-      async salvarOrganizacao(nome, tipo, logo) {
+      async salvarOrganizacao(nome, tipo, logo, link) {
         if (sessao == null) throw erro('precisa_entrar');
-        const p = pessoa(sessao), n = String(nome || '').trim();
+        const p = pessoa(sessao), n = String(nome || '').trim(), lk = String(link || '').trim();
         if (n.length < 3 || n.length > 80) throw erro('nome_organizacao');
+        if (!linkValido(lk)) throw erro('link_oficial');
         let o = orgPorNome(n);
         if (!o) {
-          o = { id: Math.max(0, ...dados.organizacoes.map(x => x.id)) + 1, nome: n, tipo: tipo || 'coletivo', verificada: false, foto: logo ? { url: logo, credito: '' } : null, criadaPor: sessao };
+          o = { id: Math.max(0, ...dados.organizacoes.map(x => x.id)) + 1, nome: n, tipo: tipo || 'coletivo', verificada: false, foto: logo ? { url: logo, credito: '' } : null, criadaPor: sessao, linkOficial: lk };
           dados.organizacoes.push(o); p.organizacao = o.id; return { situacao: 'ligada', id: o.id };
         }
-        if (p.organizacao === o.id) { if (logo && o.criadaPor === sessao && !o.verificada) o.foto = { url: logo, credito: '' }; return { situacao: 'ligada', id: o.id }; }
+        if (p.organizacao === o.id) { if (o.criadaPor === sessao && !o.verificada) { if (logo) o.foto = { url: logo, credito: '' }; o.linkOficial = lk; } return { situacao: 'ligada', id: o.id }; }
         if (!p.telefone) throw erro('sem_telefone');
         dados.pedidos = pedidos().filter(d => !(d.pessoa === sessao && d.status === 'em análise'));
-        dados.pedidos.push({ id: Date.now(), pessoa: sessao, organizacao: o.id, status: 'em análise', motivo: null });
+        dados.pedidos.push({ id: Date.now(), pessoa: sessao, organizacao: o.id, status: 'em análise', motivo: null, link: lk });
         return { situacao: 'pedido', id: o.id };
       },
       async sairDaOrganizacao() {
@@ -116,9 +120,9 @@
         if (!ehModerador()) throw erro('so_moderador');
         return {
           pedidos: pedidos().filter(d => d.status === 'em análise').map(d => { const q = pessoa(d.pessoa) || {}, o = org(d.organizacao) || {};
-            return { id: d.id, organizacao: o.nome, verificada: !!o.verificada, pessoa: q.nome, email: q.email || null, telefone: q.telefone || null }; }),
+            return { id: d.id, organizacao: o.nome, verificada: !!o.verificada, pessoa: q.nome, email: q.email || null, telefone: q.telefone || null, link: d.link || null, link_oficial: o.linkOficial || null }; }),
           semSelo: dados.organizacoes.filter(o => !o.verificada && o.criadaPor != null).map(o => { const q = pessoa(o.criadaPor) || {};
-            return { id: o.id, nome: o.nome, tipo: o.tipo, foto: o.foto || null, criada_por: q.nome, email: q.email || null, telefone: q.telefone || null,
+            return { id: o.id, nome: o.nome, tipo: o.tipo, foto: o.foto || null, link_oficial: o.linkOficial || null, criada_por: q.nome, email: q.email || null, telefone: q.telefone || null,
               membros: dados.pessoas.filter(m => m.organizacao === o.id).length, acoes: dados.acoes.filter(a => a.organizacao === o.id).length }; }),
         };
       },
@@ -152,18 +156,19 @@
         const verificada = p.papel === 'organizador' || p.papel === 'moderador' || !!(p.organizacao && (org(p.organizacao) || {}).verificada);
         const status = verificada ? 'publicada' : 'em análise';
         // quem organiza: a minha organização (só a minha) ou outra escrita à mão (criada sem selo se não existe)
-        let orgId = null; const nomeOrg = String(d.organizacao_nome || '').trim();
+        let orgId = null, orgLink = null; const nomeOrg = String(d.organizacao_nome || '').trim();
         if (d.organizacao && d.organizacao === p.organizacao) orgId = p.organizacao;
         else if (nomeOrg) {
           if (nomeOrg.length < 3 || nomeOrg.length > 80) throw erro('nome_organizacao');
+          orgLink = String(d.organizacao_link || '').trim(); if (!linkValido(orgLink)) throw erro('link_oficial');
           let o = orgPorNome(nomeOrg);
-          if (!o) { o = { id: Math.max(0, ...dados.organizacoes.map(x => x.id)) + 1, nome: nomeOrg, tipo: 'coletivo', verificada: false, foto: null, criadaPor: sessao }; dados.organizacoes.push(o); }
+          if (!o) { o = { id: Math.max(0, ...dados.organizacoes.map(x => x.id)) + 1, nome: nomeOrg, tipo: 'coletivo', verificada: false, foto: null, criadaPor: sessao, linkOficial: orgLink }; dados.organizacoes.push(o); }
           orgId = o.id;
         }
         const id = Math.max(0, ...dados.acoes.map(a => a.id)) + 1;
         const lugar = d.online ? { nome: 'Online', bairro: 'Online', cidade: 'Online', lat: null, lon: null, online: true }
           : { nome: d.lugar_nome, bairro: d.bairro || '', cidade: d.cidade || '', lat: d.lat, lon: d.lon };
-        dados.acoes.push({ id, titulo: d.titulo.trim(), tipo: d.tipo, descricao: d.descricao || '', organizador: sessao, organizacao: orgId,
+        dados.acoes.push({ id, titulo: d.titulo.trim(), tipo: d.tipo, descricao: d.descricao || '', organizador: sessao, organizacao: orgId, organizacaoLink: orgLink,
           lugar, detalhe: d.detalhe || '', contatoTipo: grupo ? 'link_grupo' : 'organizador_chama', contatoLink: grupo || null,
           foto: { url: foto, credito: '' },
           status, motivoRecusa: null, prioritaria: false, criadaEm: hoje });

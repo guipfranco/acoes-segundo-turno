@@ -4,8 +4,17 @@
 -- verificada e publicaria sem análise). O selo da organização (verificada) é dado por moderador; quem é de
 -- organização verificada publica direto (regra de criar_acao, migração 20261009000021).
 -- No cadastro da ação, "Quem organiza?": eu mesmo(a), a minha organização ou outra, escrita à mão.
+-- Verificação: toda organização cadastrada (ou escrita à mão numa ação) vem com o link de um perfil oficial
+-- (Instagram, Facebook, site). A moderação confere por ele antes de dar o selo ou aprovar a ação.
 
 alter table organizacao add column if not exists criada_por uuid references pessoa(id);
+alter table organizacao add column if not exists link_oficial text;
+alter table acao add column if not exists organizacao_link text;  -- link oficial informado junto com a ação
+
+-- link de perfil oficial: http(s), com domínio
+create or replace function link_oficial_valido(l text) returns boolean language sql immutable as $$
+  select coalesce(l, '') ~* '^https?://[a-z0-9.-]+\.[a-z]{2,}(/\S*)?$' and length(l) <= 300
+$$;
 create unique index if not exists organizacao_nome_sem_caixa on organizacao (lower(trim(nome)));
 
 -- Acha a organização pelo nome (sem diferença de maiúsculas e espaços nas pontas).
@@ -17,7 +26,7 @@ $$;
 create or replace function minha_organizacao() returns json language sql stable security definer set search_path = public as $$
   select json_build_object(
     'organizacao', (select json_build_object('id', o.id, 'nome', o.nome, 'tipo', o.tipo, 'verificada', o.verificada,
-                     'foto_url', o.foto_url, 'minha', o.criada_por = p.id)
+                     'foto_url', o.foto_url, 'link_oficial', o.link_oficial, 'minha', o.criada_por = p.id)
                     from organizacao o where o.id = p.organizacao),
     'pedido', (select json_build_object('id', d.id, 'nome', coalesce(o.nome, d.organizacao_proposta), 'status', d.status, 'motivo', d.motivo_recusa)
                from pedido_organizador d left join organizacao o on o.id = d.organizacao
@@ -26,29 +35,32 @@ create or replace function minha_organizacao() returns json language sql stable 
 $$;
 
 -- Cadastra (ou pede para entrar em) uma organização. Devolve {situacao: 'ligada' | 'pedido'}.
-create or replace function salvar_organizacao(nome text, tipo text, logo text default null) returns json language plpgsql security definer set search_path = public as $$
-declare p pessoa; o organizacao; n text := trim(coalesce(nome, '')); l text := nullif(trim(coalesce(logo, '')), '');
+create or replace function salvar_organizacao(nome text, tipo text, logo text default null, link text default null) returns json language plpgsql security definer set search_path = public as $$
+declare p pessoa; o organizacao; n text := trim(coalesce(nome, '')); l text := nullif(trim(coalesce(logo, '')), ''); lk text := trim(coalesce(link, ''));
 begin
   if auth.uid() is null then raise exception 'precisa_entrar'; end if;
   select * into p from pessoa where id = auth.uid();
   if p.bloqueada then raise exception 'bloqueada'; end if;
   if length(n) < 3 or length(n) > 80 then raise exception 'nome_organizacao'; end if;
   if l is not null and l !~ '^(https://|http://(127\.0\.0\.1|localhost)[:/])' then l := null; end if;
+  if not link_oficial_valido(lk) then raise exception 'link_oficial'; end if;
   o := organizacao_por_nome(n);
   if o.id is null then
-    insert into organizacao (nome, tipo, foto_url, criada_por) values (n, coalesce(tipo, 'coletivo')::tipo_org, l, p.id) returning * into o;
+    insert into organizacao (nome, tipo, foto_url, criada_por, link_oficial) values (n, coalesce(tipo, 'coletivo')::tipo_org, l, p.id, lk) returning * into o;
     update pessoa set organizacao = o.id where id = p.id;
     return json_build_object('situacao', 'ligada', 'id', o.id);
   end if;
   if p.organizacao = o.id then
-    -- já é minha: quem criou troca o logo enquanto não tem selo
-    if l is not null and o.criada_por = p.id and not o.verificada then update organizacao set foto_url = l where id = o.id; end if;
+    -- já é minha: quem criou troca o logo e o link enquanto não tem selo
+    if o.criada_por = p.id and not o.verificada then
+      update organizacao set foto_url = coalesce(l, foto_url), link_oficial = lk where id = o.id;
+    end if;
     return json_build_object('situacao', 'ligada', 'id', o.id);
   end if;
   if p.telefone is null then raise exception 'sem_telefone'; end if;
   delete from pedido_organizador where pessoa = p.id and status = 'em análise';
   insert into pedido_organizador (pessoa, organizacao, telefone, como_confirmar)
-    values (p.id, o.id, p.telefone, 'pedido pelo Perfil do app');
+    values (p.id, o.id, p.telefone, lk);  -- como_confirmar guarda o link oficial informado
   return json_build_object('situacao', 'pedido', 'id', o.id);
 end $$;
 
@@ -66,10 +78,11 @@ begin
   if not eh_moderador() then raise exception 'so_moderador'; end if;
   return json_build_object(
     'pedidos', (select coalesce(json_agg(json_build_object('id', d.id, 'organizacao', o.nome, 'verificada', o.verificada,
-                  'pessoa', q.nome, 'email', q.email, 'telefone', d.telefone, 'criado_em', d.criado_em) order by d.criado_em), '[]'::json)
+                  'pessoa', q.nome, 'email', q.email, 'telefone', d.telefone, 'link', d.como_confirmar,
+                  'link_oficial', o.link_oficial, 'criado_em', d.criado_em) order by d.criado_em), '[]'::json)
                 from pedido_organizador d join organizacao o on o.id = d.organizacao join pessoa q on q.id = d.pessoa
                 where d.status = 'em análise'),
-    'sem_selo', (select coalesce(json_agg(json_build_object('id', o.id, 'nome', o.nome, 'tipo', o.tipo, 'foto_url', o.foto_url,
+    'sem_selo', (select coalesce(json_agg(json_build_object('id', o.id, 'nome', o.nome, 'tipo', o.tipo, 'foto_url', o.foto_url, 'link_oficial', o.link_oficial,
                   'criada_por', q.nome, 'email', q.email, 'telefone', q.telefone,
                   'membros', (select count(*) from pessoa m where m.organizacao = o.id),
                   'acoes', (select count(*) from acao a where a.organizacao = o.id)) order by o.criada_em desc), '[]'::json)
@@ -105,7 +118,7 @@ end $$;
 --   organizacao_nome (texto) liga a ação a uma organização com esse nome, criada sem selo se ainda não existe.
 create or replace function criar_acao(dados jsonb) returns json language plpgsql security definer set search_path = public as $$
 declare p pessoa; a_id bigint; t jsonb; online boolean; grupo text; foto text; n int; verificada boolean; situacao status_acao;
-        org_id bigint; org_nome text; achada organizacao;
+        org_id bigint; org_nome text; org_link text; achada organizacao;
 begin
   if auth.uid() is null then raise exception 'precisa_entrar'; end if;
   select * into p from pessoa where id = auth.uid();
@@ -142,16 +155,18 @@ begin
     org_id := p.organizacao;
   elsif org_nome is not null then
     if length(org_nome) < 3 or length(org_nome) > 80 then raise exception 'nome_organizacao'; end if;
+    org_link := trim(coalesce(dados->>'organizacao_link', ''));
+    if not link_oficial_valido(org_link) then raise exception 'link_oficial'; end if;
     achada := organizacao_por_nome(org_nome);
     if achada.id is null then
-      insert into organizacao (nome, tipo, criada_por) values (org_nome, 'coletivo', p.id) returning id into org_id;
+      insert into organizacao (nome, tipo, criada_por, link_oficial) values (org_nome, 'coletivo', p.id, org_link) returning id into org_id;
     else
       org_id := achada.id;
     end if;
   end if;
 
   insert into acao (titulo, tipo, descricao, organizador, organizacao, lugar_nome, bairro, cidade, lat, lon, online,
-                    detalhe, contato_tipo, contato_link, foto_url, status)
+                    detalhe, contato_tipo, contato_link, foto_url, status, organizacao_link)
   values (left(trim(dados->>'titulo'), 140), (dados->>'tipo')::tipo_acao, left(coalesce(dados->>'descricao', ''), 4000), p.id,
           org_id,
           case when online then null else left(dados->>'lugar_nome', 200) end,
@@ -160,7 +175,7 @@ begin
           case when online then null else (dados->>'lat')::double precision end,
           case when online then null else (dados->>'lon')::double precision end,
           online, left(nullif(trim(coalesce(dados->>'detalhe', '')), ''), 1000),
-          case when grupo is null then 'organizador_chama' else 'link_grupo' end::contato_tipo, grupo, foto, situacao)
+          case when grupo is null then 'organizador_chama' else 'link_grupo' end::contato_tipo, grupo, foto, situacao, org_link)
   returning id into a_id;
   insert into turno (acao, inicio, fim, lotacao)
     select a_id, (x->>'inicio')::timestamp, (x->>'fim')::timestamp, nullif(x->>'lotacao', '')::int
@@ -168,8 +183,23 @@ begin
   return json_build_object('id', a_id, 'status', situacao);
 end $$;
 
+-- ação completa (Minhas ações e Fila) passa a trazer a organização: nome, selo e os links para conferir
+create or replace function acao_completa_json(a acao) returns json language sql stable security definer set search_path = public as $$
+  select json_build_object('id', a.id, 'titulo', a.titulo, 'tipo', a.tipo, 'descricao', a.descricao, 'organizador', a.organizador,
+    'organizador_nome', (select nome from pessoa where id = a.organizador), 'organizacao', a.organizacao,
+    'lugar_nome', a.lugar_nome, 'bairro', a.bairro, 'cidade', a.cidade, 'lat', a.lat, 'lon', a.lon, 'online', a.online,
+    'foto_url', a.foto_url, 'foto_credito', a.foto_credito, 'foto_pagina', a.foto_pagina, 'prioritaria', a.prioritaria,
+    'contato_tipo', a.contato_tipo, 'status', a.status, 'criada_em', a.criada_em, 'fonte', a.fonte,
+    'lugar_aproximado', a.lugar_aproximado, 'motivo_recusa', a.motivo_recusa, 'detalhe', a.detalhe, 'contato_link', a.contato_link,
+    'link_divulgacao', case when a.contato_tipo::text = 'divulgacao' then a.contato_link end,
+    'organizacao_link', a.organizacao_link,
+    'organizacao_dados', (select json_build_object('nome', o.nome, 'verificada', o.verificada, 'link_oficial', o.link_oficial)
+                          from organizacao o where o.id = a.organizacao))
+$$;
+revoke execute on function acao_completa_json(acao) from public, anon, authenticated;
+
 revoke execute on function organizacao_por_nome(text) from public, anon, authenticated;
-revoke execute on function minha_organizacao(), salvar_organizacao(text, text, text), sair_da_organizacao(), fila_organizacoes(),
+revoke execute on function minha_organizacao(), salvar_organizacao(text, text, text, text), sair_da_organizacao(), fila_organizacoes(),
   decidir_pedido_organizacao(bigint, boolean, text), dar_selo_organizacao(bigint) from public, anon;
-grant execute on function minha_organizacao(), salvar_organizacao(text, text, text), sair_da_organizacao(), fila_organizacoes(),
+grant execute on function minha_organizacao(), salvar_organizacao(text, text, text, text), sair_da_organizacao(), fila_organizacoes(),
   decidir_pedido_organizacao(bigint, boolean, text), dar_selo_organizacao(bigint) to authenticated;

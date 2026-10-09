@@ -450,3 +450,4 @@ def test_minha_organizacao_no_perfil_e_quem_organiza_no_cadastro():
         else:
             assert s in HTML, s
     assert "estado.filaAba='org'" in HTML and "API.filaOrganizacoes()" in HTML and "API.darSelo(oid)" in HTML
+    assert "Link do perfil oficial" in HTML and "organizacao_link:c.quem==='outra'" in HTML and "a moderação confere o perfil oficial" in HTML

@@ -180,18 +180,20 @@ test('organização: nome novo liga na hora, nome existente vira pedido; ação 
   const d = dados(); const api = ApiExemplo.criar(d);
   const eu = d.pessoas.find(p => p.id === d.config.eu);
   eu.papel = 'participante'; eu.organizacao = null; eu.telefone = '(11) 98888-7777';
-  const nova = await api.salvarOrganizacao('Comitê Teste da Vila', 'coletivo', 'https://exemplo.org/logo.png');
+  await assert.rejects(api.salvarOrganizacao('Comitê Teste da Vila', 'coletivo'), { codigo: 'link_oficial' });
+  const nova = await api.salvarOrganizacao('Comitê Teste da Vila', 'coletivo', 'https://exemplo.org/logo.png', 'https://instagram.com/comite');
   assert.equal(nova.situacao, 'ligada');
   const mo = await api.minhaOrganizacao();
   assert.equal(mo.organizacao.nome, 'Comitê Teste da Vila'); assert.equal(mo.organizacao.verificada, false); assert.equal(mo.organizacao.minha, true);
   const verificada = d.organizacoes.find(o => o.verificada);
-  const ped = await api.salvarOrganizacao(verificada.nome.toUpperCase(), 'mandato');
+  const ped = await api.salvarOrganizacao(verificada.nome.toUpperCase(), 'mandato', null, 'https://instagram.com/x');
   assert.equal(ped.situacao, 'pedido');
   assert.equal(eu.organizacao, nova.id); // não entrou na verificada sem aprovação
   // ação: organização de outra pessoa pelo id é ignorada; nome escrito à mão liga (ou cria sem selo)
   const r1 = await api.criarAcao(novaAcao(d, { organizacao: verificada.id }));
   assert.equal(d.acoes.find(a => a.id === r1.id).organizacao, null);
-  const r2 = await api.criarAcao(novaAcao(d, { organizacao_nome: 'Coletivo Escrito à Mão' }));
+  await assert.rejects(api.criarAcao(novaAcao(d, { organizacao_nome: 'Coletivo Escrito à Mão' })), { codigo: 'link_oficial' });
+  const r2 = await api.criarAcao(novaAcao(d, { organizacao_nome: 'Coletivo Escrito à Mão', organizacao_link: 'https://coletivo.org.br' }));
   const o2 = d.organizacoes.find(o => o.id === d.acoes.find(a => a.id === r2.id).organizacao);
   assert.equal(o2.nome, 'Coletivo Escrito à Mão'); assert.equal(o2.verificada, false);
   assert.equal(r2.status, 'em análise');
