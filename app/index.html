@@ -433,13 +433,15 @@ function tiposHtml(comOnline){const f=F(),n={},on=f.formato==='online',vistas=ac
 const VITRINE=[['São Paulo','SP',-23.55,-46.63],['Recife','PE',-8.05,-34.9],['Belo Horizonte','MG',-19.92,-43.94],['Porto Alegre','RS',-30.03,-51.23],['Salvador','BA',-12.97,-38.51]];
 const PADRAO={rotulo:'São Paulo',lat:-23.55,lon:-46.63,chute:true};
 function acoesPerto(c,raio=60){return acoesVisiveis().filter(x=>!ehOnline(x.a)&&distanciaKm(c,x.a.lugar)<=raio)}
-// foto da ação sobre um fundo com a cor do tipo e o ícone; se a imagem falhar, fica só o fundo
-const imgFoto=a=>a.foto&&a.foto.url?imgArte(a.foto.url,'loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"'):'';
+// foto da ação sobre um fundo com a cor do tipo e o ícone; se a imagem falhar, fica só o fundo.
+// Cards (vitrine, mapa, prévia) usam a miniatura (foto.mini, 480 px, importadas); a página da ação pede a cheia
+const fotoCard=a=>a.foto.mini||a.foto.url;
+const imgFoto=(a,cheia)=>a.foto&&a.foto.url?imgArte(cheia?a.foto.url:fotoCard(a),'loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"'):'';
 // arte inteira por cima da mesma imagem desfocada, que preenche a sobra do card
 const imgArte=(url,extra='')=>`<img class="fundo" src="${esc(url)}" alt="" aria-hidden="true" ${extra}><img class="img" src="${esc(url)}" alt="" ${extra}>`;
 function fotoEvento(x){const a=x.a,lg=logoCapa(a);return `<div class="foto f-${CLASSE[a.tipo].slice(2)}" role="img" aria-label="${esc(a.tipo)}">${ICONES[a.tipo]}${lg?imgLogo(lg):''}${imgFoto(a)}<span class="data">${quandoCurto(x.t)}</span>${ehOnline(a)?'<span class="online">Online</span>':''}</div>`}
 function creditoFoto(a){return a.foto&&a.foto.credito?`<p class="credito">Foto: ${a.foto.pagina?`<a href="${esc(a.foto.pagina)}" target="_blank" rel="noopener">${esc(a.foto.credito)}</a>`:esc(a.foto.credito)}</p>`:''}
-const cuboAcao=(a,extra='')=>a.foto&&a.foto.url?`<div class="cubo ${CLASSE[a.tipo]} com-foto" style="background-image:url('${esc(a.foto.url)}');${extra}"></div>`:`<div class="cubo ${CLASSE[a.tipo]}" style="${extra}">${ICONES[a.tipo]}</div>`;
+const cuboAcao=(a,extra='')=>a.foto&&a.foto.url?`<div class="cubo ${CLASSE[a.tipo]} com-foto" style="background-image:url('${esc(fotoCard(a))}');${extra}"></div>`:`<div class="cubo ${CLASSE[a.tipo]}" style="${extra}">${ICONES[a.tipo]}</div>`;
 function cardEvento(x){const a=x.a;return `<a class="evento" href="#/acao/${a.id}">${fotoEvento(x)}
   <div class="tit">${esc(a.titulo)}</div>
   <div class="meta"><b>${quandoTurno(x.t)}</b></div>
@@ -724,7 +726,7 @@ function barraModerar(a){if(!estado.sessao||estado.sessao.papel!=='moderador')re
 function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const a=ab.acao,fechada=a.status!=='publicada';
   const ts=ab.turnos,futuros=ts.filter(turnoVale);
   return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a>${barraModerar(a)}<div class="acao"><div class="acao-corpo">
-  ${a.foto&&a.foto.url?`<div class="foto capa natural f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a)}</div>${creditoFoto(a)}`:logoCapa(a)?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgLogo(logoCapa(a))}</div>${creditoLogo(logoCapa(a))}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
+  ${a.foto&&a.foto.url?`<div class="foto capa natural f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a,true)}</div>${creditoFoto(a)}`:logoCapa(a)?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgLogo(logoCapa(a))}</div>${creditoLogo(logoCapa(a))}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
   <h1>${esc(a.titulo)}</h1>
   <div class="sec" style="font-size:15px">${quemDivulga(a)}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div>
   ${fechada?`<p class="erro">${avisoFora(a,ts)}</p>`:futuros.length?ctaTopo(a,futuros):'<p class="erro">Esta ação já aconteceu.</p>'}

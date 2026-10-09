@@ -1,7 +1,9 @@
 # Operação (v1)
 
 - Produção: Supabase projeto `acoes-segundo-turno` (região São Paulo, plano grátis). Front no GitHub Pages
-  (`https://guipfranco.github.io/acoes-segundo-turno/`, só a pasta `app/`).
+  (`https://guipfranco.github.io/acoes-segundo-turno/`: a pasta `app/` da master na raiz, mais `publico.json` e
+  `fotos/`; cada outra branch em `/previa/<branch>/`, montado por `scripts/montar_pages.sh`). Veja "Lista e fotos
+  pelo GitHub Pages".
 - Migrações: `supabase/migrations/`. Aplicar com `npx supabase db push` depois de `npx supabase link`.
 - Moderador: por enquanto, `update pessoa set papel='moderador' where email='...'` no SQL Editor. Bloquear e
   desbloquear pessoa já é botão na Fila ("Bloquear organizador", migração 20261009000051); veja "Incidentes e abuso".
@@ -159,6 +161,41 @@ Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capt
   para que as linhas sem hora (ex.: "Noite - Giro nos Bares", que estava como 9h às 11h) passem a "à noite" com
   `hora_aproximada`. A hora muda o `fonte_id` dessas linhas: a ação antiga é encerrada e nasce outra, pela regra de sempre.
   As mensagens do "Fale com a gente" chegam na aba Mensagens da Fila (`#/fila`, só moderador).
+
+## Lista e fotos pelo GitHub Pages
+
+Quem só olha o site não bate no Supabase: a vitrine (inicial e mapa) lê `publico.json`, que o workflow
+"Publicar app no GitHub Pages" (`.github/workflows/pages.yml`) gera com `scripts/snapshot_publico.py` de hora em
+hora (cron `7 * * * *`) e a cada push que toque `app/` ou `fotos/`. O script baixa as views públicas
+(`configuracao_publica`, `organizacao_publica`, `acao_publica`, `turno_publico` com `inicio >= hoje` em Brasília)
+pela REST com a chave anon, pedindo 1000 linhas por vez até vir página vazia, e grava as linhas cruas com `geradoEm`.
+O workflow passa `--config` com o `app/config.js` da `origin/master`, então o snapshot sempre lê produção, seja qual
+for a branch que disparou. Plano B em `app/api-supabase.js` (`publico()`): se o arquivo não existir (prévia por
+branch), falhar ou tiver mais de 3 h, lê direto do Supabase como antes; `window.API.origemPublico` diz qual dos dois
+valeu (`snapshot` ou `supabase`). Quem está logado, ou já gravou algo nesta página (cadastro, "Eu vou!", moderação),
+não usa o snapshot: vai direto ao Supabase para ver na hora o que mudou; quem só olha segue no snapshot.
+Página da ação, login, "Eu vou!", Perfil, cadastro e Fila continuam ao vivo. Consequência: uma ação aprovada na
+Fila (ou importada) aparece na vitrine em até 1 h; para adiantar, Actions > "Publicar app no GitHub Pages" >
+Run workflow. Se o snapshot falhar, o deploy segue sem o arquivo (`continue-on-error`) e o app cai no plano B.
+As fotos das ações importadas moram em `fotos/divulgacao/` na raiz do repo e `montar_pages.sh` copia a pasta da
+master para a raiz do site (as prévias não a recebem).
+
+Rotina de importação com fotos (pasta principal, na `master`, com `SUPABASE_ACCESS_TOKEN`):
+
+1. `python scripts/publicar_acoes.py bora-lula --aplicar`: busca a arte dos posts novos, grava
+   `fotos/divulgacao/<código>.jpg` e `<código>-mini.jpg`, escreve o ensaio e, se houver foto nova, PARA sem gravar no
+   banco ("fotos novas em fotos/divulgacao ainda não foram commitadas e enviadas para a master").
+2. `git add fotos && git commit -m "Fotos: ..." && git push` e esperar o workflow do Pages terminar.
+3. Rodar o mesmo comando de novo: sem pendência no git e com o Pages já respondendo (HEAD 200) a mini de cada foto
+   que vai para o banco, grava com as URLs do Pages; se o workflow ainda não acabou, para com "o Pages ainda não serve
+   N fotos" e é só rodar de novo. `--sem-fotos` só pula a busca de fotos novas no Instagram; a conferência roda sempre
+   que algum item leve foto do Pages.
+
+Acervo antigo (uma vez, depois da migração 20261009000060 em produção): `python scripts/fotos_divulgacao.py migrar-pages`
+(ensaio: baixa cada foto do bucket `divulgacao`, gera os dois arquivos, não mexe no banco) -> commit + push de `fotos/` ->
+esperar o Pages -> `python scripts/fotos_divulgacao.py migrar-pages --aplicar` (não gera nada: confere git + HEAD no Pages
+e troca `foto_url` e grava `foto_mini_url` só nas ações cujos dois arquivos já existem; as demais saem listadas como
+"ainda não gerados: rode sem --aplicar, commite e envie"). Depois disso o bucket `divulgacao` pode ser esvaziado.
 
 ## Incidentes e abuso
 

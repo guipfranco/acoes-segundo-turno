@@ -4,6 +4,8 @@
 #   previa/<nome>/ -> app/ de cada outra branch do origin, para o Gui conferir antes do merge
 # A prévia abre com dados de exemplo (?modo=real liga o Supabase de produção), não conta visita
 # no GoatCounter, não é indexada e mostra uma etiqueta com o nome da branch.
+# A pasta fotos/ da master (fotos das ações importadas, fotos/divulgacao/) vai para a raiz do site, uma vez só;
+# as prévias não copiam fotos nem recebem publico.json (abrem com dados de exemplo).
 # Usado pelo .github/workflows/pages.yml; roda local também (precisa de git fetch antes).
 set -euo pipefail
 
@@ -20,6 +22,15 @@ extrair() { # extrair <ref> <destino>: copia a pasta app/ da ref; falha se a ref
 }
 
 extrair origin/master "$saida"
+
+if git cat-file -e origin/master:fotos 2>/dev/null; then
+  rm -rf "$tmp/f" && mkdir -p "$tmp/f"
+  git archive origin/master fotos | tar -x -C "$tmp/f"
+  cp -r "$tmp/f/fotos" "$saida/fotos"
+  echo "fotos: $(find "$saida/fotos" -type f | wc -l) arquivo(s) da master"
+else
+  echo "sem fotos/ na master"
+fi
 
 itens=""
 for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin); do

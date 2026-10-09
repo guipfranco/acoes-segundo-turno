@@ -20,7 +20,7 @@
       organizadorNome: r.organizador_nome || '', organizacao: r.organizacao == null ? null : r.organizacao,
       lugar: r.online ? { nome: 'Online', bairro: 'Online', cidade: 'Online', lat: null, lon: null, online: true }
         : { nome: r.lugar_nome, bairro: r.bairro, cidade: r.cidade, lat: r.lat, lon: r.lon, online: false, aproximado: !!r.lugar_aproximado },
-      foto: r.foto_url ? { url: r.foto_url, credito: r.foto_credito || '', pagina: r.foto_pagina || null } : null,
+      foto: r.foto_url ? { url: r.foto_url, mini: r.foto_mini_url || null, credito: r.foto_credito || '', pagina: r.foto_pagina || null } : null,
       prioritaria: !!r.prioritaria, status: r.status, contatoTipo: r.contato_tipo || 'organizador_chama',
       criadaEm: r.criada_em ? String(r.criada_em).slice(0, 10) : null,
       fonte: r.fonte || null, linkDivulgacao: r.link_divulgacao || null, motivoRecusa: r.motivo_recusa || null,
@@ -38,14 +38,39 @@
   const comInscritos = m => ({ acao: Object.assign(deAcao(m.acao), { detalhe: m.acao.detalhe || null, contatoLink: m.acao.contato_link || null,
       organizacaoLink: m.acao.organizacao_link || null, organizacaoDados: m.acao.organizacao_dados || null }),
     turnos: (m.turnos || []).map(t => Object.assign(deTurno(t), { inscritos: t.inscritos || [], desistiram: t.desistiram || [] })) });
+  // publico.json: lista pública gerada pelo workflow do Pages (scripts/snapshot_publico.py) de hora em hora, para
+  // quem só olha o site não gastar a saída do Supabase. Vale por 3 h; na prévia por branch não existe (404).
+  // Quem está logado, ou já escreveu algo nesta página (cadastrou, marcou "Eu vou", moderou), lê direto do Supabase:
+  // precisa ver na hora o que acabou de mudar, e o snapshot pode levar até 1 h para refletir.
+  const SNAPSHOT_VALIDADE_MS = 3 * 60 * 60 * 1000;
+  async function lerSnapshot() {
+    try {
+      const r = await fetch('publico.json', { cache: 'no-cache' });
+      if (!r.ok) return null;
+      const s = await r.json();
+      const idade = Date.now() - Date.parse(s && s.geradoEm);
+      if (!(idade < SNAPSHOT_VALIDADE_MS)) return null; // NaN (sem geradoEm) também cai aqui
+      if (![s.configuracao, s.organizacoes, s.acoes, s.turnos].every(Array.isArray)) return null;
+      return s;
+    } catch (e) { return null; }
+  }
+  function montarPublico(cfgLinhas, orgs, acoes, turnos) {
+    const hoje = hojeBrasilia();
+    const config = { hoje, agora: agoraBrasilia(), frase: '', vaquinha: '#' };
+    for (const c of cfgLinhas) config[c.chave] = c.valor;
+    return { config, organizacoes: orgs.map(deOrg), acoes: acoes.map(deAcao),
+      turnos: turnos.filter(t => String(t.inicio).slice(0, 16) >= hoje + 'T00:00').map(deTurno) };
+  }
   function erroDe(e) { const x = new Error(e.message || 'erro'); x.codigo = (e.message || '').trim(); x.original = e; return x; }
 
   function criar(cfg) {
     const sb = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true } });
     async function uid() { const { data } = await sb.auth.getSession(); return data.session ? data.session.user.id : null; }
     async function rpc(nome, args) { const { data, error } = await sb.rpc(nome, args || {}); if (error) throw erroDe(error); return data; }
-    return {
+    let escreveu = false; // esta página já gravou algo: a vitrine passa a vir do Supabase, não do snapshot
+    const api = {
       modo: 'supabase',
+      origemPublico: null, // 'snapshot' | 'supabase', para depuração
       async sessao() {
         const id = await uid(); if (!id) return null;
         const { data, error } = await sb.from('pessoa').select('id,nome,email,telefone,papel,bloqueada,organizacao').eq('id', id).maybeSingle();
@@ -58,6 +83,8 @@
       },
       async sair() { await sb.auth.signOut(); },
       async publico() {
+        const snap = (escreveu || await uid()) ? null : await lerSnapshot();
+        if (snap) { api.origemPublico = 'snapshot'; return montarPublico(snap.configuracao, snap.organizacoes, snap.acoes, snap.turnos); }
         const [cfgR, orgR, acR, tR] = await Promise.all([
           sb.from('configuracao_publica').select('chave,valor'),
           sb.from('organizacao_publica').select('id,nome,tipo,verificada,foto_url,foto_credito,foto_pagina'),
@@ -65,9 +92,8 @@
           sb.from('turno_publico').select('*').gte('inicio', hojeBrasilia() + 'T00:00:00'),
         ]);
         for (const r of [cfgR, orgR, acR, tR]) if (r.error) throw erroDe(r.error);
-        const config = { hoje: hojeBrasilia(), agora: agoraBrasilia(), frase: '', vaquinha: '#' };
-        for (const c of cfgR.data) config[c.chave] = c.valor;
-        return { config, organizacoes: orgR.data.map(deOrg), acoes: acR.data.map(deAcao), turnos: tR.data.map(deTurno) };
+        api.origemPublico = 'supabase';
+        return montarPublico(cfgR.data, orgR.data, acR.data, tR.data);
       },
       async acao(id) {
         const [aR, tR, mim] = await Promise.all([
@@ -86,8 +112,8 @@
           turnos: (r.turnos || []).map(deTurno) }, extra);
       },
       async salvarTelefone(telefone) { return dePessoa(await rpc('salvar_telefone', { telefone })); },
-      async inscrever(turnoId) { return rpc('inscrever', { turno_id: turnoId }); },
-      async desistir(turnoId) { await rpc('desistir', { turno_id: turnoId }); },
+      async inscrever(turnoId) { escreveu = true; return rpc('inscrever', { turno_id: turnoId }); },
+      async desistir(turnoId) { escreveu = true; await rpc('desistir', { turno_id: turnoId }); },
       // imagem da ação: cada pessoa envia só para a própria pasta do bucket fotos-acoes
       async enviarFoto(blob) {
         const id = await uid(); if (!id) throw erroDe({ message: 'precisa_entrar' });
@@ -116,24 +142,25 @@
       },
       async decidirPedido(id, aprovar, motivo) { await rpc('decidir_pedido_organizacao', { pedido_id: id, aprovar, motivo: motivo || null }); },
       async darSelo(id) { await rpc('dar_selo_organizacao', { organizacao_id: id }); },
-      async criarAcao(dados) { return rpc('criar_acao', { dados }); },
+      async criarAcao(dados) { escreveu = true; return rpc('criar_acao', { dados }); },
       async minhasAcoes() { return (await rpc('minhas_acoes')).map(comInscritos); },
-      async encerrarAcao(id) { await rpc('encerrar_acao', { acao_id: id }); },
+      async encerrarAcao(id) { escreveu = true; await rpc('encerrar_acao', { acao_id: id }); },
       async fila(situacao) { return (await rpc('fila_moderacao', { situacao: situacao || 'em análise' })).map(m => Object.assign(comInscritos(m), { organizador: m.organizador })); },
-      async aprovar(id) { await rpc('aprovar_acao', { acao_id: id }); },
-      async recusar(id, motivo) { await rpc('recusar_acao', { acao_id: id, motivo }); },
-      async suspender(id, motivo) { await rpc('suspender_acao', { acao_id: id, motivo: motivo || null }); },
-      async reativar(id) { await rpc('reativar_acao', { acao_id: id }); },
-      async excluir(id) { await rpc('excluir_acao', { acao_id: id }); },
+      async aprovar(id) { escreveu = true; await rpc('aprovar_acao', { acao_id: id }); },
+      async recusar(id, motivo) { escreveu = true; await rpc('recusar_acao', { acao_id: id, motivo }); },
+      async suspender(id, motivo) { escreveu = true; await rpc('suspender_acao', { acao_id: id, motivo: motivo || null }); },
+      async reativar(id) { escreveu = true; await rpc('reativar_acao', { acao_id: id }); },
+      async excluir(id) { escreveu = true; await rpc('excluir_acao', { acao_id: id }); },
       // bloquear tira do ar as publicadas da pessoa; desbloquear só desmarca (o moderador reativa uma a uma)
-      async bloquear(pessoaId, motivo) { await rpc('bloquear_pessoa', { pessoa_id: pessoaId, motivo: motivo || null }); },
-      async desbloquear(pessoaId) { await rpc('desbloquear_pessoa', { pessoa_id: pessoaId }); },
+      async bloquear(pessoaId, motivo) { escreveu = true; await rpc('bloquear_pessoa', { pessoa_id: pessoaId, motivo: motivo || null }); },
+      async desbloquear(pessoaId) { escreveu = true; await rpc('desbloquear_pessoa', { pessoa_id: pessoaId }); },
       async minhasInscricoes() { return (await rpc('minhas_inscricoes')).map(m => ({ acao: deAcao(m.acao), turno: deTurno(m.turno), desistiu: !!m.desistiu })); },
       // feedback: qualquer pessoa manda (logada ou não); só moderador lê e marca como tratado
       async enviarFeedback(d) { return rpc('enviar_feedback', { texto: d.texto, contato: d.contato || null, tela: d.tela || null, acao_id: d.acaoId == null ? null : d.acaoId, navegador: d.navegador || null }); },
       async feedbacks(pendentes = true) { return (await rpc('feedbacks', { pendentes })).map(deFeedback); },
       async tratarFeedback(id, tratado = true) { await rpc('tratar_feedback', { feedback_id: id, tratado }); },
     };
+    return api;
   }
   return { criar, deAcao, deTurno, dePessoa, deOrg, deFeedback, hojeBrasilia, agoraBrasilia };
 });
