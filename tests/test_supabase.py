@@ -106,3 +106,38 @@ def test_organizador_ve_a_propria_acao_na_tabela_mas_nao_as_dos_outros(cenario):
     # ninguém cria ação pela API neste plano
     r = sb.chamar("POST", "/rest/v1/acao", {"titulo": "x", "tipo": "outro", "organizador": cenario["org"], "online": True}, jwt=cenario["jwt_org"])
     assert r.status >= 400
+
+
+VIEWS = ["acao_publica", "turno_publico", "organizacao_publica", "configuracao_publica"]
+
+
+def _vaquinha():
+    return sb.chamar("GET", "/rest/v1/configuracao_publica?chave=eq.vaquinha").corpo
+
+
+def test_views_publicas_nao_aceitam_escrita(cenario):
+    antes = _vaquinha()
+    for jwt in (None, cenario["jwt_a"]):
+        for v in VIEWS:
+            filtro = "chave=eq.vaquinha" if v == "configuracao_publica" else "id=gt.0"
+            corpo = {"valor": "https://golpe.example"} if v == "configuracao_publica" else {"nome": "x"} if v == "organizacao_publica" else {"titulo": "x"}
+            assert sb.chamar("PATCH", f"/rest/v1/{v}?{filtro}", corpo, jwt=jwt).status >= 400, (v, "PATCH")
+            assert sb.chamar("POST", f"/rest/v1/{v}", corpo, jwt=jwt).status >= 400, (v, "POST")
+            assert sb.chamar("DELETE", f"/rest/v1/{v}?{filtro}", jwt=jwt).status >= 400, (v, "DELETE")
+    assert _vaquinha() == antes
+    assert sb.chamar("GET", f"/rest/v1/acao_publica?id=eq.{cenario['acao']}").corpo[0]["titulo"].startswith("Teste ")
+
+
+def test_escrita_direta_nas_tabelas_e_negada(cenario):
+    sb.rpc("salvar_telefone", {"telefone": "11988887777"}, jwt=cenario["jwt_a"])
+    r = sb.chamar("POST", "/rest/v1/inscricao", {"pessoa": cenario["a"], "turno": cenario["turno"]}, jwt=cenario["jwt_a"])
+    assert r.status >= 400
+    assert sb.chamar("PATCH", f"/rest/v1/turno?id=eq.{cenario['turno']}", {"lotacao": 99}, jwt=cenario["jwt_org"]).status >= 400
+    assert sb.chamar("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"bloqueada": True}, jwt=cenario["jwt_a"]).status >= 400
+    assert sb.chamar("GET", f"/rest/v1/turno_publico?id=eq.{cenario['turno']}").corpo[0]["vao"] == 0
+
+
+def test_anon_nao_chama_rpcs_de_sessao(cenario):
+    assert sb.rpc("salvar_telefone", {"telefone": "11988887777"}).status in (401, 403)
+    assert sb.rpc("desistir", {"turno_id": cenario["turno"]}).status in (401, 403)
+    assert sb.rpc("minhas_inscricoes", {}).status in (401, 403)
