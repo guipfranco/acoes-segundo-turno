@@ -60,7 +60,12 @@ Nasceu do `mapa-segundo-turno` em 2026-10-08. URL, repo e projeto Supabase segue
 - Decisões do Gui: inscrição com nome e telefone desde a v1; moderação humana por voluntários no
   início, automação depois; uma vaquinha só, geral, apontando para arrecadação oficial; busca por
   lugar livre (Brasil inteiro), referência visual Airbnb/Meetup.
-- Pages publica a cada push em `master` que toque `app/`.
+- Pages publica a cada push que toque `app/` (qualquer branch; desde 2026-10-09): a raiz é sempre a `master` e cada outra
+  branch do origin vira prévia em https://guipfranco.github.io/acoes-segundo-turno/previa/<branch>/ (lista em `/previa/`),
+  montada por `scripts/montar_pages.sh`: dados de exemplo por padrão (`?modo=real` usa o Supabase de produção, cuidado
+  com branch de migração não aplicada), sem GoatCounter, `noindex`, etiqueta amarela com o nome da branch. Ao terminar
+  um trabalho num worktree: push da branch e mandar ao Gui o link da prévia (não subir servidor local). Apagar a branch
+  no origin depois do merge tira a prévia.
 - Fluxo de branches (desde 2026-10-09, endurecido no mesmo dia): TODA mudança de código (app, scripts, testes,
   migrações), por menor que seja, é feita num worktree com branch própria, nunca direto na `master`. O merge na
   `master` só acontece com OK do Gui. Direto na `master` só o que não é código: documentação, CLAUDE.md e o merge
