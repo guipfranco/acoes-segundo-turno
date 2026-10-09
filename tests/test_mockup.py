@@ -109,13 +109,13 @@ def test_criar_pela_api_e_so_verificado_publica_direto():
 
 
 def test_validacao_dos_campos_obrigatorios():
-    for s in ["Dê um título.", "Diga o nome do ponto de encontro.", "Marque o lugar no mapa.", "Informe pelo menos um turno.",
-              "Telefone no formato", "t.fim<=t.inicio"]:
+    for s in ["Dê um título.", "Diga o nome do ponto de encontro.", "Marque o lugar no mapa.", "Escolha o dia da ação.",
+              "Telefone no formato", "q.fim===q.ini", "diaSeguinte", "Diga quantas vagas (um número inteiro).", "vagasValidas", "Vagas limitadas"]:
         assert s in HTML, s
 
 
 def test_perfil_e_fila():
-    for s in ["function telaPerfil", "function telaFila", "Copiar telefones", "Escrever aviso para quem vai", "Abrir no WhatsApp", "Ações que cadastrei",
+    for s in ["function telaPerfil", "function telaFila", "btn-whats", "Suspender", "Reativar", "Excluir", "Suspensas", "function barraModerar", "Ações que cadastrei",
               "Encerrar ação", "Editar", "Aprovar", "Recusar", "Dar selo à organização", "Sair da conta",
               "Bloquear organizador", "Recuse se:", "Já criou", "API.minhasAcoes()", "API.fila(", "Motivo da recusa"]:
         assert s in HTML, s
@@ -169,7 +169,7 @@ def test_voltar_na_edicao_nao_perde_texto_e_nav_reseta_criacao():
 
 
 def test_turno_no_passado_e_recusado_ao_criar():
-    assert "Turno no passado." in HTML
+    assert "Esse dia já passou." in HTML and "q.data<PUB.config.hoje" in HTML
 
 
 def test_turno_encerrado_vence_inscrito():

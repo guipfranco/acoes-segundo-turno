@@ -166,6 +166,32 @@ test('fila: só moderador; aprovar publica e recusar exige motivo', async () => 
   assert.ok((await api2.publico()).acoes.some(a => a.id === id));
 });
 
+test('moderação: suspender tira do ar, reativar volta, excluir apaga (importada não)', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const a = d.acoes.find(x => x.status === 'publicada' && !x.fonte && turnoFuturo(d, x));
+  await assert.rejects(api.suspender(a.id), { codigo: 'so_moderador' });
+  d.config.eu = d.pessoas.find(p => p.papel === 'moderador').id; const mod = ApiExemplo.criar(d);
+  await mod.suspender(a.id, 'endereço errado');
+  assert.ok(!(await mod.publico()).acoes.some(x => x.id === a.id));
+  assert.ok((await mod.fila('rascunho')).some(m => m.acao.id === a.id && m.acao.motivoRecusa === 'endereço errado'));
+  assert.equal((await mod.acao(a.id)).acao.status, 'rascunho');
+  await mod.reativar(a.id);
+  assert.ok((await mod.publico()).acoes.some(x => x.id === a.id));
+  await mod.excluir(a.id);
+  assert.equal(await mod.acao(a.id), null);
+  assert.ok(!d.turnos.some(t => t.acao === a.id));
+  // importada: não se exclui, suspende e aparece em Suspensas
+  const imp = d.acoes.find(x => x.status === 'publicada' && x.id !== a.id); imp.fonte = 'bora-lula';
+  await assert.rejects(mod.excluir(imp.id), { codigo: 'importada' });
+  await mod.suspender(imp.id);
+  assert.ok((await mod.fila('rascunho')).some(m => m.acao.id === imp.id));
+  // em análise não se suspende (recusa); pessoa bloqueada não volta ao ar
+  const pend = d.acoes.find(x => x.status === 'em análise');
+  if (pend) await assert.rejects(mod.suspender(pend.id), { codigo: 'nao_pode' });
+  d.pessoas.find(p => p.id === imp.organizador).bloqueada = true;
+  await assert.rejects(mod.reativar(imp.id), { codigo: 'organizador_bloqueado' });
+});
+
 test('eu vou em ação de divulgação não pede telefone', async () => {
   const d = dados(); const api = ApiExemplo.criar(d);
   const a = d.acoes.find(x => x.status === 'publicada' && turnoFuturo(d, x));
