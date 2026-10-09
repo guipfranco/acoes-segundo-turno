@@ -29,6 +29,6 @@ test('deTurno corta os segundos e dePessoa mantém o contrato', () => {
   const t = deTurno({ id: 1, acao: 7, inicio: '2026-10-10T08:00:00', fim: '2026-10-10T10:00:00', lotacao: null, vao: 3 });
   assert.equal(t.inicio, '2026-10-10T08:00'); assert.equal(t.fim, '2026-10-10T10:00'); assert.equal(t.vao, 3);
   assert.deepEqual(dePessoa({ id: 'u', nome: 'N', email: 'e', telefone: null, papel: 'participante', bloqueada: false }),
-    { id: 'u', nome: 'N', email: 'e', telefone: null, papel: 'participante', bloqueada: false });
+    { id: 'u', nome: 'N', email: 'e', telefone: null, papel: 'participante', bloqueada: false, organizacao: null });
   assert.match(hojeBrasilia(), /^\d{4}-\d{2}-\d{2}$/);
 });

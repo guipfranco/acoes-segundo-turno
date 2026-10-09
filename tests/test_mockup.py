@@ -6,7 +6,7 @@ HTML = (RAIZ / "app" / "index.html").read_text(encoding="utf-8")
 
 
 def test_tem_as_seis_telas():
-    for nome in ["telaInicio", "telaMapa", "telaAcao", "telaCriar", "telaMinhas", "telaFila"]:
+    for nome in ["telaInicio", "telaMapa", "telaAcao", "telaCriar", "telaPerfil", "telaFila"]:
         assert f"function {nome}" in HTML, nome
 
 
@@ -79,7 +79,7 @@ def test_tela_acao_regras_de_inscricao():
 def test_detalhe_e_grupo_so_para_inscritos():
     # o bloco "Combinado" só é montado quando a API devolve o combinado, e a API só devolve a quem se inscreveu
     i = HTML.index("Combinado")
-    assert "ab.combinado?" in HTML[i-400:i]
+    assert "ab.combinado&&!semInscricao(a)?" in HTML[i-400:i]
     assert "combinado: podeVer(a) ?" in (RAIZ / "app" / "api-exemplo.js").read_text(encoding="utf-8")
 
 
@@ -95,13 +95,17 @@ def test_turno_lotado_e_inscricao_duplicada_nos_dados_e_no_codigo():
 
 def test_criar_tem_tres_passos_modelos_e_validacao():
     for s in ["function telaCriar", "function publicarAcao", "const MODELOS", "function buscarLugares",
-              "Continuar", "Publicar", "sua ação está em análise", "publica na hora", "passa pela fila",
+              "Continuar", "Publicar", "Sua ação está em análise", "Enviar para análise", "revisão rápida da moderação",
               "Detalhe do encontro, só para inscritos", "Link do grupo de WhatsApp"]:
         assert s in HTML, s
 
 
-def test_status_nasce_publicada_so_com_organizacao_verificada():
-    assert "o&&o.verificada?'publicada':'em análise'" in HTML
+def test_criar_pela_api_e_so_verificado_publica_direto():
+    assert "API.criarAcao(" in HTML and "function souVerificado" in HTML
+    assert "s.papel==='organizador'||s.papel==='moderador'" in HTML
+    assert "if(!estado.sessao)return `<div class=\"pagina estreita\"><h1>Criar ação</h1>" in HTML
+    for codigo in ["limite_diario:", "limite_em_analise:", "turno_invalido:", "grupo_invalido:"]:
+        assert codigo in HTML, codigo
 
 
 def test_validacao_dos_campos_obrigatorios():
@@ -110,10 +114,10 @@ def test_validacao_dos_campos_obrigatorios():
         assert s in HTML, s
 
 
-def test_minhas_e_fila():
-    for s in ["function telaMinhas", "function telaFila", "Copiar números", "Mandar aviso", "Marcar presença",
-              "Encerrar", "Editar", "Aprovar", "Recusar", "Dar selo à organização", "Despublicar",
-              "Bloquear organizador", "Recuse se:", "já criou"]:
+def test_perfil_e_fila():
+    for s in ["function telaPerfil", "function telaFila", "Copiar números", "Mandar aviso", "Ações que criei",
+              "Encerrar", "Editar", "Aprovar", "Recusar", "Dar selo à organização", "Sair da conta",
+              "Bloquear organizador", "Recuse se:", "Já criou", "API.minhasAcoes()", "API.fila(", "Motivo da recusa"]:
         assert s in HTML, s
 
 
@@ -126,8 +130,9 @@ def test_fluxo_de_status_nos_dados_e_no_codigo():
     d = carregar_dados()
     a12 = next(a for a in d["acoes"] if a["id"] == 12)
     assert a12["status"] == "em análise" and a12["organizacao"] in (None, 4)
-    assert ".status='publicada'" in HTML  # aprovar
-    assert "a.status='recusada'" in HTML  # recusar
+    assert "await API.aprovar(id)" in HTML and "await API.recusar(id,m)" in HTML
+    api = (RAIZ / "app" / "api-exemplo.js").read_text(encoding="utf-8")
+    assert "a.status = 'publicada'" in api and "a.status = 'recusada'" in api
 
 
 def test_turno_passado_do_organizador_tem_inscritos_para_marcar_presenca():
@@ -307,11 +312,11 @@ def test_telas_de_participante_leem_pela_api():
     assert "DADOS.acoes" not in inicio and "DADOS.inscricoes" not in inicio and "DADOS.config" not in inicio
 
 
-def test_publicar_recarrega_antes_de_ir_para_minhas_sem_render_duplo():
-    # um render a mais apagaria o aviso de Minhas (telaMinhas zera estado.aviso)
-    corpo = HTML[HTML.index("function publicarAcao"):HTML.index("// ---------- minhas")]
+def test_publicar_recarrega_antes_de_ir_para_o_perfil_sem_render_duplo():
+    # um render a mais apagaria o aviso do Perfil (telaPerfil zera estado.aviso)
+    corpo = HTML[HTML.index("async function publicarAcao"):HTML.index("// ---------- minhas")]
     assert "sincronizar();location.hash" not in corpo
-    assert corpo.count("recarregar().then(()=>{location.hash='#/minhas'})") == 2
+    assert corpo.count("await recarregar();location.hash='#/perfil'") == 2
 
 
 def test_vou_pede_telefone_uma_vez_e_mostra_a_forma_de_contato():
@@ -321,7 +326,7 @@ def test_vou_pede_telefone_uma_vez_e_mostra_a_forma_de_contato():
               "Entrar no grupo do WhatsApp", "wa.me/55", "organizador_chama", "'whatsapp'", "link_grupo"]:
         assert s in acao, s
     assert "function continuarVouPendente" in HTML and "vouPendente" in HTML
-    assert ">Inscreva-se<" in HTML and "Inscrito ✓" in HTML and ">Vou<" not in HTML
+    assert ">Eu vou!<" in HTML and "✓ Você vai" in HTML and "Inscreva-se" not in HTML
 
 
 def test_entrar_sair_e_minhas_inscricoes():
@@ -385,8 +390,28 @@ def test_quem_divulga_tem_avatar_e_logo_da_organizacao_vira_capa():
                    "const FONTES=", "'bora-lula':{nome:'Agenda Bora Lula'", "function creditoLogo", "Logo: ", "const avatarLetra=", ".avatar.letra{"]:
         assert trecho in HTML, trecho
     # card e página usam quem divulga (avatar + nome); capa cai no logo quando não há foto própria
-    assert "${quemDivulga(a)}, ${quantosVao(vaoNa(a.id))}" in HTML
+    assert '<div class="meta quem-linha">${quemDivulga(a)}</div>${linhaVao(a)}' in HTML
     assert "logoCapa(a)?`<div class=\"foto capa" in HTML
     assert ".foto .logo{" in HTML and ".avatar{" in HTML
     api_sb = (RAIZ / "app" / "api-supabase.js").read_text(encoding="utf-8")
     assert "foto_url,foto_credito,foto_pagina" in api_sb and "orgR.data.map(deOrg)" in api_sb
+
+
+def test_cards_com_colunas_iguais_e_sem_zero_vao():
+    # minmax(0,1fr): uma imagem ou nome comprido não alarga a coluna (os cards ficavam de tamanhos diferentes)
+    assert "grid-template-columns:repeat(4,minmax(0,1fr))" in HTML
+    assert "function linhaVao(a){const n=vaoNa(a.id);return n?" in HTML
+    assert ".meta.quem-linha{display:flex;align-items:center" in HTML
+
+
+def test_conta_logada_vai_ao_perfil_e_entrar_tem_destaque():
+    assert 'href="#/perfil" id="conta" data-rota="perfil"' in HTML
+    assert "function contaClique(){if(estado.sessao)return true;" in HTML
+    assert "estado.sessao?'Perfil':'Entrar'" in HTML and "class=\"convite\"" in HTML
+    assert "data-so-moderador" in HTML
+
+
+def test_eu_vou_na_divulgacao_marca_presenca_sem_formulario():
+    corpo = HTML[HTML.index("async function abrirVou"):HTML.index("const MENSAGEM")]
+    assert "semInscricao(ab.acao)" in corpo and "await API.inscrever(tid)" in corpo
+    assert "Ver a divulgação original" in HTML

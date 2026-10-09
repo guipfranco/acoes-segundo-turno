@@ -17,13 +17,16 @@
       foto: r.foto_url ? { url: r.foto_url, credito: r.foto_credito || '', pagina: r.foto_pagina || null } : null,
       prioritaria: !!r.prioritaria, status: r.status, contatoTipo: r.contato_tipo || 'organizador_chama',
       criadaEm: r.criada_em ? String(r.criada_em).slice(0, 10) : null,
-      fonte: r.fonte || null, linkDivulgacao: r.link_divulgacao || null,
+      fonte: r.fonte || null, linkDivulgacao: r.link_divulgacao || null, motivoRecusa: r.motivo_recusa || null,
     };
   }
   const deOrg = o => ({ id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada,
     foto: o.foto_url ? { url: o.foto_url, credito: o.foto_credito || '', pagina: o.foto_pagina || null } : null });
   const deTurno = r => ({ id: r.id, acao: r.acao, inicio: semSeg(r.inicio), fim: semSeg(r.fim), lotacao: r.lotacao == null ? null : r.lotacao, vao: r.vao || 0 });
-  const dePessoa = p => ({ id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, papel: p.papel, bloqueada: !!p.bloqueada });
+  const dePessoa = p => ({ id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, papel: p.papel, bloqueada: !!p.bloqueada, organizacao: p.organizacao == null ? null : p.organizacao });
+  // ação de quem organiza (ou da fila): turnos com a lista de quem vai
+  const comInscritos = m => ({ acao: Object.assign(deAcao(m.acao), { detalhe: m.acao.detalhe || null, contatoLink: m.acao.contato_link || null }),
+    turnos: (m.turnos || []).map(t => Object.assign(deTurno(t), { inscritos: t.inscritos || [] })) });
   function erroDe(e) { const x = new Error(e.message || 'erro'); x.codigo = (e.message || '').trim(); x.original = e; return x; }
 
   function criar(cfg) {
@@ -34,7 +37,7 @@
       modo: 'supabase',
       async sessao() {
         const id = await uid(); if (!id) return null;
-        const { data, error } = await sb.from('pessoa').select('id,nome,email,telefone,papel,bloqueada').eq('id', id).maybeSingle();
+        const { data, error } = await sb.from('pessoa').select('id,nome,email,telefone,papel,bloqueada,organizacao').eq('id', id).maybeSingle();
         if (error) throw erroDe(error); return data ? dePessoa(data) : null;
       },
       async entrar() {
@@ -68,6 +71,12 @@
       async salvarTelefone(telefone) { return dePessoa(await rpc('salvar_telefone', { telefone })); },
       async inscrever(turnoId) { return rpc('inscrever', { turno_id: turnoId }); },
       async desistir(turnoId) { await rpc('desistir', { turno_id: turnoId }); },
+      async criarAcao(dados) { return rpc('criar_acao', { dados }); },
+      async minhasAcoes() { return (await rpc('minhas_acoes')).map(comInscritos); },
+      async encerrarAcao(id) { await rpc('encerrar_acao', { acao_id: id }); },
+      async fila(situacao) { return (await rpc('fila_moderacao', { situacao: situacao || 'em análise' })).map(m => Object.assign(comInscritos(m), { organizador: m.organizador })); },
+      async aprovar(id) { await rpc('aprovar_acao', { acao_id: id }); },
+      async recusar(id, motivo) { await rpc('recusar_acao', { acao_id: id, motivo }); },
       async minhasInscricoes() { return (await rpc('minhas_inscricoes')).map(m => ({ acao: deAcao(m.acao), turno: deTurno(m.turno) })); },
     };
   }

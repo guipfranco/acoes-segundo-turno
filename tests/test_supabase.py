@@ -188,7 +188,7 @@ def test_importar_acoes_e_idempotente_e_encerra_o_que_sumiu(cenario):
     assert sb.admin("GET", f"/rest/v1/acao?id=eq.{b['id']}&select=status").corpo == [{"status": "recusada"}]
 
 
-def test_importar_acoes_so_pela_chave_de_servico_e_divulgacao_nao_tem_inscricao(cenario):
+def test_importar_acoes_so_pela_chave_de_servico_e_eu_vou_na_divulgacao_sem_telefone(cenario):
     fonte = "teste-" + uuid.uuid4().hex[:8]
     assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a")]}).status >= 400
     assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a")]}, jwt=cenario["jwt_org"]).status >= 400
@@ -197,8 +197,15 @@ def test_importar_acoes_so_pela_chave_de_servico_e_divulgacao_nao_tem_inscricao(
     assert r.status == 200, r.corpo
     acao = sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo[0]["id"]
     turno = sb.chamar("GET", f"/rest/v1/turno_publico?acao=eq.{acao}").corpo[0]["id"]
-    sb.rpc("salvar_telefone", {"telefone": "11988887777"}, jwt=cenario["jwt_a"])
-    assert sb.rpc("inscrever", {"turno_id": turno}, jwt=cenario["jwt_a"]).corpo["message"] == "sem_inscricao"
+    # "Eu vou!" na divulgação só marca presença: não pede telefone e aparece em Minhas inscrições
+    sb.criar_usuario(f"semtel-{fonte}@t.local", "Sem Telefone")
+    jwt = sb.entrar(f"semtel-{fonte}@t.local")
+    r = sb.rpc("inscrever", {"turno_id": turno}, jwt=jwt)
+    assert r.status == 200, r.corpo
+    minhas = sb.rpc("minhas_inscricoes", {}, jwt=jwt).corpo
+    assert [m["turno"]["id"] for m in minhas] == [turno]
+    assert minhas[0]["acao"]["fonte"] == fonte and minhas[0]["acao"]["link_divulgacao"]
+    assert sb.chamar("GET", f"/rest/v1/turno_publico?id=eq.{turno}").corpo[0]["vao"] == 1
 
 
 def test_importar_acoes_grava_logo_da_organizacao_sem_apagar_o_que_ja_tem(cenario):
@@ -230,3 +237,60 @@ def test_importar_acoes_grava_foto_da_divulgacao_e_nao_apaga_sem_foto(cenario):
     assert sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo[0]["foto_url"] == foto["url"]
     bucket = sb.admin("GET", "/storage/v1/bucket/divulgacao").corpo
     assert bucket["public"] is True
+
+
+def _nova(**extra):
+    base = {"titulo": "Criada pelo app", "tipo": "panfletagem", "descricao": "teste", "online": False, "lugar_nome": "Praça",
+            "bairro": "Centro", "cidade": "São Paulo", "lat": -23.5, "lon": -46.6,
+            "turnos": [{"inicio": "2099-03-01T09:00", "fim": "2099-03-01T11:00"}]}
+    base.update(extra)
+    return base
+
+
+def test_criar_acao_nasce_em_analise_e_so_moderador_aprova(cenario):
+    assert sb.rpc("criar_acao", {"dados": _nova()}).status >= 400  # anon não chama
+    assert sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"]).corpo["message"] == "sem_telefone"
+    sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
+    assert sb.rpc("criar_acao", {"dados": _nova(grupo="https://golpe.com")}, jwt=cenario["jwt_b"]).corpo["message"] == "grupo_invalido"
+    assert sb.rpc("criar_acao", {"dados": _nova(turnos=[{"inicio": "2000-01-01T09:00", "fim": "2000-01-01T10:00"}])},
+                  jwt=cenario["jwt_b"]).corpo["message"] == "turno_invalido"
+    r = sb.rpc("criar_acao", {"dados": _nova(grupo="https://chat.whatsapp.com/abc")}, jwt=cenario["jwt_b"])
+    assert r.status == 200 and r.corpo["status"] == "em análise", r.corpo
+    novo = r.corpo["id"]
+    assert sb.chamar("GET", f"/rest/v1/acao_publica?id=eq.{novo}").corpo == []
+    minhas = sb.rpc("minhas_acoes", {}, jwt=cenario["jwt_b"]).corpo
+    assert minhas[0]["acao"]["id"] == novo and minhas[0]["acao"]["status"] == "em análise" and len(minhas[0]["turnos"]) == 1
+    # quem não é moderador não vê a fila nem aprova
+    assert sb.rpc("fila_moderacao", {}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
+    assert sb.rpc("aprovar_acao", {"acao_id": novo}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    fila = sb.rpc("fila_moderacao", {}, jwt=cenario["jwt_a"]).corpo
+    item = next(m for m in fila if m["acao"]["id"] == novo)
+    assert item["organizador"]["telefone"] == "(11) 97777-6666" and item["acao"]["contato_link"] == "https://chat.whatsapp.com/abc"
+    assert sb.rpc("recusar_acao", {"acao_id": novo, "motivo": " "}, jwt=cenario["jwt_a"]).corpo["message"] == "sem_motivo"
+    assert sb.rpc("aprovar_acao", {"acao_id": novo}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert len(sb.chamar("GET", f"/rest/v1/acao_publica?id=eq.{novo}").corpo) == 1
+    assert sb.rpc("recusar_acao", {"acao_id": novo, "motivo": "pede dinheiro"}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert sb.rpc("minhas_acoes", {}, jwt=cenario["jwt_b"]).corpo[0]["acao"]["motivo_recusa"] == "pede dinheiro"
+
+
+def test_verificado_publica_direto_e_limite_de_10_por_dia(cenario):
+    r = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_org"])  # papel organizador = verificado
+    assert r.status == 200 and r.corpo["status"] == "publicada", r.corpo
+    for _ in range(8):  # com a ação que o cenário já criou hoje, chega a 10
+        r = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_org"])
+        assert r.status == 200, r.corpo
+    assert sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_org"]).corpo["message"] == "limite_diario"
+
+
+def test_organizador_ve_quem_vai_e_encerra(cenario):
+    r = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_org"])
+    novo = r.corpo["id"]
+    turno = sb.chamar("GET", f"/rest/v1/turno_publico?acao=eq.{novo}").corpo[0]["id"]
+    sb.rpc("salvar_telefone", {"telefone": "11988887777"}, jwt=cenario["jwt_a"])
+    assert sb.rpc("inscrever", {"turno_id": turno}, jwt=cenario["jwt_a"]).status == 200
+    minhas = sb.rpc("minhas_acoes", {}, jwt=cenario["jwt_org"]).corpo
+    t = next(m for m in minhas if m["acao"]["id"] == novo)["turnos"][0]
+    assert t["inscritos"] == [{"nome": "Pessoa A", "telefone": "(11) 98888-7777"}]
+    assert sb.rpc("encerrar_acao", {"acao_id": novo}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
+    assert sb.rpc("encerrar_acao", {"acao_id": novo}, jwt=cenario["jwt_org"]).status in (200, 204)

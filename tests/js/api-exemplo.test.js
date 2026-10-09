@@ -118,3 +118,59 @@ test('organização com logo no modo exemplo sai com foto; sem logo, foto null',
   assert.deepEqual(orgs.find(o => o.id === 9901).foto, { url: 'https://commons.wikimedia.org/x', credito: 'c, via Wikimedia Commons', pagina: 'https://commons.wikimedia.org/wiki/File:x' });
   assert.equal(orgs.find(o => o.id !== 9901).foto, null);
 });
+
+// ação nova vinda do formulário, com turno amanhã
+const novaAcao = (d, extra) => Object.assign({ titulo: 'Panfletagem teste', tipo: 'panfletagem', descricao: 'x', online: false,
+  lugar_nome: 'Praça', bairro: 'Centro', cidade: 'São Paulo', lat: -23.5, lon: -46.6,
+  turnos: [{ inicio: d.config.hoje.slice(0, 10) + 'T23:00', fim: d.config.hoje.slice(0, 10) + 'T23:30' }] }, extra || {});
+
+test('criar ação: participante vai para análise, verificado publica direto, e aparece em minhasAcoes', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const eu = d.pessoas.find(p => p.id === d.config.eu);
+  eu.papel = 'participante'; eu.organizacao = null; eu.telefone = '(11) 98888-7777';
+  const r = await api.criarAcao(novaAcao(d));
+  assert.equal(r.status, 'em análise');
+  const minhas = await api.minhasAcoes();
+  assert.equal(minhas[0].acao.id, r.id); assert.equal(minhas[0].acao.status, 'em análise');
+  assert.ok(!(await api.publico()).acoes.some(a => a.id === r.id));
+  eu.papel = 'organizador';
+  assert.equal((await api.criarAcao(novaAcao(d))).status, 'publicada');
+});
+
+test('criar ação: exige telefone, limita 10 por dia e valida grupo e turnos', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const eu = d.pessoas.find(p => p.id === d.config.eu);
+  eu.papel = 'participante'; eu.organizacao = null; eu.telefone = null;
+  await assert.rejects(api.criarAcao(novaAcao(d)), { codigo: 'sem_telefone' });
+  eu.telefone = '(11) 98888-7777';
+  await assert.rejects(api.criarAcao(novaAcao(d, { grupo: 'https://golpe.com' })), { codigo: 'grupo_invalido' });
+  await assert.rejects(api.criarAcao(novaAcao(d, { turnos: [] })), { codigo: 'turno_invalido' });
+  eu.papel = 'organizador'; // publica direto: não esbarra no limite de 10 em análise
+  const ja = d.acoes.filter(a => a.organizador === eu.id && a.criadaEm === d.config.hoje).length;
+  for (let i = ja; i < 10; i++) await api.criarAcao(novaAcao(d));
+  await assert.rejects(api.criarAcao(novaAcao(d)), { codigo: 'limite_diario' });
+});
+
+test('fila: só moderador; aprovar publica e recusar exige motivo', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const eu = d.pessoas.find(p => p.id === d.config.eu);
+  const mod = d.pessoas.find(p => p.papel === 'moderador');
+  eu.papel = 'participante'; eu.organizacao = null; eu.telefone = '(11) 98888-7777';
+  const { id } = await api.criarAcao(novaAcao(d));
+  await assert.rejects(api.fila(), { codigo: 'so_moderador' });
+  d.config.eu = mod.id; const api2 = ApiExemplo.criar(d);
+  assert.ok((await api2.fila()).some(m => m.acao.id === id && m.organizador.telefone === '(11) 98888-7777'));
+  await assert.rejects(api2.recusar(id, ' '), { codigo: 'sem_motivo' });
+  await api2.aprovar(id);
+  assert.ok((await api2.publico()).acoes.some(a => a.id === id));
+});
+
+test('eu vou em ação de divulgação não pede telefone', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const a = d.acoes.find(x => x.status === 'publicada' && turnoFuturo(d, x));
+  a.contatoTipo = 'divulgacao'; a.contatoLink = 'https://www.instagram.com/p/x/';
+  d.pessoas.find(p => p.id === d.config.eu).telefone = null;
+  const t = turnoFuturo(d, a);
+  await api.inscrever(t.id);
+  assert.ok((await api.minhasInscricoes()).some(m => m.turno.id === t.id));
+});

@@ -40,7 +40,17 @@ nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-conte
 nav a span:first-child{font-size:20px;line-height:1}
 nav a.ativo{color:var(--tinta)}
 nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
-nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 78px;font-size:14px}nav a.entrar span:first-child{display:none}
+nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;font-weight:700}nav a.entrar span:first-child{font-size:18px}
+/* convite para entrar (inicial, ação, perfil) */
+.convite{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff5f5;border:1.5px solid #f6c9cc;border-radius:16px;padding:14px 16px;margin:18px auto 0;max-width:640px;text-align:left}
+.convite p{margin:0;flex:1 1 220px;font-size:15px}.convite p b{display:block;font-size:16px}
+.btn.google{background:var(--tinta)}.btn.google:hover{background:#34343b}.btn.google .g{background:#fff;color:#d6232e;border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center;font-weight:800;font-size:14px}
+.btn.vou{font-size:18px;padding:14px 26px;font-weight:800}.cta-topo{margin:14px 0 6px}@media (min-width:900px){.cta-topo{display:none}}
+/* perfil */
+.perfil-topo{display:flex;align-items:center;gap:14px;margin-bottom:6px}.perfil-topo .letra{width:56px;height:56px;border-radius:50%;background:var(--vermelho);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:800;flex:none}
+.perfil-topo h1{margin:0}.status{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;background:var(--nevoa);color:var(--tinta)}
+.status.publicada{background:#e8f4ec;color:var(--selo)}.status.analise{background:#fff1d6;color:#8a5a00}.status.recusada{background:#fde7e9;color:var(--vinho)}
+.cartao{border:1.5px solid var(--nevoa);border-radius:16px;padding:14px 16px;margin:10px 0}
 /* inicial: busca grande, filtros e vitrine de cidades */
 .inicio-pg{max-width:1100px;margin:0 auto;padding:22px 16px calc(var(--nav) + 24px)}
 .hero{max-width:640px;margin:8px auto 14px;text-align:center}
@@ -57,12 +67,12 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 78px;font-size:14px}nav
 .filtro .pill.ativo{border-color:var(--tinta);color:var(--tinta);box-shadow:none}
 .datas{display:flex;gap:8px;align-items:center;margin:2px 0 4px 70px;flex-wrap:wrap}
 .datas input{flex:1 1 120px;min-width:0;width:auto;padding:8px 10px;font-size:14px}.datas span{font-size:13px;color:var(--cinza)}
-.bloco{margin:26px 0 0}
-.bloco .cab{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.bloco{margin:32px 0 0}
+.bloco .cab{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
 .bloco h2{margin:0;font-size:20px}.bloco .cab a{font-size:14px;font-weight:600;color:var(--vinho);white-space:nowrap}
 .bloco .sub{color:var(--cinza);font-size:14px;margin:-6px 0 10px}
-.trilho{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(232px,1fr);gap:14px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none}.trilho::-webkit-scrollbar{display:none}
-.evento{scroll-snap-align:start;text-decoration:none;color:inherit;display:block}
+.trilho{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(248px,1fr);gap:18px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none}.trilho::-webkit-scrollbar{display:none}
+.evento{scroll-snap-align:start;text-decoration:none;color:inherit;display:block;min-width:0}
 .foto{aspect-ratio:16/10;border-radius:16px;position:relative;display:grid;place-items:center;font-size:56px;overflow:hidden;background:var(--nevoa)}
 .foto::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 18% 12%,rgba(255,255,255,.6),transparent 55%)}
 .foto .img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;display:block}
@@ -76,8 +86,11 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 78px;font-size:14px}nav
 .quem{display:inline-flex;align-items:center;gap:6px;min-width:0}.quem>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .avatar{flex:none;width:22px;height:22px;border-radius:50%;object-fit:contain;background:#fff;border:1px solid var(--nevoa);padding:1px;box-sizing:border-box}
 .avatar.letra{display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--nevoa);color:var(--tinta);border:0}
-.evento .tit{font-weight:600;font-size:16px;line-height:1.25;margin:10px 0 2px}
-.evento .meta{font-size:14px;color:var(--cinza)}.evento .meta b{color:var(--tinta);font-weight:600}
+.evento .tit{font-weight:600;font-size:16px;line-height:1.3;margin:12px 0 6px}
+.evento .meta{font-size:14px;line-height:1.4;color:var(--cinza);margin-top:3px}.evento .meta b{color:var(--tinta);font-weight:600}
+/* quem organiza (avatar + nome) numa linha flex: o texto fica centrado no avatar; quantos vão em linha própria */
+.meta.quem-linha{display:flex;align-items:center;gap:6px;margin-top:8px;min-width:0}.meta.quem-linha .quem{min-width:0}
+.meta.vao{color:var(--selo);font-weight:600}
 .f-panfletagem{background:linear-gradient(135deg,#fde7e9,#f3a9b0)}.f-adesivaco{background:linear-gradient(135deg,#fff1d6,#f7c978)}.f-encontro{background:linear-gradient(135deg,#e6f0ff,#a9c4f5)}
 .f-ligatona{background:linear-gradient(135deg,#e8f4ec,#9fd3b0)}.f-porta{background:linear-gradient(135deg,#f1e8ff,#c5aef2)}.f-bandeiraco{background:linear-gradient(135deg,#fde7e9,#e07b84)}.f-outro{background:linear-gradient(135deg,#eef0f3,#c8ccd4)}
 .f-ato{background:linear-gradient(135deg,#ffe4d6,#f29b72)}.f-caminhada{background:linear-gradient(135deg,#e0f5f3,#8fd1c8)}.f-cultural{background:linear-gradient(135deg,#fbe3f4,#e5a3d3)}
@@ -119,7 +132,7 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 78px;font-size:14px}nav
 #sugestoes div,#sug-criar div{padding:12px 16px;cursor:pointer;border-top:1px solid var(--nevoa)}#sugestoes div:first-child,#sug-criar div:first-child{border:0}
 #sugestoes div:hover,#sugestoes div.foco,#sug-criar div:hover{background:var(--nevoa)}#sugestoes small,#sug-criar small{color:var(--cinza);display:block}
 .tipos{display:flex;gap:6px;overflow-x:auto;padding:10px 2px 4px;scrollbar-width:none;-ms-overflow-style:none}.tipos::-webkit-scrollbar{display:none}
-.chip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:1.5px solid transparent;border-radius:14px;padding:8px 10px 6px;min-width:72px;font-size:11px;font-weight:600;color:var(--cinza);cursor:pointer;box-shadow:0 1px 6px rgba(23,23,26,.12)}
+.chip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;background:#fff;border:1.5px solid transparent;border-radius:14px;padding:10px 12px 8px;min-width:84px;font-size:11px;font-weight:600;color:var(--cinza);cursor:pointer;box-shadow:0 1px 6px rgba(23,23,26,.12)}
 .chip b{font-size:22px;line-height:1;font-weight:400}.chip.ativo{border-color:var(--tinta);color:var(--tinta)}
 #gaveta{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;box-shadow:var(--sombra);transition:transform .28s ease;z-index:800;display:flex;flex-direction:column;height:calc(100% - 150px);transform:translateY(calc(100% - 132px))}
 #gaveta.meio{transform:translateY(42%)}#gaveta.cheia{transform:translateY(0)}
@@ -163,7 +176,7 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 78px;font-size:14px}nav
   nav a{flex:0 0 auto;flex-direction:row;gap:7px;font-size:14px;padding:0 14px;height:40px;border-radius:10px}
   nav a span:first-child{font-size:17px}nav a:hover{background:var(--nevoa)}nav a.ativo{color:var(--tinta);background:var(--nevoa)}
   nav a.doar{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.doar:hover{background:var(--vinho)}
-  nav a.entrar{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.entrar:hover{background:#34343b}
+  nav a.entrar{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.entrar:hover{background:#34343b}nav a.entrar span:first-child{display:none}
   /* páginas internas mais largas e com respiro */
   .pagina{max-width:760px;padding:32px 24px 56px}.pagina.estreita{max-width:620px}
   h1{font-size:34px}
@@ -175,7 +188,7 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 78px;font-size:14px}nav
   .inicio-pg{padding:36px 24px 56px}.hero{margin-bottom:28px}
   .hero h1{font-size:44px}.hero p{font-size:18px}
   .filtros{flex-direction:row;flex-wrap:wrap;gap:8px 28px;align-items:center}.datas{margin-left:0}
-  .trilho{grid-auto-flow:row;grid-template-columns:repeat(4,1fr);overflow:visible}
+  .trilho{grid-auto-flow:row;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px 22px;overflow:visible}
   .foto{transition:transform .2s ease,box-shadow .2s ease}.evento:hover .foto{transform:translateY(-2px);box-shadow:0 10px 24px rgba(23,23,26,.14)}
   .evento:hover .tit{text-decoration:underline}
   /* mapa: ocupa a área abaixo do cabeçalho */
@@ -192,11 +205,10 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 78px;font-size:14px}nav
   <a class="marca" href="#/inicio">Ações do <em>2º turno</em></a>
   <a href="#/inicio" data-rota="inicio"><span>🔍</span><span>Ações</span></a>
   <a href="#/mapa" data-rota="mapa"><span>🗺️</span><span>Mapa</span></a>
-  <a href="#/criar" data-rota="criar" data-so-exemplo onclick="novaCriacao()"><span>＋</span><span>Criar ação</span></a>
-  <a href="#/minhas" data-rota="minhas" data-so-exemplo><span>👤</span><span>Minhas</span></a>
-  <a href="#/fila" data-rota="fila" data-so-exemplo><span>✅</span><span>Fila</span></a>
+  <a href="#/criar" data-rota="criar" onclick="novaCriacao()"><span>＋</span><span>Criar</span></a>
+  <a href="#/fila" data-rota="fila" data-so-moderador style="display:none"><span>✅</span><span>Fila</span></a>
   <a href="#/inscricoes" data-rota="inscricoes"><span>🙋</span><span>Inscrições</span></a>
-  <a href="#" id="conta" onclick="return contaClique()"><span>👋</span><span id="conta-rotulo">Entrar</span></a>
+  <a href="#/perfil" id="conta" data-rota="perfil" onclick="return contaClique()"><span id="conta-icone">👤</span><span id="conta-rotulo">Entrar</span></a>
   <a class="doar" id="doar" href="#" target="_blank">Doar</a>
 </div></nav>
 <script src="dados.js"></script>
@@ -258,9 +270,12 @@ function fmtCurta(iso){const d=new Date(iso);return `${DIAS[d.getDay()]} ${hora(
 function distanciaKm(a,b){const r=6371,x=(b.lat-a.lat)*Math.PI/180,y=(b.lon-a.lon)*Math.PI/180;const s=Math.sin(x/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(y/2)**2;return 2*r*Math.asin(Math.sqrt(s))}
 function quantosInscritos(n){return n===1?'1 inscrito':n+' inscritos'}
 function quantosVao(n){return n===1?'1 vai':n+' vão'}
+// quantos vão só aparece quando alguém já disse "Eu vou!" ("0 vão" desanima)
+function linhaVao(a){const n=vaoNa(a.id);return n?`<div class="meta vao">🙋 ${quantosVao(n)}</div>`:''}
 function lugarCurto(l){if(l.online)return 'Online';return !l.bairro||l.bairro===l.cidade?l.cidade:`${l.bairro}, ${l.cidade}`}
 const semInscricao=a=>a.contatoTipo==='divulgacao';
-function botaoDivulgacao(a){return a.linkDivulgacao?`<a class="btn" href="${esc(a.linkDivulgacao)}" target="_blank" rel="noopener">Ver a divulgação original ↗</a>`:'<span class="sec">Sem inscrição: é só aparecer.</span>'}
+// ação importada: o "Eu vou!" só marca presença; o link da divulgação original fica ao lado, como secundário
+function botaoDivulgacao(a){return a.linkDivulgacao?`<a class="btn sec mini" href="${esc(a.linkDivulgacao)}" target="_blank" rel="noopener">Ver a divulgação original ↗</a>`:''}
 function lugarAproximadoNota(l){return l.aproximado?`<div class="sec" style="font-size:14px;margin-top:4px">📍 Ponto aproximado: o mapa marca o centro de ${esc(l.cidade)}. O local exato está na divulgação.</div>`:''}
 // pinos no centro da mesma cidade abrem em espiral para não se empilharem
 function espalhar(lista){const grupos={};return lista.map(x=>{const l=x.a.lugar;if(!l.aproximado)return [l.lat,l.lon];const k=l.lat.toFixed(3)+','+l.lon.toFixed(3);const i=grupos[k]=(grupos[k]||0)+1;if(i===1)return [l.lat,l.lon];const r=0.0025*Math.sqrt(i),ang=i*2.4;return [l.lat+r*Math.sin(ang),l.lon+r*Math.cos(ang)*1.1]})}
@@ -340,7 +355,7 @@ function cardEvento(x){const a=x.a;return `<a class="evento" href="#/acao/${a.id
   <div class="tit">${esc(a.titulo)}</div>
   <div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
   <div class="meta">${esc(lugarCurto(a.lugar))}</div>
-  <div class="meta">${quemDivulga(a)}, ${quantosVao(vaoNa(a.id))}</div></a>`}
+  <div class="meta quem-linha">${quemDivulga(a)}</div>${linhaVao(a)}</a>`}
 function blocoVitrine(titulo,lista,link,sub,extra){return `<section class="bloco"><div class="cab${extra?' cab-cidade':''}"><h2>${titulo}</h2>${link||''}${extra||''}</div>${sub?`<p class="sub">${sub}</p>`:''}
   ${lista.length?`<div class="trilho">${lista.map(cardEvento).join('')}</div>`:'<p class="vitrine-vazia">Nenhuma ação com esses filtros por aqui.</p>'}</section>`}
 function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='online';
@@ -352,7 +367,8 @@ function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='o
    <div class="caixa"><div class="busca"><span>🔍</span><input id="busca-lugar" placeholder="Em que cidade você está?" autocomplete="off" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
     <button class="ico" title="Usar minha localização" onclick="usarLocalizacao()">📍</button></div><div id="sugestoes"></div></div>
    ${soOnline?`<button class="link" onclick="F().formato='qualquer';render()">Ver também as ações presenciais</button>`:
-     `<button class="link" onclick="F().formato='online';render();document.getElementById('bloco-online').scrollIntoView({behavior:'smooth'})">Prefiro ajudar online, de onde estiver</button>`}</header>
+     `<button class="link" onclick="F().formato='online';render();document.getElementById('bloco-online').scrollIntoView({behavior:'smooth'})">Prefiro ajudar online, de onde estiver</button>`}
+   ${estado.sessao?'':`<div class="convite"><p><b>Vai participar?</b>Entre com o Google para dizer "Eu vou!" nas ações e criar a sua.</p>${botaoEntrar()}</div>`}</header>
   ${filtrosHtml()}${tiposHtml()}
   ${soOnline?'':blocoVitrine(tituloPerto,acoesPerto(perto),linkMapa(perto),'',popCidade)}
   ${soOnline?'':VITRINE.filter(c=>c[0]!==perto.rotulo).map(c=>blocoVitrine(esc(c[0]),acoesPerto({lat:c[2],lon:c[3]}),linkMapa({rotulo:c[0],lat:c[2],lon:c[3]}))).join('')}
@@ -378,10 +394,10 @@ function localizarCidade(){if(!navigator.geolocation)return;navigator.geolocatio
 function cardAcao(x){const a=x.a;return `<a class="card ${estado.foco===a.id?'foco':''} ${estado.sel===a.id?'sel':''}" id="card-${a.id}" href="#/acao/${a.id}" onmouseenter="focar(${a.id})" onmouseleave="focar(null)">
   ${cuboAcao(a)}
   <div><div class="tit">${esc(a.titulo)}</div>
-  <div class="meta">${quemDivulga(a)}</div>
+  <div class="meta quem-linha">${quemDivulga(a)}</div>
   <div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
   <div class="meta">${esc(lugarCurto(a.lugar))}${x.km!=null?`, a ${fmtKm(x.km)} km`:''}${a.lugar.aproximado?' <span class="sec">(ponto aproximado)</span>':''}</div>
-  <div class="meta">${semInscricao(a)?'Sem inscrição':quantosVao(vaoNa(a.id))}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div></div></a>`}
+  ${linhaVao(a)}${a.prioritaria?'<div class="meta"><span class="prior">Área prioritária</span></div>':''}</div></a>`}
 function telaMapa(){
   return `<div id="tela-mapa"><div id="mapa" aria-label="Mapa das ações"></div>
   <div id="topo"><div class="busca"><span>🔍</span><input id="busca-lugar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(estado.onde?estado.onde.rotulo:'')}" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
@@ -454,26 +470,38 @@ function usarLocalizacao(){if(!navigator.geolocation)return;navigator.geolocatio
 // ---------- acao ----------
 async function entrar(){await API.entrar();await sincronizar()}
 async function sair(){await API.sair();localStorage.removeItem('vouPendente');estado.inscrevendo=null;await sincronizar()}
-function contaClique(){(estado.sessao?sair():entrar()).catch(e=>console.error(e));return false}
+// logado, o botão da conta leva ao Perfil (onde fica o Sair); deslogado, entra com o Google
+function contaClique(){if(estado.sessao)return true;entrar().catch(e=>console.error(e));return false}
+const botaoEntrar=()=>`<button class="btn google" onclick="entrar()"><span class="g" aria-hidden="true">G</span> Entrar com Google</button>`;
 function telaInscricoes(){
-  if(!estado.sessao)return `<div class="pagina estreita"><h1>Minhas inscrições</h1><p>Entre para ver em que ações você disse que vai.</p><button class="btn" onclick="entrar()">Entrar com Google</button></div>`;
+  if(!estado.sessao)return `<div class="pagina estreita"><h1>Minhas inscrições</h1><p>Entre para ver as ações em que você disse "Eu vou!".</p>${botaoEntrar()}</div>`;
   const lista=estado.minhasInscricoes||[],proxima=m=>m.acao.status==='publicada'&&m.turno.inicio.slice(0,10)>=PUB.config.hoje;
   const card=m=>`<div>${cardEvento({a:m.acao,t:m.turno})}<div style="margin-top:6px">${proxima(m)?'':`<span class="selo">${m.acao.status==='publicada'?'já aconteceu':'ação encerrada'}</span> `}<button class="btn sec mini" onclick="desistir(${m.turno.id})">desistir</button>${proxima(m)?`<div>${botaoAgenda(m.acao,m.turno)}</div>`:''}</div></div>`;
   const grupo=(t,l)=>l.length?`<h2>${t}</h2><div class="trilho">${l.map(card).join('')}</div>`:'';
   return `<div class="pagina"><h1>Minhas inscrições</h1><p class="sec" style="font-size:15px">${esc(estado.sessao.nome)}${estado.sessao.telefone?`, ${esc(estado.sessao.telefone)}`:''}</p>
-  ${lista.length?grupo('Próximas',lista.filter(proxima))+grupo('Passadas ou encerradas',lista.filter(m=>!proxima(m))):'<div class="vazio"><p>Você ainda não se inscreveu em nenhuma ação.</p><a class="btn" href="#/inicio">Ver ações</a></div>'}</div>`}
+  ${lista.length?grupo('Próximas',lista.filter(proxima))+grupo('Passadas ou encerradas',lista.filter(m=>!proxima(m))):'<div class="vazio"><p>Você ainda não se inscreveu em nenhuma ação.</p><p class="sec">Abra uma ação e toque em "Eu vou!".</p><a class="btn" href="#/inicio">Ver ações</a></div>'}</div>`}
 async function desistir(tid){await API.desistir(tid);await sincronizar()}
 async function iniciarVou(tid){
   if(!estado.sessao){localStorage.setItem('vouPendente',String(tid));await API.entrar();await continuarVouPendente();return}
-  estado.inscrevendo={turno:tid,telefone:estado.sessao.telefone||'',erro:null};render()}
+  await abrirVou(tid)}
 async function continuarVouPendente(){const tid=Number(localStorage.getItem('vouPendente'));if(!tid)return;
-  estado.sessao=await API.sessao();if(!estado.sessao)return;localStorage.removeItem('vouPendente');
+  estado.sessao=await API.sessao();if(!estado.sessao)return;localStorage.removeItem('vouPendente');await abrirVou(tid)}
+// "Eu vou!": em ação de divulgação marca presença na hora (sem telefone); nas outras abre a confirmação do WhatsApp
+async function abrirVou(tid){const [,rota,arg]=(location.hash||'').split('/');
+  if(rota==='acao'&&(!estado.acaoAberta||estado.acaoAberta.acao.id!==Number(arg))){estado.acaoAberta=await API.acao(Number(arg));if(estado.acaoAberta)normalizarTipos([estado.acaoAberta.acao])}
+  const ab=estado.acaoAberta;
+  if(ab&&semInscricao(ab.acao)){
+    try{await API.inscrever(tid)}catch(e){estado.inscrevendo={turno:tid,semFormulario:true,erro:MENSAGEM[e.codigo]||'Não deu. Tente de novo.'};await render();return}
+    estado.inscrevendo=null;await recarregar();await render();estado.vouOk=tid;await render();return}
   estado.inscrevendo={turno:tid,telefone:estado.sessao.telefone||'',erro:null};await render()}
-const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_inscricao:'Esta ação não tem inscrição: siga a divulgação original.',sem_telefone:'Informe seu WhatsApp.',telefone_invalido:'Telefone no formato (11) 9xxxx-xxxx.',bloqueada:'Sua conta está bloqueada.',lotado:'Esse horário lotou.',turno_passado:'Esse horário já passou.',nao_publicada:'Esta ação não está aberta a inscrições.'};
+const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_inscricao:'Esta ação não tem inscrição: siga a divulgação original.',sem_telefone:'Informe seu WhatsApp.',telefone_invalido:'Telefone no formato (11) 9xxxx-xxxx.',bloqueada:'Sua conta está bloqueada.',lotado:'Esse horário lotou.',turno_passado:'Esse horário já passou.',nao_publicada:'Esta ação não está aberta a inscrições.',
+  limite_diario:'Você já criou 10 ações hoje. Tente de novo amanhã.',limite_em_analise:'Você tem 10 ações esperando a moderação. Espere a análise antes de criar mais.',
+  sem_titulo:'Dê um título.',sem_lugar:'Marque o lugar da ação.',turno_invalido:'Confira os horários: início antes do fim e nada no passado.',
+  grupo_invalido:'O link do grupo precisa começar com https://chat.whatsapp.com/',sem_motivo:'Escreva o motivo.',so_moderador:'Só moderadores fazem isso.',nao_pode:'Não deu: a ação mudou de situação. Recarregue a página.'};
 async function confirmarVou(tid){const ins=estado.inscrevendo;const tel=(document.getElementById('vtel')||{}).value||'';
   try{if(tel!==(estado.sessao.telefone||''))estado.sessao=await API.salvarTelefone(tel);await API.inscrever(tid)}
   catch(e){ins.erro=MENSAGEM[e.codigo]||'Não deu. Tente de novo.';ins.telefone=tel;render();return}
-  estado.inscrevendo=null;await sincronizar()}
+  estado.inscrevendo=null;await recarregar();await render();estado.vouOk=tid;await render()}
 async function inscrever(tid){return confirmarVou(tid)}
 // ---------- adicionar à agenda (Google Agenda por link, Apple e Outlook por arquivo .ics) ----------
 // os horários são de Brasília (sem horário de verão desde 2019): convertemos para UTC somando 3 horas
@@ -505,25 +533,29 @@ function botaoAgenda(a,t){if(t.inicio.slice(0,10)<PUB.config.hoje)return '';cons
 function compartilhar(){const u=location.href;if(navigator.share)navigator.share({url:u});else{navigator.clipboard&&navigator.clipboard.writeText(u);alert('Link copiado')}}
 function botaoTurno(a,t){const n=vaoNo(t);
   if(t.inicio.slice(0,10)<PUB.config.hoje)return `<button class="btn" disabled>horário encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
-  if(semInscricao(a))return botaoDivulgacao(a);
-  if(estouInscrito(t.id))return `<span class="selo">Inscrito ✓</span> <button class="btn sec mini" onclick="desistir(${t.id})">desistir</button>`;
-  if(t.lotacao&&n>=t.lotacao)return `<button class="btn" disabled>lotado</button>`;
-  return `<button class="btn" onclick="iniciarVou(${t.id})">Inscreva-se</button>`}
+  const div=semInscricao(a)&&a.linkDivulgacao?`<div style="margin-top:8px">${botaoDivulgacao(a)}</div>`:'';
+  if(estouInscrito(t.id))return `<span class="selo">✓ Você vai</span> <button class="btn sec mini" onclick="desistir(${t.id})">desistir</button>${div}`;
+  if(t.lotacao&&n>=t.lotacao)return `<button class="btn" disabled>lotado</button>${div}`;
+  return `<button class="btn vou" onclick="iniciarVou(${t.id})">Eu vou!</button>${div}`}
+// no celular o "Eu vou!" aparece logo abaixo do título (os horários ficam depois do mapa); com vários horários, leva até eles
+function ctaTopo(a,futuros){return `<div class="cta-topo">${futuros.length===1?botaoTurno(a,futuros[0]):`<a class="btn vou" href="#" onclick="document.querySelector('.acao-lado').scrollIntoView({behavior:'smooth'});return false">Eu vou!</a> <span class="sec">escolha o horário</span>`}</div>`}
 function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const a=ab.acao,fechada=a.status!=='publicada';
   const ts=ab.turnos,futuros=ts.filter(t=>t.inicio.slice(0,10)>=PUB.config.hoje),ins=estado.inscrevendo;
   return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a><div class="acao"><div class="acao-corpo">
   ${a.foto&&a.foto.url?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a)}</div>${creditoFoto(a)}`:logoCapa(a)?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgLogo(logoCapa(a))}</div>${creditoLogo(logoCapa(a))}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
   <h1>${esc(a.titulo)}</h1>
   <div class="sec" style="font-size:15px">${quemDivulga(a)}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div>
-  ${fechada?`<p class="erro">Esta ação não está aberta a inscrições (${a.status}).</p>`:futuros.length?'':'<p class="erro">Esta ação já aconteceu.</p>'}
+  ${fechada?`<p class="erro">Esta ação não está aberta a inscrições (${a.status}).</p>`:futuros.length?ctaTopo(a,futuros):'<p class="erro">Esta ação já aconteceu.</p>'}
   <p style="margin-top:12px;white-space:pre-line">${esc(a.descricao)}</p>
   <h2>Onde</h2>${ehOnline(a)?`<div><strong>Online</strong></div><div class="sec" style="font-size:15px">Você participa de casa. O link da chamada vai para quem se inscreve.</div>`:
   `<div><strong>${esc(a.lugar.nome)}</strong></div><div class="sec" style="font-size:15px">${esc(lugarCurto(a.lugar))}</div>${lugarAproximadoNota(a.lugar)}
   <div id="minimapa" style="height:200px;border-radius:14px;margin:10px 0"></div>`}</div>
   <aside class="acao-lado"><h2>Quando</h2>
-  ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${semInscricao(a)?'Sem inscrição':quantosVao(vaoNo(t))+(t.lotacao?` de ${t.lotacao} vagas`:'')}</div><div style="margin-top:8px">${fechada?'':botaoTurno(a,t)}</div>${fechada?'':botaoAgenda(a,t)}
-    ${ins&&ins.turno===t.id?`<div class="sec" style="margin-top:8px">Você: <strong>${esc(estado.sessao.nome)}</strong></div><label>Seu WhatsApp</label><input id="vtel" value="${esc(ins.telefone)}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p>${ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}<div style="margin-top:8px"><button class="btn" onclick="confirmarVou(${t.id})">Confirmar</button> <button class="btn sec mini" onclick="estado.inscrevendo=null;render()">Cancelar</button></div>`:''}</div>`).join('')}</aside>
-  <div class="acao-resto">${ab.combinado?blocoCombinado(a,ab.combinado):''}
+  ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${vaoNo(t)?quantosVao(vaoNo(t)):'Ninguém disse que vai ainda. Seja a primeira pessoa!'}${t.lotacao?` (${t.lotacao} vagas)`:''}</div><div style="margin-top:10px">${fechada?'':botaoTurno(a,t)}</div>
+    ${estado.vouOk===t.id?'<div class="selo" style="margin-top:8px">Pronto! A ação está nas suas <a href="#/inscricoes">Inscrições</a>.</div>':''}
+    ${ins&&ins.turno===t.id&&ins.semFormulario&&ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}${fechada?'':botaoAgenda(a,t)}
+    ${ins&&ins.turno===t.id&&!ins.semFormulario?`<div class="sec" style="margin-top:8px">Você: <strong>${esc(estado.sessao.nome)}</strong></div><label>Seu WhatsApp</label><input id="vtel" value="${esc(ins.telefone)}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p>${ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}<div style="margin-top:8px"><button class="btn" onclick="confirmarVou(${t.id})">Confirmar</button> <button class="btn sec mini" onclick="estado.inscrevendo=null;render()">Cancelar</button></div>`:''}</div>`).join('')}</aside>
+  <div class="acao-resto">${ab.combinado&&!semInscricao(a)?blocoCombinado(a,ab.combinado):''}
   <h2>Quem organiza</h2><div class="sec" style="font-size:15px">${quemDivulga(a)}</div></div></div></div>`}
 function blocoCombinado(a,c){const ct=c.contato;const tel=ct.whatsapp?ct.whatsapp.replace(/\D/g,''):'';
   const como=ct.tipo==='organizador_chama'?`<p><strong>${nomeOrganizador(a)}</strong> vai entrar em contato pelo seu WhatsApp.</p>`:
@@ -561,12 +593,13 @@ function telValido(t){return /^\(\d{2}\) 9[\dx]{4}-[\dx]{4}$/.test(t)||/^\d{11}$
 function validarPasso2(){const c=estado.criar,e={};if(!c.titulo.trim())e.titulo='Dê um título.';
   if(!c.online){if(!c.lugar.nome.trim())e.lugarNome='Diga o nome do ponto de encontro.';if(c.lugar.lat==null)e.lugar='Marque o lugar no mapa.'}
   const ts=c.turnos.filter(t=>t.inicio||t.fim);if(!ts.length)e.turnos='Informe pelo menos um turno.';else if(ts.some(t=>!t.inicio||!t.fim||t.fim<=t.inicio))e.turnos='Cada turno precisa de início e fim, e o fim depois do início.';else if(ts.some(t=>t.inicio.slice(0,10)<PUB.config.hoje))e.turnos='Turno no passado.';
-  c.erros=e;if(!Object.keys(e).length)c.passo=3;render()}
+  c.erros=e;if(!Object.keys(e).length){c.passo=3;if(!c.telefone&&estado.sessao)c.telefone=estado.sessao.telefone||''}render()}
 function atualizarTurnos(c,acaoId){const atuais=turnosDaExemplo(acaoId);const form=c.turnos.filter(t=>t.inicio&&t.fim);
   form.forEach((t,i)=>{const lot=t.lotacao?Number(t.lotacao):null;if(atuais[i])Object.assign(atuais[i],{inicio:t.inicio,fim:t.fim,lotacao:lot});else DADOS.turnos.push({id:Date.now()+i,acao:acaoId,inicio:t.inicio,fim:t.fim,lotacao:lot})});
   const sobra=atuais.slice(form.length).map(t=>t.id);DADOS.turnos=DADOS.turnos.filter(t=>!sobra.includes(t.id))}
 function turnosDoFormulario(c,acaoId){return c.turnos.filter(t=>t.inicio&&t.fim).map((t,i)=>({id:Date.now()+i,acao:acaoId,inicio:t.inicio,fim:t.fim,lotacao:t.lotacao?Number(t.lotacao):null}))}
 function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c.erros[k]}</div>`:'';const titulo=c.editando?'Editar ação':'Criar ação';
+  if(!estado.sessao)return `<div class="pagina estreita"><h1>Criar ação</h1><p>Qualquer pessoa pode criar uma ação: panfletagem, encontro, ato, caminhada. Entre com o Google para começar.</p><p class="sec" style="font-size:15px">Toda ação nova passa por uma revisão rápida da moderação antes de aparecer.</p>${botaoEntrar()}</div>`;
   if(c.passo===1)return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 1 de 3. Que tipo de ação?</p>${TIPOS.map(t=>`<a class="card" href="#" onclick="escolherTipo('${t}');return false"><div class="cubo ${CLASSE[t]}">${ICONES[t]}</div><div><div class="tit">${t}</div><div class="meta">${MODELOS[t].dica}</div></div></a>`).join('')}</div>`;
   if(c.passo===2)return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 2 de 3. Onde e quando. ${ICONES[c.tipo]} ${c.tipo}</p>
    <label>Título</label><input value="${esc(c.titulo)}" oninput="cv('titulo',this.value)">${E('titulo')}
@@ -581,55 +614,83 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
    <label>Detalhe do encontro, só para inscritos</label><input placeholder="ex.: perto do ponto de ônibus, camisa vermelha" value="${esc(c.detalhe)}" oninput="cv('detalhe',this.value)">
    <label>Link do grupo de WhatsApp</label><input placeholder="https://chat.whatsapp.com/..." value="${esc(c.grupo)}" oninput="cv('grupo',this.value)">
    <p style="margin-top:18px">${c.editando?'<button class="btn sec" onclick="cancelarEdicao()">Cancelar</button>':'<button class="btn sec" onclick="estado.criar.passo=1;render()">Voltar</button>'} <button class="btn" onclick="validarPasso2()">Continuar</button></p></div>`;
-  const o=c.organizacao?org(c.organizacao):null;
+  const verif=souVerificado();
   return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 3 de 3. Quem organiza.</p>
-   <label>Seu nome</label><input value="${esc(c.nome)}" oninput="cv('nome',this.value)">${E('nome')}
-   <label>Seu WhatsApp</label><input placeholder="(11) 9xxxx-xxxx" value="${esc(c.telefone)}" oninput="cv('telefone',this.value)">${E('telefone')}
-   <label>Em nome de uma organização?</label><select onchange="estado.criar.organizacao=this.value?Number(this.value):null;render()"><option value="">Sou eu mesmo(a)</option>${DADOS.organizacoes.map(x=>`<option value="${x.id}" ${c.organizacao===x.id?'selected':''}>${esc(x.nome)}</option>`).join('')}</select>
-   <p class="sec" style="margin-top:6px">${o&&o.verificada?'✓ verificada: publica na hora':'sem selo: passa pela fila (sua ação está em análise até um moderador aprovar)'}</p>
-   <p style="margin-top:18px"><button class="btn sec" onclick="estado.criar.passo=2;render()">Voltar</button> <button class="btn" onclick="publicarAcao()">${c.editando?'Salvar':'Publicar'}</button></p></div>`}
-function publicarAcao(){const c=estado.criar,e={};if(!c.nome.trim())e.nome='Seu nome.';if(!telValido(c.telefone))e.telefone='Telefone no formato (11) 9xxxx-xxxx.';c.erros=e;if(Object.keys(e).length){render();return}
+   <label>Seu nome</label><div>${esc(estado.sessao.nome)}</div>
+   <label>Seu WhatsApp</label><input placeholder="(11) 9xxxx-xxxx" inputmode="tel" value="${esc(c.telefone)}" oninput="cv('telefone',this.value)">${E('telefone')}
+   <p class="sec" style="margin-top:4px">A moderação usa para falar com você. Quem disser "Eu vou!" aparece no seu Perfil, com nome e telefone.</p>
+   <label>Em nome de uma organização? (opcional)</label><select onchange="estado.criar.organizacao=this.value?Number(this.value):null"><option value="">Sou eu mesmo(a)</option>${PUB.organizacoes.slice().sort((x,y)=>x.nome.localeCompare(y.nome)).map(x=>`<option value="${x.id}" ${c.organizacao===x.id?'selected':''}>${esc(x.nome)}</option>`).join('')}</select>
+   <div class="aviso" style="margin-top:16px">${verif?'✓ Você é verificado: sua ação aparece na hora.':'Sua ação passa por uma revisão rápida da moderação antes de aparecer. Você acompanha a situação no seu Perfil.'}</div>${E('geral')}
+   <p style="margin-top:18px"><button class="btn sec" onclick="estado.criar.passo=2;render()">Voltar</button> <button class="btn" onclick="publicarAcao()">${c.editando?'Salvar':verif?'Publicar':'Enviar para análise'}</button></p></div>`}
+// verificado publica direto: papel organizador ou moderador, ou membro de organização verificada (a regra vale no banco)
+function souVerificado(){const s=estado.sessao;if(!s)return false;if(s.papel==='organizador'||s.papel==='moderador')return true;const o=s.organizacao?org(s.organizacao):null;return !!(o&&o.verificada)}
+async function publicarAcao(){const c=estado.criar,e={};if(!telValido(c.telefone))e.telefone='Telefone no formato (11) 9xxxx-xxxx.';c.erros=e;if(Object.keys(e).length){render();return}
   const lugar=c.online?LUGAR_ONLINE():Object.assign({},c.lugar);
   if(c.editando){const a=acaoExemplo(c.editando);Object.assign(a,{titulo:c.titulo,descricao:c.descricao,foto:c.foto.trim()?{url:c.foto.trim(),credito:''}:null,lugar,detalhe:c.detalhe,grupo:c.grupo,organizacao:c.organizacao,prioritaria:!c.online&&DADOS.areasPrioritarias.includes(lugar.bairro)});
-    atualizarTurnos(c,a.id);estado.aviso='Ação atualizada.';estado.criar=novoCriar();recarregar().then(()=>{location.hash='#/minhas'});return}
-  const o=c.organizacao?org(c.organizacao):null;const status=o&&o.verificada?'publicada':'em análise';
-  const id=Math.max(...DADOS.acoes.map(a=>a.id))+1;
-  DADOS.acoes.push({id,titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,foto:c.foto.trim()?{url:c.foto.trim(),credito:''}:null,organizador:eu(),organizacao:c.organizacao,lugar,detalhe:c.detalhe,grupo:c.grupo,status,motivoRecusa:null,prioritaria:!c.online&&DADOS.areasPrioritarias.includes(lugar.bairro),criadaEm:PUB.config.hoje});
-  DADOS.turnos.push(...turnosDoFormulario(c,id));
-  estado.aviso=status==='publicada'?'Publicada! Sua ação já aparece no mapa.':'Recebemos: sua ação está em análise, avisamos pelo WhatsApp.';
-  estado.criar=novoCriar();recarregar().then(()=>{location.hash='#/minhas'})}
+    atualizarTurnos(c,a.id);estado.aviso='Ação atualizada.';estado.criar=novoCriar();await recarregar();location.hash='#/perfil';return}
+  let r;
+  try{if(c.telefone!==(estado.sessao.telefone||''))estado.sessao=await API.salvarTelefone(c.telefone);
+    r=await API.criarAcao({titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,foto:c.foto,online:c.online,lugar_nome:lugar.nome,bairro:lugar.bairro,cidade:lugar.cidade,lat:lugar.lat,lon:lugar.lon,
+      detalhe:c.detalhe,grupo:c.grupo,organizacao:c.organizacao,turnos:c.turnos.filter(t=>t.inicio&&t.fim).map(t=>({inicio:t.inicio,fim:t.fim,lotacao:t.lotacao?Number(t.lotacao):null}))})}
+  catch(err){c.erros={geral:MENSAGEM[err.codigo]||'Não deu para enviar. Tente de novo.'};render();return}
+  estado.aviso=r.status==='publicada'?'Publicada! Sua ação já aparece no mapa.':'Recebemos! Sua ação está em análise. Você acompanha a situação aqui no Perfil.';
+  estado.criar=novoCriar();await recarregar();location.hash='#/perfil'}
 // ---------- minhas ----------
-const ORDEM={'em análise':0,'publicada':1,'encerrada':2,'recusada':3,'rascunho':4};
 function textoAviso(a,t){return `Oi! ${fmtData(t.inicio)} tem ${a.titulo}${ehOnline(a)?', online':` em ${a.lugar.nome}, ${a.lugar.bairro}`}. ${a.detalhe} Até lá!`}
 function copiar(txt){navigator.clipboard&&navigator.clipboard.writeText(txt);alert('Copiado')}
-function marcarPresenca(insId,v){const i=DADOS.inscricoes.find(i=>i.id===insId);if(i)i.presenca=v}
-function encerrar(id){acaoExemplo(id).status='encerrada';sincronizar()}
-function editar(id){const a=acaoExemplo(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,online:ehOnline(a),titulo:a.titulo,foto:a.foto&&a.foto.url||'',descricao:a.descricao,lugar:Object.assign({},a.lugar),buscaLugar:lugarCurto(a.lugar),detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,nome:pessoa(a.organizador).nome,telefone:pessoa(a.organizador).telefone,turnos:turnosDaExemplo(id).map(t=>({inicio:t.inicio,fim:t.fim,lotacao:t.lotacao||''}))});estado.criar=c;location.hash='#/criar'}
-function telaMinhas(){const minhas=DADOS.acoes.filter(a=>a.organizador===eu()).sort((p,q)=>ORDEM[p.status]-ORDEM[q.status]);
+async function encerrar(id){try{await API.encerrarAcao(id)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}await sincronizar()}
+function editar(id){const a=acaoExemplo(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,online:ehOnline(a),titulo:a.titulo,foto:a.foto&&a.foto.url||'',descricao:a.descricao,lugar:Object.assign({},a.lugar),buscaLugar:lugarCurto(a.lugar),detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,telefone:pessoa(a.organizador).telefone,turnos:turnosDaExemplo(id).map(t=>({inicio:t.inicio,fim:t.fim,lotacao:t.lotacao||''}))});estado.criar=c;location.hash='#/criar'}
+// ---------- perfil: a conta, o WhatsApp, onde vou, as ações que criei (com a situação) e o Sair ----------
+const ROTULO_STATUS={'em análise':['Em análise','analise'],'publicada':['Publicada','publicada'],'recusada':['Recusada','recusada'],'encerrada':['Encerrada',''],'rascunho':['Despublicada','']};
+async function salvarTelPerfil(){const v=(document.getElementById('ptel')||{}).value||'';
+  try{estado.sessao=await API.salvarTelefone(v);estado.perfil={ok:true}}catch(e){estado.perfil={erro:MENSAGEM[e.codigo]||'Não deu. Tente de novo.'}}render()}
+function itemMinha(m){const a=m.acao,[rot,cl]=ROTULO_STATUS[a.status]||[a.status,''],aberta=estado.minhasAberta===a.id,n=m.turnos.reduce((k,t)=>k+t.inscritos.length,0);
+  return `<div class="cartao"><div onclick="estado.minhasAberta=${aberta?'null':a.id};render()" style="cursor:pointer;display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center">${cuboAcao(a,'width:44px;height:44px;font-size:22px')}
+   <div style="min-width:0"><div style="font-weight:600;line-height:1.3">${esc(a.titulo)}</div><div class="sec" style="margin-top:5px"><span class="status ${cl}">${rot}</span> ${m.turnos[0]?fmtData(m.turnos[0].inicio):''}${a.status==='publicada'?` · ${quantosInscritos(n)}`:''}</div></div></div>
+  ${a.status==='em análise'?'<p class="sec" style="margin:10px 0 0">Esperando a moderação. Assim que aprovarem, ela aparece para todo mundo.</p>':''}
+  ${a.status==='recusada'&&a.motivoRecusa?`<p class="erro" style="margin:10px 0 0">Motivo da recusa: ${esc(a.motivoRecusa)}</p>`:''}
+  ${aberta?m.turnos.map(t=>`<div class="linha" style="margin-top:10px"><strong>${fmtData(t.inicio)}</strong> <span class="sec">${quantosInscritos(t.inscritos.length)}</span>
+     ${t.inscritos.map(i=>`<div>${esc(i.nome)} <span class="sec">${esc(i.telefone||'')}</span></div>`).join('')}
+     ${t.inscritos.length?`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec mini" onclick="copiar('${esc(t.inscritos.map(i=>i.telefone).filter(Boolean).join(', '))}')">Copiar números</button> <button class="btn sec mini" onclick="estado.avisoTexto=${t.id};render()">Mandar aviso</button></div>`:''}
+     ${estado.avisoTexto===t.id?`<textarea rows="3" id="aviso${t.id}" style="margin-top:8px">${esc(textoAviso(a,t))}</textarea><button class="btn sec mini" style="margin-top:6px" onclick="copiar(document.getElementById('aviso${t.id}').value)">Copiar texto</button>`:''}</div>`).join('')+
+   `<div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">${a.status==='publicada'?`<a class="btn sec mini" href="#/acao/${a.id}">Ver página</a>`:''}${API.modo==='exemplo'?`<button class="btn sec mini" onclick="editar(${a.id})">Editar</button>`:''}${['em análise','publicada'].includes(a.status)?`<button class="btn sec mini" onclick="encerrar(${a.id})">Encerrar</button>`:''}</div>`:''}</div>`}
+function telaPerfil(){const s=estado.sessao;
+  if(!s)return `<div class="pagina estreita"><h1>Perfil</h1><p>Entre com sua conta Google para dizer "Eu vou!" nas ações, criar ações e acompanhar tudo por aqui.</p>${botaoEntrar()}</div>`;
   const aviso=estado.aviso?`<div class="aviso">${estado.aviso}</div>`:'';estado.aviso=null;
-  return `<div class="pagina"><h1>Minhas ações</h1>${aviso}${minhas.length?'':'<div class="vazio"><p>Você ainda não criou nenhuma ação.</p><a class="btn" href="#/criar" onclick="novaCriacao()">Criar ação</a></div>'}
-  ${minhas.map(a=>`<div class="linha"><div onclick="estado.minhasAberta=estado.minhasAberta===${a.id}?null:${a.id};render()" style="cursor:pointer;display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center">${cuboAcao(a,'width:44px;height:44px;font-size:22px')}<div><div class="tit" style="font-weight:600">${esc(a.titulo)}</div><div class="sec">${a.status}${a.motivoRecusa?`. Motivo: ${esc(a.motivoRecusa)}`:''}. ${quantosInscritos(vaoNa(a.id))}</div></div></div>
-   ${estado.minhasAberta===a.id?turnosDaExemplo(a.id).map(t=>{const ins=inscritosNo(t.id);const passado=t.inicio.slice(0,10)<PUB.config.hoje;return `<div style="margin-top:10px;padding-left:54px"><strong>${fmtData(t.inicio)}</strong> <span class="sec">${quantosInscritos(ins.length)}</span>
-     ${ins.map(i=>`<div>${esc(pessoa(i.pessoa).nome)} <span class="sec">${pessoa(i.pessoa).telefone}</span>${passado?` <label style="display:inline;font-weight:400;font-size:14px"><input type="checkbox" style="width:auto" ${i.presenca?'checked':''} onchange="marcarPresenca(${i.id},this.checked)"> presente</label>`:''}</div>`).join('')}
-     <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec mini" onclick="copiar('${ins.map(i=>pessoa(i.pessoa).telefone).join(', ')}')">Copiar números</button> <button class="btn sec mini" onclick="estado.avisoTexto=${t.id};render()">Mandar aviso</button>${passado?' <span class="sec" style="align-self:center">Marcar presença: marque quem foi</span>':''}</div>
-     ${estado.avisoTexto===t.id?`<textarea rows="3" id="aviso${t.id}" style="margin-top:8px">${esc(textoAviso(a,t))}</textarea><button class="btn sec mini" style="margin-top:6px" onclick="copiar(document.getElementById('aviso${t.id}').value)">Copiar texto</button>`:''}</div>`}).join('')+`<div style="margin-top:12px;padding-left:54px;display:flex;gap:6px"><button class="btn sec mini" onclick="editar(${a.id})">Editar</button> ${a.status!=='encerrada'?`<button class="btn sec mini" onclick="encerrar(${a.id})">Encerrar</button>`:''}</div>`:''}</div>`).join('')}</div>`}
+  const minhas=estado.minhasAcoes||[],pf=estado.perfil||{};
+  const vou=(estado.minhasInscricoes||[]).filter(m=>m.acao.status==='publicada'&&m.turno.inicio.slice(0,10)>=PUB.config.hoje);
+  return `<div class="pagina estreita">${aviso}<div class="perfil-topo"><div class="letra" aria-hidden="true">${esc(String(s.nome||'?').trim().charAt(0).toUpperCase())}</div>
+   <div style="min-width:0"><h1>${esc(s.nome)}</h1><div class="sec" style="font-size:14px">${esc(s.email||'')}</div>${souVerificado()?'<div class="selo">✓ Verificado: suas ações aparecem na hora</div>':''}</div></div>
+  <h2>Seu WhatsApp</h2><p class="sec" style="font-size:14px;margin-top:-4px">Vai para quem organiza as ações em que você diz "Eu vou!" (nas ações importadas, para ninguém) e para a moderação das ações que você cria.</p>
+  <div style="display:flex;gap:8px"><input id="ptel" value="${esc(s.telefone||'')}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><button class="btn sec" onclick="salvarTelPerfil()">Salvar</button></div>
+  ${pf.erro?`<div class="erro">${esc(pf.erro)}</div>`:''}${pf.ok?'<div class="selo" style="margin-top:6px">Salvo.</div>':''}
+  <h2>Eu vou</h2><div class="cartao">${vou.length?`Você disse que vai em <strong>${vou.length===1?'1 ação':vou.length+' ações'}</strong>. A próxima: <a href="#/acao/${vou[0].acao.id}">${esc(vou[0].acao.titulo)}</a>, ${fmtData(vou[0].turno.inicio)}.`:'Você ainda não disse "Eu vou!" em nenhuma ação.'}
+   <div style="margin-top:8px"><a href="#/inscricoes" style="font-weight:600;color:var(--vinho)">Ver minhas inscrições</a></div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:22px"><h2 style="margin:0">Ações que criei</h2><a class="btn mini" href="#/criar" onclick="novaCriacao()">＋ Criar ação</a></div>
+  ${minhas.length?minhas.map(itemMinha).join(''):'<p class="sec" style="font-size:15px;margin-top:10px">Você ainda não criou nenhuma ação. Toda ação nova passa por uma revisão rápida antes de aparecer, e a situação fica aqui.</p>'}
+  ${s.papel==='moderador'?'<h2>Moderação</h2><a class="btn sec" href="#/fila">Abrir a fila de moderação</a>':''}
+  <div style="margin-top:40px;border-top:1px solid var(--nevoa);padding-top:16px"><button class="btn sec mini" onclick="sair().then(()=>{location.hash='#/inicio'})">Sair da conta</button></div></div>`}
 // ---------- fila ----------
-function historicoOrganizador(pid){const as=DADOS.acoes.filter(a=>a.organizador===pid);return `já criou ${as.length} ações (${as.filter(a=>a.status==='publicada'||a.status==='encerrada').length} aprovadas, ${as.filter(a=>a.status==='recusada').length} recusadas)`}
-function aprovar(id){acaoExemplo(id).status='publicada';sincronizar()}
-function recusar(id){const m=(document.getElementById('motivo'+id)||{}).value||'';if(!m.trim()){estado.recusando=id;estado.erroRecusa='Escreva o motivo.';render();return}const a=acaoExemplo(id);a.status='recusada';a.motivoRecusa=m;estado.recusando=null;estado.erroRecusa=null;sincronizar()}
+async function aprovar(id){try{await API.aprovar(id)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}await sincronizar()}
+async function recusar(id){const m=(document.getElementById('motivo'+id)||{}).value||'';if(!m.trim()){estado.recusando=id;estado.erroRecusa='Escreva o motivo.';render();return}
+  try{await API.recusar(id,m)}catch(e){estado.erroRecusa=MENSAGEM[e.codigo]||'Não deu.';render();return}
+  estado.recusando=null;estado.erroRecusa=null;await sincronizar()}
+// só no modo exemplo (ainda sem função no banco): selo, despublicar e bloquear
 function darSelo(oid){DADOS.organizacoes.find(o=>o.id===oid).verificada=true;sincronizar()}
 function despublicar(id){acaoExemplo(id).status='rascunho';sincronizar()}
 function bloquear(pid){pessoa(pid).bloqueada=true;DADOS.acoes.filter(a=>a.organizador===pid&&a.status==='publicada').forEach(a=>a.status='rascunho');sincronizar()}
-function telaFila(){const aba=estado.filaAba;
-  const lista=aba==='analise'?DADOS.acoes.filter(a=>a.status==='em análise').sort((p,q)=>q.criadaEm.localeCompare(p.criadaEm)):DADOS.acoes.filter(a=>a.status==='publicada');
+function telaFila(){const s=estado.sessao;if(!s||s.papel!=='moderador')return '<div class="pagina"><h1>Fila de moderação</h1><p>Só moderadores veem a fila.</p></div>';
+  const aba=estado.filaAba,lista=estado.fila||[],ex=API.modo==='exemplo';
   return `<div class="pagina"><h1>Fila de moderação</h1>
-  <div class="quando" style="display:inline-flex;margin-bottom:12px"><button class="pill ${aba==='analise'?'ativo':''}" onclick="estado.filaAba='analise';render()">Em análise (${DADOS.acoes.filter(a=>a.status==='em análise').length})</button><button class="pill ${aba==='publicadas'?'ativo':''}" onclick="estado.filaAba='publicadas';render()">Publicadas</button></div>
+  <div class="quando" style="display:inline-flex;margin-bottom:12px"><button class="pill ${aba==='analise'?'ativo':''}" onclick="estado.filaAba='analise';render()">Em análise${aba==='analise'?` (${lista.length})`:''}</button><button class="pill ${aba==='publicadas'?'ativo':''}" onclick="estado.filaAba='publicadas';render()">Publicadas</button></div>
   <p class="sec">Recuse se: não é ação de campanha; o lugar não é público; convoca para confronto; pede dinheiro; tem dado pessoal no texto.</p>
   ${lista.length?'':'<div class="vazio"><p>Nada por aqui.</p></div>'}
-  ${lista.map(a=>{const t=turnosDaExemplo(a.id)[0]||{inicio:a.criadaEm+'T00:00'};const p=pessoa(a.organizador);const o=a.organizacao?org(a.organizacao):null;return `<div class="linha">${cardAcao({a,t,km:null})}
-   <div class="sec">Organizador: ${esc(p.nome)}, ${p.telefone}. ${historicoOrganizador(p.id)}.</div>
-   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${aba==='analise'?`<button class="btn mini" onclick="aprovar(${a.id})">Aprovar</button> <button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Recusar</button>${o&&!o.verificada?` <button class="btn sec mini" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}`:
-     `<button class="btn sec mini" onclick="despublicar(${a.id})">Despublicar</button> <button class="btn sec mini" onclick="bloquear(${p.id})">Bloquear organizador</button>`}</div>
+  ${lista.map(m=>{const a=m.acao,t=m.turnos[0]||{inicio:(a.criadaEm||PUB.config.hoje)+'T00:00'},p=m.organizador||{},o=a.organizacao?org(a.organizacao):null;return `<div class="linha">${cardAcao({a,t,km:null})}
+   <p style="white-space:pre-line;font-size:15px;margin:4px 0 8px">${esc(a.descricao)}</p>
+   <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome)}, ${esc(lugarCurto(a.lugar))}`}. Turnos: ${m.turnos.map(x=>fmtData(x.inicio)).join('; ')||'nenhum'}.${a.detalhe?` Detalhe: ${esc(a.detalhe)}.`:''}${a.contatoLink?` Grupo: ${esc(a.contatoLink)}.`:''}</div>
+   <div class="sec">Quem criou: ${esc(p.nome)}, ${esc(p.telefone||'sem telefone')}${p.email?`, ${esc(p.email)}`:''}. Já criou ${p.criadas} ações (${p.aprovadas} aprovadas, ${p.recusadas} recusadas).</div>
+   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${aba==='analise'?`<button class="btn mini" onclick="aprovar(${a.id})">Aprovar</button> <button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Recusar</button>${ex&&o&&!o.verificada?` <button class="btn sec mini" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}`:
+     `<button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Tirar do ar (recusar)</button>${ex?` <button class="btn sec mini" onclick="bloquear(${p.id})">Bloquear organizador</button>`:''}`}</div>
    ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: pede dinheiro para o material">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="recusar(${a.id})">Confirmar recusa</button></div>`:''}</div>`}).join('')}</div>`}
 // ---------- roteamento ----------
 async function recarregar(){PUB=await API.publico();normalizarTipos(PUB.acoes);estado.sessao=await API.sessao()}
@@ -637,10 +698,13 @@ let renderN=0;
 async function render(){
   const n=++renderN;
   const h=location.hash||'#/inicio';const [,rota,arg]=h.split('/');
-  if(rota!=='acao')estado.inscrevendo=null;if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}
+  if(rota!=='acao'){estado.inscrevendo=null;estado.vouOk=null}if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}if(rota!=='perfil')estado.perfil=null;
   try{
     if(rota==='acao'){const r=await API.acao(Number(arg));if(n!==renderN)return;if(r)normalizarTipos([r.acao]);estado.acaoAberta=r}
     if(rota==='inscricoes'){const r=await API.minhasInscricoes();if(n!==renderN)return;normalizarTipos(r.map(m=>m.acao));estado.minhasInscricoes=r}
+    if((rota==='perfil'||rota==='minhas')&&estado.sessao){const [ma,mi]=await Promise.all([API.minhasAcoes(),API.minhasInscricoes()]);if(n!==renderN)return;
+      normalizarTipos(ma.map(m=>m.acao));normalizarTipos(mi.map(m=>m.acao));estado.minhasAcoes=ma;estado.minhasInscricoes=mi}
+    if(rota==='fila'&&estado.sessao&&estado.sessao.papel==='moderador'){const r=await API.fila(estado.filaAba==='analise'?'em análise':'publicada');if(n!==renderN)return;normalizarTipos(r.map(m=>m.acao));estado.fila=r}
   }catch(e){if(n!==renderN)return;console.error(e);if(mapa){mapa.remove();mapa=null;marcadores=[]}
     document.getElementById('app').innerHTML='<div class="pagina"><p class="erro">Não foi possível carregar. Tente de novo.</p></div>';return}
   if(mapa){mapa.remove();mapa=null;marcadores=[]}
@@ -652,12 +716,12 @@ async function render(){
   if(r!=='mapa')estado.sel=null;
   rotaAnterior=r;telaAtual=r;
   const app=document.getElementById('app');
-  const soExemplo=['criar','minhas','fila'].includes(rota)&&API.modo!=='exemplo';
-  app.innerHTML=soExemplo?'<div class="pagina"><h1>Em breve</h1><p>Criar ação, Minhas ações e a Fila chegam na próxima etapa.</p></div>':
-    rota==='acao'?telaAcao():rota==='inscricoes'?telaInscricoes():rota==='criar'?telaCriar():rota==='minhas'?telaMinhas():rota==='fila'?telaFila():rota==='mapa'?telaMapa():telaInicio();
+  app.innerHTML=rota==='acao'?telaAcao():rota==='inscricoes'?telaInscricoes():rota==='criar'?telaCriar():rota==='perfil'||rota==='minhas'?telaPerfil():rota==='fila'?telaFila():rota==='mapa'?telaMapa():telaInicio();
   document.querySelectorAll('nav a[data-rota]').forEach(a=>a.classList.toggle('ativo',a.dataset.rota===(rota||'inicio')));
   document.querySelectorAll('nav a[data-so-exemplo]').forEach(a=>a.style.display=API.modo==='exemplo'?'':'none');
-  document.getElementById('conta-rotulo').textContent=estado.sessao?'Sair':'Entrar';
+  document.querySelectorAll('nav a[data-so-moderador]').forEach(a=>a.style.display=estado.sessao&&estado.sessao.papel==='moderador'?'':'none');
+  document.getElementById('conta-rotulo').textContent=estado.sessao?'Perfil':'Entrar';
+  document.getElementById('conta-icone').textContent=estado.sessao?'👤':'👋';
   document.getElementById('conta').classList.toggle('entrar',!estado.sessao); // "Entrar" com destaque, como o Doar
   document.getElementById('doar').href=PUB.config.vaquinha||'#';
   if(rota==='mapa')montarMapa();
