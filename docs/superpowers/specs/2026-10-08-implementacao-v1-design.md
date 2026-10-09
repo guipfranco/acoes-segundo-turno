@@ -63,11 +63,19 @@ marcar alguém como organizador direto, sem pedido (parceiros).
 da lista ou propõe nova. Só moderador dá selo.
 
 **Ação**: título, tipo, descrição, organizador, organização opcional, lugar público (nome, bairro,
-cidade, coordenadas) ou online, detalhe do encontro, link do grupo, foto por URL, área prioritária
-(marcada à mão por moderador), estado (rascunho, em análise, publicada, recusada, encerrada), motivo
-da recusa, criada em. Publicadas são públicas, menos detalhe do encontro e link do grupo, que só
-inscritos em algum horário dela, o organizador e os moderadores veem. Organizador de organização
-verificada publica direto; os demais vão para a fila.
+cidade, coordenadas) ou online, detalhe do encontro (opcional), **forma de contato** (ver abaixo),
+foto por URL, área prioritária (marcada à mão por moderador), estado (rascunho, em análise,
+publicada, recusada, encerrada), motivo da recusa, criada em. Publicadas são públicas, menos detalhe
+do encontro e dados de contato, que só inscritos em algum horário dela, o organizador e os
+moderadores veem. Organizador de organização verificada publica direto; os demais vão para a fila.
+
+**Forma de contato** da ação. O organizador escolhe como vai combinar com quem se inscrever:
+- `organizador_chama` (padrão): a pessoa só deixa nome e telefone e não vê contato nenhum. O
+  organizador chama no WhatsApp ou adiciona no grupo quem ele quiser, depois de ver quem é.
+- `whatsapp`: a pessoa vê um número informado pelo organizador (o dele ou outro) e chama.
+- `link_grupo`: a pessoa vê o link do grupo. Na escolha, aviso claro: qualquer inscrito vai ver o
+  link.
+Pode ser mudada depois editando a ação. Nunca é obrigatório informar link de grupo.
 
 **Horário** (tabela `turno`): ação, início, fim, lotação opcional. Público junto com a ação.
 
@@ -88,15 +96,18 @@ verificado.
 **Entrar.** "Entrar com Google". Primeira vez cria a pessoa e mostra o aviso de dados.
 
 **Vou.** Toca em Vou num horário. Sem login, abre o Google e volta para onde estava. Sem telefone,
-pede uma vez com o aviso "seu nome e telefone vão para quem organiza esta ação". Confirma. Aparecem
-detalhe do encontro, link do grupo e compartilhar. A ação entra em "Minhas inscrições", de onde dá
+pede uma vez com o aviso "seu nome e telefone vão para quem organiza esta ação". Confirma. A tela
+de confirmação diz o que acontece conforme a forma de contato: "Fulano vai entrar em contato pelo
+seu telefone", ou mostra o número do WhatsApp, ou mostra o link do grupo. Mostra também o detalhe do
+encontro, se houver, e o botão de compartilhar. A ação entra em "Minhas inscrições", de onde dá
 para desistir. Lotação cheia bloqueia nova inscrição. Pessoa bloqueada não se inscreve.
 
 **Quero organizar.** Botão na inicial e no rodapé. Pede telefone, organização e o texto de
 confirmação. Fica em análise. Moderador confere fora da plataforma, aprova ou recusa com motivo. A
 pessoa vê o resultado ao entrar e, se aprovada, ganha "Criar ação".
 
-**Criar ação.** Os 3 passos do mockup com horários no vocabulário da Agenda. Organização verificada
+**Criar ação.** Os 3 passos do mockup com horários no vocabulário da Agenda e, no passo 2, a
+pergunta "Como você vai combinar com quem se inscrever?" com as três formas de contato. Organização verificada
 publica na hora; demais veem "sua ação está em análise". Editar e encerrar depois. Editar uma ação
 publicada não a tira do ar.
 
@@ -118,8 +129,9 @@ Código de verificação de telefone; marcar presença; lembrete na véspera e a
 prioritária derivada do mapa; upload de foto; login por Instagram; denúncia pela tela da ação;
 auto-aprovação de organizador por histórico. Tudo isso cabe no modelo sem migração destrutiva.
 
-Risco aceito: participante mal-intencionado se inscreve e vê detalhe e link do grupo. Mitigação é
-na camada WhatsApp (organizador remove do grupo) e o bloqueio pelo moderador.
+Risco: participante mal-intencionado se inscreve. Com a forma de contato padrão ele não vê nada e
+o organizador filtra antes de chamar. Só na opção de link do grupo ele chega ao grupo, e o
+organizador escolhe isso ciente do aviso. Bloqueio pelo moderador cobre o resto.
 
 ## Do mockup ao app
 
