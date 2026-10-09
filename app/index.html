@@ -266,7 +266,7 @@ nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;fon
   <a href="#/mapa" data-rota="mapa"><span>🗺️</span><span>Mapa</span></a>
   <a href="#/fila" data-rota="fila" data-so-moderador style="display:none"><span>✅</span><span>Fila</span></a>
   <a href="#/perfil" id="conta" data-rota="perfil" onclick="return contaClique()"><span id="conta-icone">👤</span><span id="conta-rotulo">Entrar</span></a>
-  <a id="doar" href="#" target="_blank" rel="noopener"><span>❤️</span><span>Doar</span></a>
+  <a id="doar" href="#" target="_blank" rel="noopener" onclick="contar('doar')"><span>❤️</span><span>Doar</span></a>
   <a class="cta" href="#/criar" data-rota="criar" onclick="novaCriacao()"><span>＋</span><span><span class="so-cel">Ação</span><span class="so-desk">Cadastrar ação</span></span></a>
 </div></nav>
 <script src="dados.js"></script>
@@ -277,8 +277,16 @@ nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;fon
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="api-supabase.js"></script>
 <script src="api.js"></script>
+<!-- contagem de visitas sem cookie (GoatCounter, painel em acoes-segundo-turno.goatcounter.com): a tela vem do hash,
+     sem a query (onde passa o code do login); não conta em localhost -->
+<script>window.goatcounter={path:()=>location.pathname+(location.hash||'#/inicio')}</script>
+<script data-goatcounter="https://acoes-segundo-turno.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <script>
 // ---------- dados e helpers ----------
+// contagem: a tela a cada troca de hash e cliques como eventos; o evento leva só o nome, nada de quem clicou.
+// No modo exemplo os eventos não contam; sem o script (bloqueador, localhost) não faz nada
+function contar(evento){try{if(window.API&&API.modo==='exemplo')return;if(window.goatcounter&&goatcounter.count)goatcounter.count({path:evento,title:evento,event:true})}catch(e){}}
+function contarTela(){try{if(window.goatcounter&&goatcounter.count)goatcounter.count()}catch(e){}}
 // tipos de ação, na ordem dos chips; revistos em 2026-10-09 a partir das ações reais da agenda Bora Lula
 // (encontro e plenária, ato e caminhada dominam; ligatona e porta a porta ficam para quem cria ação)
 const ICONES={'panfletagem':'📄','encontro':'🗣️','ato':'📣','caminhada':'🚶','cultural':'🎶','bandeiraço':'🚩','adesivaço':'🏷️','porta a porta':'🚪','ligatona':'📞','outro':'✨'};
@@ -545,7 +553,7 @@ function irParaLugar(l){estado.onde={rotulo:nomeLugar(l),lat:l[2],lon:l[3]};cons
   if(estado.gaveta==='baixa')abrirGaveta('meio')}
 function usarLocalizacao(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{irParaLugar(['Minha localização','',p.coords.latitude,p.coords.longitude,'g'])},()=>{})}
 // ---------- acao ----------
-async function entrar(){await API.entrar();await sincronizar()}
+async function entrar(){contar('entrar');await API.entrar();await sincronizar()}
 async function sair(){await API.sair();localStorage.removeItem('vouPendente');estado.inscrevendo=null;await sincronizar()}
 // logado, o botão da conta leva ao Perfil (onde fica o Sair); deslogado, entra com o Google
 function contaClique(){if(estado.sessao)return true;entrar().catch(e=>console.error(e));return false}
@@ -569,7 +577,7 @@ function secaoInscricoes(){const lista=estado.minhasInscricoes||[],prox=lista.fi
    ${pass.length?`<details class="passadas"><summary>Passadas, canceladas ou desistências (${pass.length})</summary><div class="lista-insc">${pass.map(linhaInscricao).join('')}</div></details>`:''}</section>`}
 async function desistir(tid){await API.desistir(tid);await sincronizar()}
 // onde: 'topo' (botão logo abaixo do título, no celular) ou 'lado' (coluna "Quando"); o formulário abre ali
-async function iniciarVou(tid,onde){estado.vouOnde=onde||null;
+async function iniciarVou(tid,onde){contar('eu-vou-clique');estado.vouOnde=onde||null;
   if(!estado.sessao){localStorage.setItem('vouPendente',String(tid));await API.entrar();await continuarVouPendente();return}
   await abrirVou(tid)}
 async function continuarVouPendente(){const tid=Number(localStorage.getItem('vouPendente'));if(!tid)return;
@@ -580,7 +588,7 @@ async function abrirVou(tid){const [,rota,arg]=(location.hash||'').split('/');
   const ab=estado.acaoAberta;
   if(ab&&semInscricao(ab.acao)){
     try{await API.inscrever(tid)}catch(e){estado.inscrevendo={turno:tid,semFormulario:true,erro:MENSAGEM[e.codigo]||'Não deu. Tente de novo.'};await render();return}
-    estado.inscrevendo=null;await recarregar();await render();estado.vouOk=tid;await render();return}
+    contar('eu-vou-confirmado');estado.inscrevendo=null;await recarregar();await render();estado.vouOk=tid;await render();return}
   estado.inscrevendo={turno:tid,telefone:estado.sessao.telefone||'',erro:null};await render()}
 const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_inscricao:'Esta ação não tem inscrição: siga a divulgação original.',sem_telefone:'Informe seu WhatsApp.',telefone_invalido:'Telefone no formato (11) 9xxxx-xxxx.',bloqueada:'Sua conta está bloqueada.',lotado:'Esse horário lotou.',turno_passado:'Esse horário já passou.',nao_publicada:'Esta ação não está aberta a inscrições.',
   limite_diario:'Você já criou 10 ações hoje. Tente de novo amanhã.',limite_em_analise:'Você tem 10 ações esperando a moderação. Espere a análise antes de criar mais.',
@@ -596,7 +604,7 @@ const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_inscricao:'Esta a�
 async function confirmarVou(tid){const ins=estado.inscrevendo;const tel=(document.getElementById('vtel')||{}).value||'';
   try{if(tel!==(estado.sessao.telefone||''))estado.sessao=await API.salvarTelefone(tel);await API.inscrever(tid)}
   catch(e){ins.erro=MENSAGEM[e.codigo]||'Não deu. Tente de novo.';ins.telefone=tel;render();return}
-  estado.inscrevendo=null;await recarregar();await render();estado.vouOk=tid;await render()}
+  contar('eu-vou-confirmado');estado.inscrevendo=null;await recarregar();await render();estado.vouOk=tid;await render()}
 async function inscrever(tid){return confirmarVou(tid)}
 // ---------- adicionar à agenda (Google Agenda por link, Apple e Outlook por arquivo .ics) ----------
 // os horários são de Brasília (sem horário de verão desde 2019): convertemos para UTC somando 3 horas
@@ -619,13 +627,13 @@ function icsTexto(a,t){const e=s=>String(s||'').replace(/\\/g,'\\\\').replace(/;
     `SUMMARY:${e(a.titulo)}`,`LOCATION:${e(ondeAgenda(a))}`,`DESCRIPTION:${e(textoAgenda(a))}`,`URL:${linkAcao(a)}`,
     'BEGIN:VALARM','TRIGGER:-PT2H','ACTION:DISPLAY',`DESCRIPTION:${e(a.titulo)}`,'END:VALARM','END:VEVENT','END:VCALENDAR'].map(dobra).join('\r\n')+'\r\n'}
 const agendaCache={};
-function baixarIcs(chave){const x=agendaCache[chave];if(!x)return;const blob=new Blob([icsTexto(x.a,x.t)],{type:'text/calendar;charset=utf-8'});
+function baixarIcs(chave){const x=agendaCache[chave];if(!x)return;contar('agenda-ics');const blob=new Blob([icsTexto(x.a,x.t)],{type:'text/calendar;charset=utf-8'});
   const url=URL.createObjectURL(blob),l=document.createElement('a');l.href=url;l.download=`acao-${x.a.id}.ics`;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function botaoAgenda(a,t){if(t.inicio.slice(0,10)<PUB.config.hoje)return '';const k=a.id+'-'+t.id;agendaCache[k]={a,t};
   return `<details class="agenda"><summary>📅 Adicionar à agenda</summary><div class="opcoes">
-   <a href="${esc(linkGoogleAgenda(a,t))}" target="_blank" rel="noopener">Google Agenda</a>
+   <a href="${esc(linkGoogleAgenda(a,t))}" target="_blank" rel="noopener" onclick="contar('agenda-google')">Google Agenda</a>
    <button onclick="baixarIcs('${k}')">Apple ou Outlook (arquivo .ics)</button></div></details>`}
-function compartilhar(){const u=location.href;if(navigator.share)navigator.share({url:u});else{navigator.clipboard&&navigator.clipboard.writeText(u);alert('Link copiado')}}
+function compartilhar(){contar('compartilhar');const u=location.href;if(navigator.share)navigator.share({url:u});else{navigator.clipboard&&navigator.clipboard.writeText(u);alert('Link copiado')}}
 function botaoTurno(a,t,onde='lado'){const n=vaoNo(t);
   if(t.inicio.slice(0,10)<PUB.config.hoje)return `<button class="btn" disabled>horário encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
   const div=semInscricao(a)&&a.linkDivulgacao?`<div style="margin-top:8px">${botaoDivulgacao(a)}</div>`:'';
@@ -702,7 +710,7 @@ function novoCriar(){return {passo:1,editando:null,tipo:null,online:false,titulo
 estado.criar=novoCriar();
 function cv(campo,valor){estado.criar[campo]=valor}
 function escolherTipo(t){const c=estado.criar;c.tipo=t;if(!c.editando){c.titulo=MODELOS[t].titulo;c.descricao=MODELOS[t].descricao}c.erros={};c.passo=2;render()}
-function novaCriacao(){estado.criar=novoCriar()}
+function novaCriacao(){contar('cadastrar-acao-abrir');estado.criar=novoCriar()}
 function cancelarEdicao(){estado.criar=novoCriar();location.hash='#/minhas'}
 let sugLugarCriar=[];
 function sugerirCriar(q){const box=document.getElementById('sug-criar');sugLugarCriar=buscarLugares(q,5);estado.criar.buscaLugar=q;
@@ -838,7 +846,7 @@ async function publicarAcao(){const c=estado.criar,e={};if(!telValido(c.telefone
     r=await API.criarAcao({titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,foto:c.foto,online:c.online,lugar_nome:lugar.nome,bairro:lugar.bairro,cidade:lugar.cidade,lat:lugar.lat,lon:lugar.lon,
       detalhe:c.detalhe,grupo:c.grupo,organizacao:c.quem==='minha'&&minhaOrg()?minhaOrg().id:null,organizacao_nome:c.quem==='outra'?c.orgNome.trim():'',organizacao_link:precisaPost(c)?normLink(c.orgLink):'',turnos:turnosForm(c)})}
   catch(err){c.erros={geral:MENSAGEM[err.codigo]||'Não deu para enviar. Tente de novo.'};render();return}
-  estado.aviso=r.status==='publicada'?'Publicada! Sua ação já aparece no mapa.':'Recebemos! Sua ação está em análise. Você acompanha a situação aqui no Perfil.';
+  contar('cadastrar-acao-enviada');estado.aviso=r.status==='publicada'?'Publicada! Sua ação já aparece no mapa.':'Recebemos! Sua ação está em análise. Você acompanha a situação aqui no Perfil.';
   estado.criar=novoCriar();await recarregar();location.hash='#/perfil'}
 // ---------- minhas ----------
 // recado curto no pé da tela, no lugar do alert
@@ -989,6 +997,7 @@ window.matchMedia('(min-width:900px)').addEventListener('change',()=>{const ins=
   if(!(ins||estado.vouOk)||!(location.hash||'').startsWith('#/acao/'))return;const e=document.getElementById('vtel');if(ins&&e)ins.telefone=e.value;render()});
 document.addEventListener('toggle',e=>{const d=e.target;if(d.open&&d.matches&&d.matches('details.mais,details.agenda'))ajeitarMenu(d)},true);
 window.addEventListener('hashchange',render);
+window.addEventListener('hashchange',contarTela);
 window.addEventListener('DOMContentLoaded',sincronizar);
 </script>
 </body>
