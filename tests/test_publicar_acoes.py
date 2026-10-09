@@ -175,3 +175,21 @@ def test_mesma_cidade_data_e_hora_com_algo_em_comum_e_o_mesmo_ato():
     assert motivos["Ato Estudantes com Lula em Belo Horizonte"] == "já está no feed Bora Lula (id 1)"
     assert motivos["Caminhada pela democracia em São João del-Rei"] == "já está no feed Bora Lula (id 2)"
     assert [i["titulo"] for i in itens] == ["Panfletagem com Lula na feira", "Plenária com Lula no Barreiro"]
+
+
+def test_card_com_varias_acoes_no_mesmo_post_vira_uma_acao_por_linha():
+    card = "https://www.instagram.com/p/card/"
+    linhas = [
+        linha(titulo="Camisetaço no Vidigal", cidade="Rio de Janeiro", uf="RJ", bairro="", hora="17:00", link=card),
+        linha(titulo="Bandeiraço no Vidigal", cidade="Rio de Janeiro", uf="RJ", bairro="", hora="17:30", link=card),
+        linha(titulo="Caminhada Macaé com Lula", cidade="Macaé", uf="RJ", bairro="", hora="17:00", link=card),
+        # a mesma ação do card vista por outra frente, com outro título: continua repetida
+        linha(frente="x", titulo="Caminhada em Macaé", cidade="Macaé", uf="RJ", bairro="", hora="17:00", link=card),
+        linha(titulo="Plenária das mulheres", link="https://x/p"),
+    ]
+    itens, revisao = pa.itens_do_consolidado(linhas, LUGARES, hoje="2026-10-09")
+    assert [i["titulo"] for i in itens] == ["Camisetaço no Vidigal", "Bandeiraço no Vidigal", "Caminhada Macaé com Lula",
+                                            "Plenária das mulheres"]
+    assert [m for _, _, m in revisao] == ["repetido no consolidado"]
+    # link de um post só: o id continua sendo o do link, como antes (não muda o que já está publicado)
+    assert itens[3]["fonte_id"] == pa.id_redes(linhas[4])

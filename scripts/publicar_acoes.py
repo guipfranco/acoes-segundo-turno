@@ -128,8 +128,13 @@ def tipo_redes(tipo, titulo=""):
     return bl.tipo_pelo_titulo(titulo)
 
 
-def id_redes(r):
-    base = (r.get("link") or "").strip() or f"{r.get('titulo')}|{r.get('data')}|{r.get('cidade')}"
+def id_redes(r, link_compartilhado=False):
+    """Hash do link. Card com várias ações no mesmo post (link_compartilhado): link + data, hora e cidade."""
+    link = (r.get("link") or "").strip()
+    if link and link_compartilhado:
+        base = f"{link}|{r.get('data')}|{(r.get('hora') or '').strip()}|{bl.sem_acento(r.get('cidade'))}"
+    else:
+        base = link or f"{r.get('titulo')}|{r.get('data')}|{r.get('cidade')}"
     return hashlib.sha1(base.encode("utf-8")).hexdigest()[:16]
 
 
@@ -158,7 +163,7 @@ def limpar_org(texto):
     return org[:120]
 
 
-def item_da_rede(r, lugares, geo=None):
+def item_da_rede(r, lugares, geo=None, link_compartilhado=False):
     if "bora lula" in bl.sem_acento(r.get("texto_original")):
         return None, "já vem do feed Bora Lula"
     if bl.sem_acento(r.get("lula_explicito")) != "sim":
@@ -173,7 +178,7 @@ def item_da_rede(r, lugares, geo=None):
     data = r["data"]
     org = limpar_org(r.get("organizador"))
     item = {
-        "fonte_id": id_redes(r), "titulo": (r.get("titulo") or "Ação")[:120], "tipo": tipo_redes(r.get("tipo"), r.get("titulo")),
+        "fonte_id": id_redes(r, link_compartilhado),"titulo": (r.get("titulo") or "Ação")[:120], "tipo": tipo_redes(r.get("tipo"), r.get("titulo")),
         "organizacao": org or None, "organizacao_tipo": bl.tipo_org(org) if org else None,
         "organizacao_foto": bl.logo_org(org) if org else None, "link": (r.get("link") or "").strip(), "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
     }
@@ -231,11 +236,18 @@ def repetido_no_feed(item, itens_feed, hora_explicita=True):
 def itens_do_consolidado(linhas, lugares, itens_feed=(), hoje=None, ate=ATE, geo=None):
     hoje = hoje or date.today().isoformat()
     itens, revisao, vistos = [], [], set()
+    # link que aparece com mais de uma data/hora/cidade é card com várias ações
+    atos_por_link = {}
+    for r in linhas:
+        link = (r.get("link") or "").strip()
+        if link:
+            atos_por_link.setdefault(link, set()).add((r.get("data"), (r.get("hora") or "").strip(), bl.sem_acento(r.get("cidade"))))
     for r in linhas:
         data = r.get("data") or ""
         if not (hoje <= data <= ate):
             continue
-        item, motivo = item_da_rede(r, lugares, geo)
+        compartilhado = len(atos_por_link.get((r.get("link") or "").strip(), ())) > 1
+        item, motivo = item_da_rede(r, lugares, geo, compartilhado)
         if not item:
             revisao.append((r.get("frente", ""), r.get("titulo", ""), motivo))
             continue
