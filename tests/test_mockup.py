@@ -115,8 +115,8 @@ def test_validacao_dos_campos_obrigatorios():
 
 
 def test_perfil_e_fila():
-    for s in ["function telaPerfil", "function telaFila", "Copiar números", "Mandar aviso", "Ações que criei",
-              "Encerrar", "Editar", "Aprovar", "Recusar", "Dar selo à organização", "Sair da conta",
+    for s in ["function telaPerfil", "function telaFila", "Copiar telefones", "Escrever aviso para quem vai", "Abrir no WhatsApp", "Ações que criei",
+              "Encerrar ação", "Editar", "Aprovar", "Recusar", "Dar selo à organização", "Sair da conta",
               "Bloquear organizador", "Recuse se:", "Já criou", "API.minhasAcoes()", "API.fila(", "Motivo da recusa"]:
         assert s in HTML, s
 
@@ -329,15 +329,15 @@ def test_vou_pede_telefone_uma_vez_e_mostra_a_forma_de_contato():
     assert ">Eu vou!<" in HTML and "✓ Você vai" in HTML and "Inscreva-se" not in HTML
 
 
-def test_entrar_sair_e_minhas_inscricoes():
-    for s in ["function telaInscricoes", "rota==='inscricoes'", 'data-rota="inscricoes"', "API.minhasInscricoes()",
-              "Entrar com Google", "function entrar", "function sair", "Você ainda não se inscreveu"]:
+def test_entrar_sair_e_inscricoes_no_perfil():
+    for s in ["function secaoInscricoes", "rota==='inscricoes'", "API.minhasInscricoes()", "${secaoInscricoes()}",
+              "Entrar com Google", "function entrar", "function sair", 'Você ainda não disse "Eu vou!"']:
         assert s in HTML, s
 
 
-def test_inscricoes_separa_passadas_e_permite_desistir():
-    corpo = HTML.split("function telaInscricoes", 1)[1].split("async function desistir", 1)[0]
-    for s in ["Próximas", "Passadas ou encerradas", "já aconteceu", "ação encerrada", "desistir(", "Você ainda não se inscreveu"]:
+def test_inscricoes_separa_passadas_e_desistir_fica_no_menu():
+    corpo = HTML.split("const inscProxima", 1)[1].split("async function desistir", 1)[0]
+    for s in ["Onde eu vou", "Passadas ou encerradas", "já aconteceu", "ação encerrada", "menuMais(", "desistir("]:
         assert s in corpo, s
 
 
@@ -417,13 +417,19 @@ def test_eu_vou_na_divulgacao_marca_presenca_sem_formulario():
     assert "Ver a divulgação original" in HTML
 
 
-def test_criar_acao_e_o_cta_principal_e_doar_sai_da_barra():
+def test_criar_acao_e_o_cta_principal_e_doar_fica_na_barra():
     nav = HTML[HTML.index("<nav>"):HTML.index("</nav>")]
-    assert 'class="cta" href="#/criar"' in nav and "Doar" not in nav
-    assert "const linkDoar=" in HTML and HTML.count("${linkDoar()}") == 2  # inicial e Perfil
+    assert 'class="cta" href="#/criar"' in nav and 'id="doar"' in nav and "Inscrições" not in nav
+    assert "Doe para a campanha do Lula" in HTML and "Uma vaquinha só" not in HTML
 
 
 def test_inscricoes_em_lista_sem_nome_e_telefone():
-    corpo = HTML.split("function telaInscricoes", 1)[1].split("async function desistir", 1)[0]
+    corpo = HTML.split("const inscProxima", 1)[1].split("async function desistir", 1)[0]
     assert 'class="insc"' in corpo and "cardEvento" not in corpo
     assert "estado.sessao.telefone" not in corpo
+
+
+def test_desistir_e_encerrar_so_no_menu_de_tres_pontinhos():
+    assert "const menuMais=" in HTML and 'class="perigo" onclick="desistir(' in HTML
+    assert 'class="btn sec mini" onclick="desistir(' not in HTML
+    assert "details.mais[open]" in HTML

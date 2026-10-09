@@ -17,7 +17,7 @@ try {
   await p.waitForSelector('#vtel'); // volta do "login" com o formulário aberto
   await p.fill('#vtel', '11988887777'); await p.click('text=Confirmar');
   await p.waitForSelector('text=vai entrar em contato');
-  await p.goto('http://localhost:8000/?modo=exemplo#/inscricoes');
-  await p.waitForSelector('.evento');
+  await p.goto('http://localhost:8000/?modo=exemplo#/inscricoes'); // abre o Perfil na seção "Onde eu vou"
+  await p.waitForSelector('#inscricoes .insc');
   console.log('ok');
 } finally { await b.close(); }

@@ -50,13 +50,26 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
 .perfil-topo{display:flex;align-items:center;gap:14px;margin-bottom:6px}.perfil-topo .letra{width:56px;height:56px;border-radius:50%;background:var(--vermelho);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:800;flex:none}
 .perfil-topo h1{margin:0}.status{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;background:var(--nevoa);color:var(--tinta)}
 .status.publicada{background:#e8f4ec;color:var(--selo)}.status.analise{background:#fff1d6;color:#8a5a00}.status.recusada{background:#fde7e9;color:var(--vinho)}
-.cartao{border:1.5px solid var(--nevoa);border-radius:16px;padding:14px 16px;margin:10px 0}
+.cartao{background:#f3f4f6;border-radius:18px;padding:16px;margin:12px 0}.cartao-topo{display:flex;align-items:center;gap:8px}
+.turno-meu{background:#fff;border-radius:14px;padding:12px 14px;margin-top:12px}.turno-meu .pessoa{margin-top:6px;font-size:15px}
+.link-whats{color:var(--selo);font-weight:600;font-size:13px;text-decoration:none;white-space:nowrap}.link-whats:hover{text-decoration:underline}
+.ferramentas{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:10px;border-top:1px solid var(--nevoa);padding-top:8px}.ferramentas .link{text-decoration:none;color:var(--tinta)}.ferramentas .link:hover{text-decoration:underline}
+.ver-pagina{display:inline-block;margin-top:12px;font-weight:600;color:var(--vinho);font-size:14px}
+.mais{position:relative;display:inline-block;flex:none}.mais summary{list-style:none;cursor:pointer;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:22px;line-height:1;color:var(--cinza);user-select:none}
+.mais summary::-webkit-details-marker{display:none}.mais summary:hover,.mais[open] summary{background:var(--nevoa);color:var(--tinta)}
+.mais .opcoes{position:absolute;right:0;top:calc(100% + 4px);background:#fff;border-radius:12px;box-shadow:0 8px 28px rgba(23,23,26,.2);padding:6px;z-index:60;min-width:170px}
+.mais .opcoes button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 12px;border-radius:8px;font-size:14px;cursor:pointer;color:var(--tinta)}
+.mais .opcoes button:hover{background:var(--nevoa)}.mais .opcoes button.perigo{color:var(--vinho)}
+.vai{display:flex;align-items:center;gap:6px}
+.passadas{margin-top:12px}.passadas summary{cursor:pointer;color:var(--cinza);font-size:14px;font-weight:600;padding:6px 0}
+#recado{position:fixed;left:50%;bottom:calc(var(--nav) + 16px);transform:translate(-50%,20px);background:var(--tinta);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:.2s;z-index:2000}
+#recado.visivel{opacity:1;transform:translate(-50%,0)}@media (min-width:900px){#recado{bottom:24px}}
 /* minhas inscrições: uma ação por linha */
 .insc{display:flex;align-items:center;gap:8px 14px;padding:12px 0;border-top:1px solid var(--nevoa);flex-wrap:wrap}.lista-insc .insc:first-child{border-top:0}
 .insc-link{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:center;flex:1 1 280px;min-width:0;text-decoration:none;color:inherit}
 .insc .tit{font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.insc-link:hover .tit{text-decoration:underline}
 .insc .meta{font-size:14px;color:var(--cinza);margin-top:3px}.insc .meta b{color:var(--tinta);font-weight:600}
-.insc-acoes{display:flex;align-items:center;gap:12px;margin-left:68px}.insc-acoes .agenda{margin-top:0}.insc-acoes .agenda .opcoes{left:auto;right:0}
+.insc-acoes{display:flex;align-items:center;gap:8px;margin-left:68px}.insc-acoes .agenda{margin-top:0}.insc-acoes .agenda .opcoes{left:auto;right:0}
 @media (min-width:900px){.insc-acoes{margin-left:0}}
 /* inicial: busca grande, filtros e vitrine de cidades */
 .inicio-pg{max-width:1100px;margin:0 auto;padding:22px 16px calc(var(--nav) + 24px)}
@@ -213,8 +226,8 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
   <a href="#/inicio" data-rota="inicio"><span>🔍</span><span>Ações</span></a>
   <a href="#/mapa" data-rota="mapa"><span>🗺️</span><span>Mapa</span></a>
   <a href="#/fila" data-rota="fila" data-so-moderador style="display:none"><span>✅</span><span>Fila</span></a>
-  <a href="#/inscricoes" data-rota="inscricoes"><span>🙋</span><span>Inscrições</span></a>
   <a href="#/perfil" id="conta" data-rota="perfil" onclick="return contaClique()"><span id="conta-icone">👤</span><span id="conta-rotulo">Entrar</span></a>
+  <a id="doar" href="#" target="_blank" rel="noopener"><span>❤️</span><span>Doar</span></a>
   <a class="cta" href="#/criar" data-rota="criar" onclick="novaCriacao()"><span>＋</span><span>Criar ação</span></a>
 </div></nav>
 <script src="dados.js"></script>
@@ -480,17 +493,20 @@ async function sair(){await API.sair();localStorage.removeItem('vouPendente');es
 // logado, o botão da conta leva ao Perfil (onde fica o Sair); deslogado, entra com o Google
 function contaClique(){if(estado.sessao)return true;entrar().catch(e=>console.error(e));return false}
 // a doação é uma só, geral, e aponta para a arrecadação oficial (configuracao.vaquinha)
-const linkDoar=()=>`<a class="btn sec" href="${esc(PUB.config.vaquinha||'#')}" target="_blank" rel="noopener">Doar para a campanha ↗</a>`;
+const linkDoar=()=>`<a class="btn sec" href="${esc(PUB.config.vaquinha||'#')}" target="_blank" rel="noopener">Doe para a campanha do Lula ↗</a>`;
+// menu "⋯": ações que não podem ser fáceis demais de tocar (desistir, encerrar) só aparecem depois de abrir
+const menuMais=itens=>`<details class="mais"><summary aria-label="Mais opções" title="Mais opções">⋯</summary><div class="opcoes">${itens}</div></details>`;
 const botaoEntrar=()=>`<button class="btn google" onclick="entrar()"><span class="g" aria-hidden="true">G</span> Entrar com Google</button>`;
-function telaInscricoes(){
-  if(!estado.sessao)return `<div class="pagina estreita"><h1>Minhas inscrições</h1><p>Entre para ver as ações em que você disse "Eu vou!".</p>${botaoEntrar()}</div>`;
-  const lista=estado.minhasInscricoes||[],proxima=m=>m.acao.status==='publicada'&&m.turno.inicio.slice(0,10)>=PUB.config.hoje;
-  const linha=m=>`<div class="insc"><a class="insc-link" href="#/acao/${m.acao.id}">${cuboAcao(m.acao,'width:56px;height:56px;font-size:24px;border-radius:12px')}
+// minhas inscrições: uma ação por linha; desistir fica no menu ⋯
+const inscProxima=m=>m.acao.status==='publicada'&&m.turno.inicio.slice(0,10)>=PUB.config.hoje;
+function linhaInscricao(m){const prox=inscProxima(m);
+  return `<div class="insc"><a class="insc-link" href="#/acao/${m.acao.id}">${cuboAcao(m.acao,'width:56px;height:56px;font-size:24px;border-radius:12px')}
     <div style="min-width:0"><div class="tit">${esc(m.acao.titulo)}</div><div class="meta"><b>${fmtData(m.turno.inicio)}</b> · ${esc(lugarCurto(m.acao.lugar))}</div></div></a>
-    <div class="insc-acoes">${proxima(m)?`${botaoAgenda(m.acao,m.turno)}<button class="btn sec mini" onclick="desistir(${m.turno.id})">desistir</button>`:`<span class="selo">${m.acao.status==='publicada'?'já aconteceu':'ação encerrada'}</span>`}</div></div>`;
-  const grupo=(t,l)=>l.length?`<h2>${t}</h2><div class="lista-insc">${l.map(linha).join('')}</div>`:'';
-  return `<div class="pagina"><h1>Minhas inscrições</h1>
-  ${lista.length?grupo('Próximas',lista.filter(proxima))+grupo('Passadas ou encerradas',lista.filter(m=>!proxima(m))):'<div class="vazio"><p>Você ainda não se inscreveu em nenhuma ação.</p><p class="sec">Abra uma ação e toque em "Eu vou!".</p><a class="btn" href="#/inicio">Ver ações</a></div>'}</div>`}
+    <div class="insc-acoes">${prox?`${botaoAgenda(m.acao,m.turno)}${menuMais(`<button class="perigo" onclick="desistir(${m.turno.id})">Desistir de ir</button>`)}`:`<span class="sec">${m.acao.status==='publicada'?'já aconteceu':'ação encerrada'}</span>`}</div></div>`}
+function secaoInscricoes(){const lista=estado.minhasInscricoes||[],prox=lista.filter(inscProxima),pass=lista.filter(m=>!inscProxima(m));
+  return `<section id="inscricoes"><h2>Onde eu vou</h2>${prox.length?`<div class="lista-insc">${prox.map(linhaInscricao).join('')}</div>`:
+    '<p class="sec" style="font-size:15px">Você ainda não disse "Eu vou!" em nenhuma ação. <a href="#/inicio" style="color:var(--vinho);font-weight:600">Ver ações</a></p>'}
+   ${pass.length?`<details class="passadas"><summary>Passadas ou encerradas (${pass.length})</summary><div class="lista-insc">${pass.map(linhaInscricao).join('')}</div></details>`:''}</section>`}
 async function desistir(tid){await API.desistir(tid);await sincronizar()}
 async function iniciarVou(tid){
   if(!estado.sessao){localStorage.setItem('vouPendente',String(tid));await API.entrar();await continuarVouPendente();return}
@@ -545,7 +561,7 @@ function compartilhar(){const u=location.href;if(navigator.share)navigator.share
 function botaoTurno(a,t){const n=vaoNo(t);
   if(t.inicio.slice(0,10)<PUB.config.hoje)return `<button class="btn" disabled>horário encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
   const div=semInscricao(a)&&a.linkDivulgacao?`<div style="margin-top:8px">${botaoDivulgacao(a)}</div>`:'';
-  if(estouInscrito(t.id))return `<span class="selo">✓ Você vai</span> <button class="btn sec mini" onclick="desistir(${t.id})">desistir</button>${div}`;
+  if(estouInscrito(t.id))return `<div class="vai"><span class="selo">✓ Você vai</span>${menuMais(`<button class="perigo" onclick="desistir(${t.id})">Desistir de ir</button>`)}</div>${div}`;
   if(t.lotacao&&n>=t.lotacao)return `<button class="btn" disabled>lotado</button>${div}`;
   return `<button class="btn vou" onclick="iniciarVou(${t.id})">Eu vou!</button>${div}`}
 // no celular o "Eu vou!" aparece logo abaixo do título (os horários ficam depois do mapa); com vários horários, leva até eles
@@ -563,7 +579,7 @@ function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina
   <div id="minimapa" style="height:200px;border-radius:14px;margin:10px 0"></div>`}</div>
   <aside class="acao-lado"><h2>Quando</h2>
   ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${vaoNo(t)?quantosVao(vaoNo(t)):'Ninguém disse que vai ainda. Seja a primeira pessoa!'}${t.lotacao?` (${t.lotacao} vagas)`:''}</div><div style="margin-top:10px">${fechada?'':botaoTurno(a,t)}</div>
-    ${estado.vouOk===t.id?'<div class="selo" style="margin-top:8px">Pronto! A ação está nas suas <a href="#/inscricoes">Inscrições</a>.</div>':''}
+    ${estado.vouOk===t.id?'<div class="selo" style="margin-top:8px">Pronto! A ação está no seu <a href="#/inscricoes">Perfil</a>.</div>':''}
     ${ins&&ins.turno===t.id&&ins.semFormulario&&ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}${fechada?'':botaoAgenda(a,t)}
     ${ins&&ins.turno===t.id&&!ins.semFormulario?`<div class="sec" style="margin-top:8px">Você: <strong>${esc(estado.sessao.nome)}</strong></div><label>Seu WhatsApp</label><input id="vtel" value="${esc(ins.telefone)}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p>${ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}<div style="margin-top:8px"><button class="btn" onclick="confirmarVou(${t.id})">Confirmar</button> <button class="btn sec mini" onclick="estado.inscrevendo=null;render()">Cancelar</button></div>`:''}</div>`).join('')}</aside>
   <div class="acao-resto">${ab.combinado&&!semInscricao(a)?blocoCombinado(a,ab.combinado):''}
@@ -647,40 +663,49 @@ async function publicarAcao(){const c=estado.criar,e={};if(!telValido(c.telefone
   estado.aviso=r.status==='publicada'?'Publicada! Sua ação já aparece no mapa.':'Recebemos! Sua ação está em análise. Você acompanha a situação aqui no Perfil.';
   estado.criar=novoCriar();await recarregar();location.hash='#/perfil'}
 // ---------- minhas ----------
-function textoAviso(a,t){return `Oi! ${fmtData(t.inicio)} tem ${a.titulo}${ehOnline(a)?', online':` em ${a.lugar.nome}, ${a.lugar.bairro}`}. ${a.detalhe} Até lá!`}
-function copiar(txt){navigator.clipboard&&navigator.clipboard.writeText(txt);alert('Copiado')}
+function textoAviso(a,t){return `Oi! ${fmtData(t.inicio)} tem ${a.titulo}${ehOnline(a)?', online':` em ${a.lugar.nome}, ${lugarCurto(a.lugar)}`}.${a.detalhe?' '+a.detalhe:''} Até lá!`}
+// recado curto no pé da tela, no lugar do alert
+function recado(msg){let el=document.getElementById('recado');if(!el){el=document.createElement('div');el.id='recado';document.body.appendChild(el)}
+  el.textContent=msg;el.classList.add('visivel');clearTimeout(recado.t);recado.t=setTimeout(()=>el.classList.remove('visivel'),2200)}
+function copiar(txt,msg){navigator.clipboard&&navigator.clipboard.writeText(txt);recado(msg||'Copiado')}
+const linkWhats=tel=>'https://wa.me/55'+String(tel||'').replace(/\D/g,'');
 async function encerrar(id){try{await API.encerrarAcao(id)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}await sincronizar()}
 function editar(id){const a=acaoExemplo(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,online:ehOnline(a),titulo:a.titulo,foto:a.foto&&a.foto.url||'',descricao:a.descricao,lugar:Object.assign({},a.lugar),buscaLugar:lugarCurto(a.lugar),detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,telefone:pessoa(a.organizador).telefone,turnos:turnosDaExemplo(id).map(t=>({inicio:t.inicio,fim:t.fim,lotacao:t.lotacao||''}))});estado.criar=c;location.hash='#/criar'}
 // ---------- perfil: a conta, o WhatsApp, onde vou, as ações que criei (com a situação) e o Sair ----------
 const ROTULO_STATUS={'em análise':['Em análise','analise'],'publicada':['Publicada','publicada'],'recusada':['Recusada','recusada'],'encerrada':['Encerrada',''],'rascunho':['Despublicada','']};
 async function salvarTelPerfil(){const v=(document.getElementById('ptel')||{}).value||'';
   try{estado.sessao=await API.salvarTelefone(v);estado.perfil={ok:true}}catch(e){estado.perfil={erro:MENSAGEM[e.codigo]||'Não deu. Tente de novo.'}}render()}
+// um horário da minha ação: quem vai (com WhatsApp de cada um) e as ferramentas para avisar todo mundo
+function turnoMeu(a,t){const tels=t.inscritos.map(i=>i.telefone).filter(Boolean);
+  return `<div class="turno-meu"><div><strong>${fmtData(t.inicio)}</strong> <span class="sec">${t.inscritos.length?quantosVao(t.inscritos.length):'ninguém disse que vai ainda'}</span></div>
+   ${t.inscritos.map(i=>`<div class="pessoa"><span>${esc(i.nome)}</span> <span class="sec">${esc(i.telefone||'')}</span>${i.telefone?` <a class="link-whats" href="${linkWhats(i.telefone)}" target="_blank" rel="noopener">WhatsApp ↗</a>`:''}</div>`).join('')}
+   ${tels.length?`<div class="ferramentas"><button class="link" onclick="copiar('${tels.join(', ')}','Telefones copiados: cole no WhatsApp para criar um grupo ou uma lista de transmissão')">📋 Copiar telefones</button>
+     <button class="link" onclick="estado.avisoTexto=estado.avisoTexto===${t.id}?null:${t.id};render()">✉️ Escrever aviso para quem vai</button></div>`:''}
+   ${estado.avisoTexto===t.id?`<p class="sec" style="margin:10px 0 4px">Ajuste o texto e envie pelo WhatsApp, no grupo ou para cada pessoa.</p><textarea rows="3" id="aviso${t.id}">${esc(textoAviso(a,t))}</textarea>
+     <div style="margin-top:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><a class="btn mini" href="#" onclick="this.href='https://wa.me/?text='+encodeURIComponent(document.getElementById('aviso${t.id}').value);this.target='_blank';return true">Abrir no WhatsApp</a>
+     <button class="link" onclick="copiar(document.getElementById('aviso${t.id}').value,'Texto copiado')">Copiar texto</button></div>`:''}</div>`}
 function itemMinha(m){const a=m.acao,[rot,cl]=ROTULO_STATUS[a.status]||[a.status,''],aberta=estado.minhasAberta===a.id,n=m.turnos.reduce((k,t)=>k+t.inscritos.length,0);
-  return `<div class="cartao"><div onclick="estado.minhasAberta=${aberta?'null':a.id};render()" style="cursor:pointer;display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center">${cuboAcao(a,'width:44px;height:44px;font-size:22px')}
-   <div style="min-width:0"><div style="font-weight:600;line-height:1.3">${esc(a.titulo)}</div><div class="sec" style="margin-top:5px"><span class="status ${cl}">${rot}</span> ${m.turnos[0]?fmtData(m.turnos[0].inicio):''}${a.status==='publicada'?` · ${quantosInscritos(n)}`:''}</div></div></div>
+  const opcoes=(API.modo==='exemplo'?`<button onclick="editar(${a.id})">Editar</button>`:'')+(['em análise','publicada'].includes(a.status)?`<button class="perigo" onclick="encerrar(${a.id})">Encerrar ação</button>`:'');
+  return `<div class="cartao"><div class="cartao-topo"><div onclick="estado.minhasAberta=${aberta?'null':a.id};render()" style="cursor:pointer;display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;flex:1;min-width:0">${cuboAcao(a,'width:48px;height:48px;font-size:22px;border-radius:12px')}
+   <div style="min-width:0"><div style="font-weight:700;line-height:1.3">${esc(a.titulo)}</div><div class="sec" style="margin-top:5px"><span class="status ${cl}">${rot}</span> ${m.turnos[0]?fmtData(m.turnos[0].inicio):''}${a.status==='publicada'?` · ${quantosVao(n)}`:''}</div></div></div>
+   ${opcoes?menuMais(opcoes):''}</div>
   ${a.status==='em análise'?'<p class="sec" style="margin:10px 0 0">Esperando a moderação. Assim que aprovarem, ela aparece para todo mundo.</p>':''}
   ${a.status==='recusada'&&a.motivoRecusa?`<p class="erro" style="margin:10px 0 0">Motivo da recusa: ${esc(a.motivoRecusa)}</p>`:''}
-  ${aberta?m.turnos.map(t=>`<div class="linha" style="margin-top:10px"><strong>${fmtData(t.inicio)}</strong> <span class="sec">${quantosInscritos(t.inscritos.length)}</span>
-     ${t.inscritos.map(i=>`<div>${esc(i.nome)} <span class="sec">${esc(i.telefone||'')}</span></div>`).join('')}
-     ${t.inscritos.length?`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec mini" onclick="copiar('${esc(t.inscritos.map(i=>i.telefone).filter(Boolean).join(', '))}')">Copiar números</button> <button class="btn sec mini" onclick="estado.avisoTexto=${t.id};render()">Mandar aviso</button></div>`:''}
-     ${estado.avisoTexto===t.id?`<textarea rows="3" id="aviso${t.id}" style="margin-top:8px">${esc(textoAviso(a,t))}</textarea><button class="btn sec mini" style="margin-top:6px" onclick="copiar(document.getElementById('aviso${t.id}').value)">Copiar texto</button>`:''}</div>`).join('')+
-   `<div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">${a.status==='publicada'?`<a class="btn sec mini" href="#/acao/${a.id}">Ver página</a>`:''}${API.modo==='exemplo'?`<button class="btn sec mini" onclick="editar(${a.id})">Editar</button>`:''}${['em análise','publicada'].includes(a.status)?`<button class="btn sec mini" onclick="encerrar(${a.id})">Encerrar</button>`:''}</div>`:''}</div>`}
+  ${aberta?m.turnos.map(t=>turnoMeu(a,t)).join('')+(a.status==='publicada'?`<a class="ver-pagina" href="#/acao/${a.id}">Ver a página da ação →</a>`:''):
+    `<button class="link" style="margin-top:8px" onclick="estado.minhasAberta=${a.id};render()">${a.status==='publicada'?`Ver quem vai e avisar →`:'Ver detalhes →'}</button>`}</div>`}
 function telaPerfil(){const s=estado.sessao;
   if(!s)return `<div class="pagina estreita"><h1>Perfil</h1><p>Entre com sua conta Google para dizer "Eu vou!" nas ações, criar ações e acompanhar tudo por aqui.</p>${botaoEntrar()}</div>`;
   const aviso=estado.aviso?`<div class="aviso">${estado.aviso}</div>`:'';estado.aviso=null;
   const minhas=estado.minhasAcoes||[],pf=estado.perfil||{};
-  const vou=(estado.minhasInscricoes||[]).filter(m=>m.acao.status==='publicada'&&m.turno.inicio.slice(0,10)>=PUB.config.hoje);
   return `<div class="pagina estreita">${aviso}<div class="perfil-topo"><div class="letra" aria-hidden="true">${esc(String(s.nome||'?').trim().charAt(0).toUpperCase())}</div>
    <div style="min-width:0"><h1>${esc(s.nome)}</h1><div class="sec" style="font-size:14px">${esc(s.email||'')}</div>${souVerificado()?'<div class="selo">✓ Verificado: suas ações aparecem na hora</div>':''}</div></div>
-  <h2>Seu WhatsApp</h2><p class="sec" style="font-size:14px;margin-top:-4px">Vai para quem organiza as ações em que você diz "Eu vou!" (nas ações importadas, para ninguém) e para a moderação das ações que você cria.</p>
-  <div style="display:flex;gap:8px"><input id="ptel" value="${esc(s.telefone||'')}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><button class="btn sec" onclick="salvarTelPerfil()">Salvar</button></div>
-  ${pf.erro?`<div class="erro">${esc(pf.erro)}</div>`:''}${pf.ok?'<div class="selo" style="margin-top:6px">Salvo.</div>':''}
-  <h2>Eu vou</h2><div class="cartao">${vou.length?`Você disse que vai em <strong>${vou.length===1?'1 ação':vou.length+' ações'}</strong>. A próxima: <a href="#/acao/${vou[0].acao.id}">${esc(vou[0].acao.titulo)}</a>, ${fmtData(vou[0].turno.inicio)}.`:'Você ainda não disse "Eu vou!" em nenhuma ação.'}
-   <div style="margin-top:8px"><a href="#/inscricoes" style="font-weight:600;color:var(--vinho)">Ver minhas inscrições</a></div></div>
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:22px"><h2 style="margin:0">Ações que criei</h2><a class="btn mini" href="#/criar" onclick="novaCriacao()">＋ Criar ação</a></div>
+  ${secaoInscricoes()}
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:28px"><h2 style="margin:0">Ações que criei</h2><a class="btn mini" href="#/criar" onclick="novaCriacao()">＋ Criar ação</a></div>
   ${minhas.length?minhas.map(itemMinha).join(''):'<p class="sec" style="font-size:15px;margin-top:10px">Você ainda não criou nenhuma ação. Toda ação nova passa por uma revisão rápida antes de aparecer, e a situação fica aqui.</p>'}
   ${s.papel==='moderador'?'<h2>Moderação</h2><a class="btn sec" href="#/fila">Abrir a fila de moderação</a>':''}
-  <h2>Doar</h2><p class="sec" style="font-size:14px;margin-top:-4px">Uma vaquinha só, apontando para a arrecadação oficial.</p>${linkDoar()}
+  <h2 style="margin-top:28px">Seu WhatsApp</h2><p class="sec" style="font-size:14px;margin-top:-4px">Vai para quem organiza as ações em que você diz "Eu vou!" (nas ações importadas, para ninguém) e para a moderação das ações que você cria.</p>
+  <div style="display:flex;gap:8px"><input id="ptel" value="${esc(s.telefone||'')}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><button class="btn sec" onclick="salvarTelPerfil()">Salvar</button></div>
+  ${pf.erro?`<div class="erro">${esc(pf.erro)}</div>`:''}${pf.ok?'<div class="selo" style="margin-top:6px">Salvo.</div>':''}
   <div style="margin-top:40px;border-top:1px solid var(--nevoa);padding-top:16px"><button class="btn sec mini" onclick="sair().then(()=>{location.hash='#/inicio'})">Sair da conta</button></div></div>`}
 // ---------- fila ----------
 async function aprovar(id){try{await API.aprovar(id)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}await sincronizar()}
@@ -710,11 +735,10 @@ let renderN=0;
 async function render(){
   const n=++renderN;
   const h=location.hash||'#/inicio';const [,rota,arg]=h.split('/');
-  if(rota!=='acao'){estado.inscrevendo=null;estado.vouOk=null}if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}if(rota!=='perfil')estado.perfil=null;
+  if(rota!=='acao'){estado.inscrevendo=null;estado.vouOk=null}if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}if(rota!=='perfil'){estado.perfil=null;estado.avisoTexto=null}
   try{
     if(rota==='acao'){const r=await API.acao(Number(arg));if(n!==renderN)return;if(r)normalizarTipos([r.acao]);estado.acaoAberta=r}
-    if(rota==='inscricoes'){const r=await API.minhasInscricoes();if(n!==renderN)return;normalizarTipos(r.map(m=>m.acao));estado.minhasInscricoes=r}
-    if((rota==='perfil'||rota==='minhas')&&estado.sessao){const [ma,mi]=await Promise.all([API.minhasAcoes(),API.minhasInscricoes()]);if(n!==renderN)return;
+    if((rota==='perfil'||rota==='minhas'||rota==='inscricoes')&&estado.sessao){const [ma,mi]=await Promise.all([API.minhasAcoes(),API.minhasInscricoes()]);if(n!==renderN)return;
       normalizarTipos(ma.map(m=>m.acao));normalizarTipos(mi.map(m=>m.acao));estado.minhasAcoes=ma;estado.minhasInscricoes=mi}
     if(rota==='fila'&&estado.sessao&&estado.sessao.papel==='moderador'){const r=await API.fila(estado.filaAba==='analise'?'em análise':'publicada');if(n!==renderN)return;normalizarTipos(r.map(m=>m.acao));estado.fila=r}
   }catch(e){if(n!==renderN)return;console.error(e);if(mapa){mapa.remove();mapa=null;marcadores=[]}
@@ -728,9 +752,11 @@ async function render(){
   if(r!=='mapa')estado.sel=null;
   rotaAnterior=r;telaAtual=r;
   const app=document.getElementById('app');
-  app.innerHTML=rota==='acao'?telaAcao():rota==='inscricoes'?telaInscricoes():rota==='criar'?telaCriar():rota==='perfil'||rota==='minhas'?telaPerfil():rota==='fila'?telaFila():rota==='mapa'?telaMapa():telaInicio();
-  document.querySelectorAll('nav a[data-rota]').forEach(a=>a.classList.toggle('ativo',a.dataset.rota===(rota||'inicio')));
+  app.innerHTML=rota==='acao'?telaAcao():rota==='criar'?telaCriar():rota==='perfil'||rota==='minhas'||rota==='inscricoes'?telaPerfil():rota==='fila'?telaFila():rota==='mapa'?telaMapa():telaInicio();
+  const rotaNav={minhas:'perfil',inscricoes:'perfil'}[rota]||rota||'inicio';
+  document.querySelectorAll('nav a[data-rota]').forEach(a=>a.classList.toggle('ativo',a.dataset.rota===rotaNav));
   document.querySelectorAll('nav a[data-so-exemplo]').forEach(a=>a.style.display=API.modo==='exemplo'?'':'none');
+  document.getElementById('doar').href=PUB.config.vaquinha||'#';
   document.querySelectorAll('nav a[data-so-moderador]').forEach(a=>a.style.display=estado.sessao&&estado.sessao.papel==='moderador'?'':'none');
   document.getElementById('conta-rotulo').textContent=estado.sessao?'Perfil':'Entrar';
   document.getElementById('conta-icone').textContent=estado.sessao?'👤':'👋';
@@ -741,6 +767,7 @@ async function render(){
   if(rota==='acao'&&ab&&!ehOnline(ab.acao))montarMiniMapa(ab.acao.lugar,false);
   if(rota==='criar'&&estado.criar.passo===2&&!estado.criar.online&&estado.criar.lugar.lat!=null){const r=montarMiniMapa(estado.criar.lugar,true);if(r)r.mk.on('dragend',()=>{const p=r.mk.getLatLng();estado.criar.lugar.lat=p.lat;estado.criar.lugar.lon=p.lng})}
   if(rota!=='mapa')window.scrollTo(0,0);
+  if(rota==='inscricoes'){const el=document.getElementById('inscricoes');if(el)el.scrollIntoView()}
 }
 async function sincronizar(){
   try{await recarregar()}catch(e){console.error(e);
@@ -751,7 +778,7 @@ async function sincronizar(){
   await render()}
 document.addEventListener('click',e=>{if(!e.target.closest('#topo,.caixa')){const s=document.getElementById('sugestoes');if(s)s.style.display='none'}
   if(!e.target.closest('.cab-cidade'))fecharCidade();
-  document.querySelectorAll('details.agenda[open]').forEach(d=>{if(!d.contains(e.target))d.open=false})});
+  document.querySelectorAll('details.agenda[open],details.mais[open]').forEach(d=>{if(!d.contains(e.target))d.open=false})});
 window.addEventListener('hashchange',render);
 window.addEventListener('DOMContentLoaded',sincronizar);
 </script>
