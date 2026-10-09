@@ -177,7 +177,18 @@ Run workflow. Se o snapshot falhar, o deploy segue sem o arquivo (`continue-on-e
 As fotos das ações importadas moram em `fotos/divulgacao/` na raiz do repo e `montar_pages.sh` copia a pasta da
 master para a raiz do site (as prévias não a recebem).
 
-<!-- rotina de fotos: o outro agente descreve -->
+Rotina de importação com fotos (pasta principal, na `master`, com `SUPABASE_ACCESS_TOKEN`):
+
+1. `python scripts/publicar_acoes.py bora-lula --aplicar`: busca a arte dos posts novos, grava
+   `fotos/divulgacao/<código>.jpg` e `<código>-mini.jpg`, escreve o ensaio e, se houver foto nova, PARA sem gravar no
+   banco ("fotos novas em fotos/divulgacao ainda não foram commitadas e enviadas para a master").
+2. `git add fotos && git commit -m "Fotos: ..." && git push` e esperar o workflow do Pages terminar.
+3. Rodar o mesmo comando de novo: sem pendência, grava no banco com as URLs do Pages (`--sem-fotos` pula a busca e a trava).
+
+Acervo antigo (uma vez, depois da migração 20261009000060 em produção): `python scripts/fotos_divulgacao.py migrar-pages`
+(ensaio: baixa cada foto do bucket `divulgacao`, gera os dois arquivos, não mexe no banco) -> commit + push de `fotos/` ->
+esperar o Pages -> `python scripts/fotos_divulgacao.py migrar-pages --aplicar` (troca `foto_url` e grava `foto_mini_url`).
+Depois disso o bucket `divulgacao` pode ser esvaziado.
 
 ## Incidentes e abuso
 
