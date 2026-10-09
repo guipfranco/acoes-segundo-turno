@@ -14,6 +14,7 @@ const CORS = {
 const AGENTE_PREVIA = "Mozilla/5.0 (compatible; acoes-segundo-turno link preview; +https://github.com/guipfranco/acoes-segundo-turno)";
 const RE_POST = /instagram\.com\/(?:[A-Za-z0-9_.]+\/)?(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/;
 const LIMITE = 2 * 1024 * 1024;
+const LIMITE_POR_HORA = 10;  // artes puxadas por pessoa por hora
 
 const resposta = (corpo: unknown, status = 200) =>
   new Response(JSON.stringify(corpo), { status, headers: { ...CORS, "Content-Type": "application/json" } });
@@ -52,6 +53,13 @@ Deno.serve(async (req) => {
   const codigo = link.match(RE_POST)?.[1];
   if (!codigo) return erro("link_instagram_invalido");
 
+  // no máximo LIMITE_POR_HORA artes por pessoa por hora: a pasta dela no bucket diz quantas já foram
+  const servico = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const { data: enviados } = await servico.storage.from("fotos-acoes").list(quem.user.id, { limit: 1000 });
+  const haUmaHora = Date.now() - 60 * 60 * 1000;
+  const recentes = (enviados ?? []).filter((o) => o.created_at && new Date(o.created_at).getTime() >= haUmaHora).length;
+  if (recentes >= LIMITE_POR_HORA) return erro("muitas_chamadas", 429);
+
   const embed = await fetch(`https://www.instagram.com/p/${codigo}/embed/captioned/`, { headers: { "User-Agent": AGENTE_PREVIA } });
   if (embed.status === 429) return erro("instagram_ocupado", 503);
   let img = embed.ok ? imagemDoEmbed(await embed.text()) : null;
@@ -68,7 +76,6 @@ Deno.serve(async (req) => {
   const dados = new Uint8Array(await bruto.arrayBuffer());
   if (dados.byteLength > LIMITE) return erro("imagem_grande");
 
-  const servico = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const nome = `${quem.user.id}/ig-${codigo}.jpg`;
   const { error } = await servico.storage.from("fotos-acoes").upload(nome, dados, { contentType: "image/jpeg", upsert: true });
   if (error) return erro("falha_envio", 500);

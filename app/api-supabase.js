@@ -125,6 +125,9 @@
       async suspender(id, motivo) { await rpc('suspender_acao', { acao_id: id, motivo: motivo || null }); },
       async reativar(id) { await rpc('reativar_acao', { acao_id: id }); },
       async excluir(id) { await rpc('excluir_acao', { acao_id: id }); },
+      // bloquear tira do ar as publicadas da pessoa; desbloquear só desmarca (o moderador reativa uma a uma)
+      async bloquear(pessoaId, motivo) { await rpc('bloquear_pessoa', { pessoa_id: pessoaId, motivo: motivo || null }); },
+      async desbloquear(pessoaId) { await rpc('desbloquear_pessoa', { pessoa_id: pessoaId }); },
       async minhasInscricoes() { return (await rpc('minhas_inscricoes')).map(m => ({ acao: deAcao(m.acao), turno: deTurno(m.turno), desistiu: !!m.desistiu })); },
       // feedback: qualquer pessoa manda (logada ou não); só moderador lê e marca como tratado
       async enviarFeedback(d) { return rpc('enviar_feedback', { texto: d.texto, contato: d.contato || null, tela: d.tela || null, acao_id: d.acaoId == null ? null : d.acaoId, navegador: d.navegador || null }); },

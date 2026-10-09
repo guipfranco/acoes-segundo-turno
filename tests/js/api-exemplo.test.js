@@ -214,6 +214,26 @@ test('moderação: suspender tira do ar, reativar volta, excluir marca excluída
   await assert.rejects(mod.reativar(imp.id), { codigo: 'organizador_bloqueado' });
 });
 
+test('moderação: bloquear pessoa suspende as publicadas dela; desbloquear só desmarca', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const a = d.acoes.find(x => x.status === 'publicada' && !x.fonte && turnoFuturo(d, x));
+  const alvo = a.organizador;
+  await assert.rejects(api.bloquear(alvo), { codigo: 'so_moderador' });
+  const modP = d.pessoas.find(p => p.papel === 'moderador'); d.config.eu = modP.id; const mod = ApiExemplo.criar(d);
+  await assert.rejects(mod.bloquear(modP.id), { codigo: 'nao_pode' });
+  await mod.bloquear(alvo, 'spam');
+  assert.equal(d.pessoas.find(p => p.id === alvo).bloqueada, true);
+  assert.ok(!(await mod.publico()).acoes.some(x => x.organizador === alvo));
+  assert.ok((await mod.fila('rascunho')).some(m => m.acao.id === a.id && m.acao.motivoRecusa === 'spam'));
+  await assert.rejects(mod.reativar(a.id), { codigo: 'organizador_bloqueado' });
+  await mod.desbloquear(alvo);
+  assert.equal(d.pessoas.find(p => p.id === alvo).bloqueada, false);
+  assert.equal(d.acoes.find(x => x.id === a.id).status, 'rascunho');
+  await assert.rejects(mod.desbloquear(alvo), { codigo: 'nao_pode' });
+  await mod.reativar(a.id);
+  assert.ok((await mod.publico()).acoes.some(x => x.id === a.id));
+});
+
 test('eu vou em ação de divulgação não pede telefone', async () => {
   const d = dados(); const api = ApiExemplo.criar(d);
   const a = d.acoes.find(x => x.status === 'publicada' && turnoFuturo(d, x));

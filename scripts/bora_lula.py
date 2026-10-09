@@ -65,6 +65,30 @@ def sem_acento(s):
     return "".join(c for c in s if not unicodedata.combining(c)).lower().strip()
 
 
+# ---- links e fotos vindos de fora (o link vira href no app; a foto vira <img>) ----
+
+RE_LINK = re.compile(r"^https?://", re.I)
+# https em produção; o http da pilha local (127.0.0.1) passa, como em criar_acao (migração 20261009000022)
+RE_FOTO = re.compile(r"^(https://|http://(127\.0\.0\.1|localhost)[:/])", re.I)
+
+
+def link_valido(url):
+    """O link como veio se começa com http:// ou https://; senão "" (javascript:, data:, texto solto, telefone...)."""
+    u = str(url or "").strip()
+    return u if RE_LINK.match(u) else ""
+
+
+def foto_valida(url):
+    """A url da imagem se é https:// (ou a pilha local); senão ""."""
+    u = str(url or "").strip()
+    return u if RE_FOTO.match(u) else ""
+
+
+def aviso_link(bruto):
+    """Texto do aviso quando um link foi descartado (sem repetir o link inteiro, que pode ser lixo)."""
+    return f"link descartado (não é http/https): {str(bruto).strip()[:60]}"
+
+
 def tipo_pelo_titulo(titulo):
     t = sem_acento(titulo)
     for padrao, tipo in TIPOS_TITULO:
@@ -389,7 +413,8 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25", geo=None):
                      "uf": uf, "endereco": endereco, "lat": lat, "lon": lon, "precisao": precisao}
         h_ini, h_fim, aprox = faixa_aproximada(item.get("hora"), item.get("atividade"), item.get("hora_ord"))
         inicio, fim = f"{data}T{h_ini}", f"{data}T{h_fim}"
-        link = (item.get("link") or "").strip()
+        link_bruto = (item.get("link") or "").strip()
+        link = link_valido(link_bruto)
         descricao = (item.get("atividade") or "").strip()
         if item.get("plataforma"):
             descricao += f" ({item['plataforma']})"
@@ -402,6 +427,8 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25", geo=None):
             "organizacao": org_id, "lugar": lugar, "detalhe": "", "contatoTipo": "divulgacao" if link else "organizador_chama", "contatoWhatsapp": None, "contatoLink": link or None, "status": "publicada",
             "motivoRecusa": None, "prioritaria": False, "criadaEm": hoje, "foto": None, "fonte": "bora-lula", "link": link,
         })
+        if link_bruto and not link:
+            acoes[-1]["aviso"] = aviso_link(link_bruto)
         turnos.append({"id": len(turnos) + 1, "acao": item["id"], "inicio": inicio, "fim": fim, "lotacao": None, "horaAproximada": aprox})
     return {"config": config, "organizacoes": organizacoes, "pessoas": [pessoa_feed], "acoes": acoes,
             "turnos": turnos, "inscricoes": [], "areasPrioritarias": []}
@@ -422,8 +449,12 @@ def resumo(d):
             exatas += 1
     top = ", ".join(f"{k or '?'} {v}" for k, v in sorted(por_uf.items(), key=lambda kv: -kv[1])[:8])
     com_logo = sum(1 for o in d["organizacoes"] if o.get("foto"))
-    return (f"{len(d['acoes'])} ações ({exatas} com ponto exato), {len(d['organizacoes'])} organizações ({com_logo} com logo), "
-            f"{sem_coord} sem coordenada. Por UF: {top}")
+    avisos = [a for a in d["acoes"] if a.get("aviso")]
+    texto = (f"{len(d['acoes'])} ações ({exatas} com ponto exato), {len(d['organizacoes'])} organizações ({com_logo} com logo), "
+             f"{sem_coord} sem coordenada. Por UF: {top}")
+    if avisos:
+        texto += f". AVISO: {len(avisos)} links descartados por não serem http/https (ids " + ", ".join(str(a["id"]) for a in avisos[:10]) + ")"
+    return texto
 
 
 def main(argv=None):

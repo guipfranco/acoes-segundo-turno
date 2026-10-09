@@ -3,7 +3,8 @@
 - Produção: Supabase projeto `acoes-segundo-turno` (região São Paulo, plano grátis). Front no GitHub Pages
   (`https://guipfranco.github.io/acoes-segundo-turno/`, só a pasta `app/`).
 - Migrações: `supabase/migrations/`. Aplicar com `npx supabase db push` depois de `npx supabase link`.
-- Moderador: por enquanto, `update pessoa set papel='moderador' where email='...'` no SQL Editor.
+- Moderador: por enquanto, `update pessoa set papel='moderador' where email='...'` no SQL Editor. Bloquear e
+  desbloquear pessoa já é botão na Fila ("Bloquear organizador", migração 20261009000051); veja "Incidentes e abuso".
 - Organizador parceiro: `update pessoa set papel='organizador' where email='...'`.
 - Plano grátis pausa após 7 dias sem uso: o ping diário entra na etapa 5.
 - Capa de compartilhamento (WhatsApp, redes): `app/capa.png` (1200x630) e `app/favicon.png`, geradas por `scripts/gerar_capa.py`; as metatags ficam no `<head>` de `app/index.html`.
@@ -158,6 +159,46 @@ Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capt
   para que as linhas sem hora (ex.: "Noite - Giro nos Bares", que estava como 9h às 11h) passem a "à noite" com
   `hora_aproximada`. A hora muda o `fonte_id` dessas linhas: a ação antiga é encerrada e nasce outra, pela regra de sempre.
   As mensagens do "Fale com a gente" chegam na aba Mensagens da Fila (`#/fila`, só moderador).
+
+## Incidentes e abuso
+
+Curto e prático. Tudo pela Fila (`#/fila`, só moderador) quando dá; SQL Editor e painel do Supabase como reserva.
+
+- **Bloquear pessoa** (spam, dado falso, ataque): na Fila, abra a ação e use "Bloquear organizador" (migração
+  20261009000050, funções `bloquear_pessoa` / `desbloquear_pessoa`): a pessoa não cria ação nem marca "Eu vou", e as
+  ações dela saem do ar. Reserva no SQL Editor:
+  ```sql
+  select id, nome, email from pessoa where email = 'fulano@exemplo.com';   -- acha o uuid pelo e-mail
+  select bloquear_pessoa('<uuid>', 'motivo curto');
+  select desbloquear_pessoa('<uuid>');
+  ```
+- **Tirar ação do ar**: na Fila, "Suspender" (volta com "Reativar") ou "Excluir" (migração 20261009000030). A imagem
+  continua no bucket público `fotos-acoes` até alguém apagar: pelo painel (Storage > fotos-acoes > pasta `<uuid da
+  pessoa>` > arquivo > Delete) ou, para tudo o que ficou sem dono há mais de 24 h (cadastro abandonado, ação recusada
+  ou excluída), `python scripts/limpar_fotos.py` (ensaio, só lista) e `python scripts/limpar_fotos.py --aplicar`
+  (pasta principal, com `SUPABASE_ACCESS_TOKEN`; `--horas N` muda a margem). Rodar uma vez por dia enquanto o site
+  estiver no ar.
+- **Pedido de remoção de arte de terceiros** (dono da foto ou do cartaz pede para tirar): excluir a ação na Fila e
+  apagar a imagem do bucket no mesmo dia; responder a quem pediu dizendo que saiu.
+- **Segundo moderador**: o comando é o do topo deste arquivo (`update pessoa set papel='moderador' where email='...'`);
+  a pessoa precisa ter entrado uma vez pelo site antes. Para tirar: `papel='apoiador'`.
+- **Links e fotos vindos de fora**: a importação (`bora_lula.py`, `publicar_acoes.py`, inclusive a rota `redes`) descarta
+  link que não comece com `http://` ou `https://` (o contato vira `organizador_chama`) e url de imagem que não seja
+  `https://`; o aviso sai no resumo e na `revisao-*.csv` com o prefixo `aviso:`. O banco também recusa.
+- **Uso do plano Free**: painel em
+  https://supabase.com/dashboard/project/ommitzndniqnmsjsjghb/settings/billing/usage. Olhar egress (saída de dados:
+  fotos do bucket e respostas da API, é o que mais cresce com visita), storage e MAU. Limites do Free consultados em
+  2026-10-09 em https://supabase.com/pricing e nos guias de uso (docs/guides/platform/manage-your-usage/egress e
+  database-size): 5 GB de egress por mês (+ 5 GB de egress em cache), 1 GB de arquivos no Storage, 500 MB de banco,
+  50.000 MAU, 500.000 invocações de edge function, 2 projetos ativos, pausa após 7 dias sem uso. Ao estourar: egress e
+  storage acima da cota geram aviso por e-mail e um período de carência; se continuar, a organização entra em
+  restrição (Fair Use) que só sai no ciclo seguinte ou ao subir de plano; banco acima de 500 MB entra em modo só
+  leitura na hora. Saída: Pro por US$ 25/mês (spend cap ligado por padrão). Aliviar antes: fotos já saem reduzidas
+  (720 px na importação, até 1600 px no cadastro) com `Cache-Control` de uma semana; `limpar_fotos.py` segura o storage.
+- **Lei eleitoral** (Lei 9.504/97, art. 57-B e 57-D): propaganda na internet feita por pessoa natural é permitida,
+  sem impulsionamento pago e sem anonimato. Por isso o rodapé do site leva o nome de quem responde pela página, e
+  nunca se paga impulsionamento (anúncio, post patrocinado, "turbinar") para o site nem para ação cadastrada nele.
+  Ação importada mostra sempre a fonte e o link da divulgação original.
 
 ## O que falta para ir ao ar
 

@@ -25,9 +25,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Montserrat:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="leaflet.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pmtiles@4.5.0/dist/pmtiles.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/protomaps-leaflet@5.1.0/dist/protomaps-leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/pmtiles@4.5.0/dist/pmtiles.js" integrity="sha384-pbKNZbDshUsLnZMIVsn/t+j3xEY9PGfuX5Z22l5rcy/obXz3EwaMx1F5d9sRsJMn" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/protomaps-leaflet@5.1.0/dist/protomaps-leaflet.js" integrity="sha384-pAKrddYWxjFAIJwatOtmmtq9ebz3ZwluHCEg3pqOMpOporUofLqz/l5hs+0LAWaH" crossorigin="anonymous"></script>
 <style>
 :root{--papel:#fff;--tinta:#17171a;--vermelho:#d6232e;--vinho:#8c1420;--nevoa:#eef0f3;--cinza:#6e6e76;--selo:#1f7a3e;--sombra:0 -6px 24px rgba(23,23,26,.14);--nav:60px}
 *{box-sizing:border-box}html,body{height:100%}
@@ -180,6 +180,7 @@ nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;fon
 .previa .meta{font-size:13px;color:var(--cinza);line-height:1.4}.previa .meta b{color:var(--tinta);font-weight:600}
 .previa .ver{display:inline-block;margin-top:6px;font-size:13px;font-weight:700;color:var(--vinho)}
 .vitrine-vazia{color:var(--cinza);font-size:14px;padding:10px 0}
+.rodape{text-align:center;font-size:13px;margin:12px auto 8px;padding:0 16px;max-width:640px}.rodape a{color:var(--cinza)}
 .ver-todas{display:none}
 /* mapa: mapa + busca + gaveta */
 #tela-mapa{position:fixed;inset:0 0 var(--nav) 0;overflow:hidden}
@@ -283,13 +284,14 @@ nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;fon
 <script src="fundo.js"></script>
 <script src="config.js"></script>
 <script src="api-exemplo.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="api-supabase.js"></script>
 <script src="api.js"></script>
 <!-- contagem de visitas sem cookie (GoatCounter, painel em acoes-segundo-turno.goatcounter.com): a tela vem do hash,
-     sem a query (onde passa o code do login); não conta em localhost -->
+     sem a query (onde passa o code do login); não conta em localhost. Versão fixa (count.v5.js) com o hash publicado
+     em https://www.goatcounter.com/help/countjs-versions, para o navegador recusar o script se ele mudar -->
 <script>window.goatcounter={path:()=>location.pathname+(location.hash||'#/inicio')}</script>
-<script data-goatcounter="https://acoes-segundo-turno.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<script data-goatcounter="https://acoes-segundo-turno.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ" crossorigin="anonymous"></script>
 <script>
 // ---------- dados e helpers ----------
 // contagem: a tela a cada troca de hash e cliques como eventos; o evento leva só o nome, nada de quem clicou.
@@ -307,7 +309,7 @@ const tipoAtual=t=>TIPO_ANTIGO[t]||(ICONES[t]?t:'outro');
 function normalizarTipos(acoes){(acoes||[]).forEach(a=>{if(a)a.tipo=tipoAtual(a.tipo)});return acoes}
 // filtros da inicial e do mapa são separados: cada tela tem o seu e ele não vaza para a outra
 const filtroNovo=()=>({quando:'breve',de:'',ate:'',formato:'qualquer',tipo:null});
-const estado={onde:null,filtros:{inicio:filtroNovo(),mapa:filtroNovo()},perto:null,geoTentada:false,gaveta:'baixa',vista:{lat:-23.62,lon:-46.62,zoom:10},foco:null,sel:null,filaAba:'analise',inscrevendo:null,minhasAberta:null,recusando:null,erroRecusa:null,aviso:null,sessao:null,acaoAberta:null,vitrineAberta:{}};
+const estado={onde:null,filtros:{inicio:filtroNovo(),mapa:filtroNovo()},perto:null,geoTentada:false,gaveta:'baixa',vista:{lat:-23.62,lon:-46.62,zoom:10},foco:null,sel:null,filaAba:'analise',inscrevendo:null,minhasAberta:null,recusando:null,erroRecusa:null,bloqueando:null,erroBloqueio:null,aviso:null,sessao:null,acaoAberta:null,vitrineAberta:{}};
 let telaAtual='inicio',rotaAnterior=null,ultimaLista=null;
 const F=()=>estado.filtros[telaAtual==='mapa'?'mapa':'inicio'];
 let PUB={config:{hoje:'',frase:'',vaquinha:'#'},organizacoes:[],acoes:[],turnos:[]};
@@ -476,7 +478,10 @@ function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='o
   <section class="bloco"><div class="vazio"><p>Não achou ação na sua cidade?</p><a class="btn" href="#/criar" onclick="novaCriacao()">Cadastrar a primeira ação</a></div></section>
   <section class="bloco"><div class="vazio" style="padding-top:8px"><p style="font-size:15px;font-weight:600">Prefere ajudar com dinheiro?</p>${linkDoar()}</div></section>
   <section class="bloco"><div class="vazio" style="padding-top:8px"><p style="font-size:15px;font-weight:600">Achou um erro ou quer falar com a gente?</p><p class="sec" style="font-size:14px;margin-top:-6px">Ação com dado errado, botão que não funciona, ideia: conte pra gente.</p><a class="btn sec" href="#/contato">Enviar mensagem</a></div></section>
-  <p class="credito" style="text-align:center;margin-top:24px">Fotos de exemplo do Wikimedia Commons, com licenças livres. O crédito de cada uma está na página da ação.</p></div>`}
+  <p class="credito" style="text-align:center;margin-top:24px">Fotos de exemplo do Wikimedia Commons, com licenças livres. O crédito de cada uma está na página da ação.</p>
+  ${rodapeHtml()}</div>`}
+// responsabilidade (a lei eleitoral veda anonimato): quem faz o site e que não é propaganda paga
+function rodapeHtml(){return `<footer class="rodape sec">Site voluntário feito por Guilherme Pereira Franco, sem vínculo com a campanha nem com partido. Nenhuma divulgação paga.<br><a href="privacidade.html">Privacidade</a> · <a href="https://github.com/guipfranco/acoes-segundo-turno" target="_blank" rel="noopener">Código no GitHub</a></footer>`}
 function irParaCidade(lat,lon,rotulo){estado.onde={rotulo,lat,lon};estado.vista={lat,lon,zoom:11};location.hash='#/mapa'}
 // chute da cidade: pede a localização uma vez e escolhe o município mais próximo (capital se estiver a até 40 km)
 function cidadeMaisProxima(p){const eu={lat:p.coords.latitude,lon:p.coords.longitude};let melhor=null,cap=null;
@@ -641,7 +646,7 @@ const MENSAGEM={sem_texto:'Escreva a mensagem.',muitas_mensagens:'Muitas mensage
   limite_diario:'Você já criou 10 ações hoje. Tente de novo amanhã.',limite_em_analise:'Você tem 10 ações esperando a moderação. Espere a análise antes de criar mais.',
   sem_titulo:'Dê um título.',sem_lugar:'Marque o lugar da ação.',turno_invalido:'Confira os horários: início antes do fim e nada no passado.',
   grupo_invalido:'O link do grupo precisa começar com https://chat.whatsapp.com/',
-  organizador_bloqueado:'Quem criou esta ação está bloqueado: ela não volta ao ar.',
+  organizador_bloqueado:'Quem criou esta ação está bloqueado: ela não volta ao ar.',so_moderador:'Só a moderação pode fazer isso.',nao_pode:'Não dá para fazer isso com esta pessoa.',
   nome_organizacao:'O nome da organização precisa ter de 3 a 80 letras.',link_oficial:'Cole o link de um perfil oficial da organização (Instagram, Facebook ou site).',link_post:'Cole o link do post da organização anunciando esta ação.',
   sem_foto:'A ação precisa de uma imagem: a arte da divulgação ou uma foto.',imagem_invalida:'Escolha um arquivo de imagem (foto ou arte).',
   imagem_grande:'Essa imagem é grande demais. Tente outra.',falha_envio:'Não deu para enviar a imagem. Tente de novo.',
@@ -804,6 +809,7 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
    <div id="vagas-box" ${c.quando.limitar?'':'hidden'}><label>Quantas vagas</label><input type="number" min="1" step="1" inputmode="numeric" placeholder="ex.: 20" value="${esc(c.quando.vagas)}" oninput="estado.criar.quando.vagas=this.value">${E('vagas')}</div>
    <label>Detalhe do encontro, só para inscritos</label><input placeholder="ex.: perto do ponto de ônibus, camisa vermelha" value="${esc(c.detalhe)}" oninput="cv('detalhe',this.value)">
    <label>Link do grupo de WhatsApp</label><input placeholder="https://chat.whatsapp.com/..." value="${esc(c.grupo)}" oninput="cv('grupo',this.value)">
+   <p class="sec" style="margin-top:6px">Qualquer pessoa com conta Google que disser "Eu vou!" vê este link. Prefira um grupo em que a entrada passa pela aprovação de um administrador, ou deixe em branco para combinar você mesmo(a) com quem vai.</p>
    <p style="margin-top:18px">${c.editando?'<button class="btn sec" onclick="cancelarEdicao()">Cancelar</button>':'<button class="btn sec" onclick="estado.criar.passo=1;render()">Voltar</button>'} <button class="btn" onclick="validarPasso2()">Continuar</button></p></div>`;
   if(c.passo===3)return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 3 de 4. Imagem da ação.</p>
    <p>Use a arte da divulgação ou uma foto do lugar. É ela que chama gente na vitrine.</p>
@@ -1009,10 +1015,14 @@ function filaMensagensHtml(){const lista=estado.feedbacks||[],trat=!!estado.msgs
     <div style="margin-top:8px">${f.tratadoEm?`<span class="selo">Tratada em ${esc(fmtQuando(f.tratadoEm))}</span> <button class="btn sec mini" onclick="tratarMsg(${f.id},false)">Reabrir</button>`:`<button class="btn mini" onclick="tratarMsg(${f.id},true)">Marcar como tratada</button>`}</div></div>`).join('')}`}
 function fmtQuando(iso){if(!iso)return '';const d=new Date(iso);return isNaN(d)?iso:`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${hora(d)}`}
 async function tratarMsg(id,tratado){try{await API.tratarFeedback(id,tratado)}catch(e){recado(MENSAGEM[e.codigo]||'Não deu.');return}await rerender()}
-// só no modo exemplo (ainda sem função no banco): bloquear
-function bloquear(pid){pessoa(pid).bloqueada=true;DADOS.acoes.filter(a=>a.organizador===pid&&a.status==='publicada').forEach(a=>a.status='rascunho');sincronizar()}
+// bloquear quem criou: pede motivo (como a recusa); o formulário é por ação (aid) porque a mesma pessoa pode ter várias na lista
+async function bloquear(pid,aid){const m=(document.getElementById('motivo-b'+aid)||{}).value||'';if(!m.trim()){estado.bloqueando=aid;estado.erroBloqueio='Escreva o motivo.';render();return}
+  try{await API.bloquear(pid,m)}catch(e){estado.erroBloqueio=MENSAGEM[e.codigo]||'Não deu.';render();return}
+  estado.bloqueando=null;estado.erroBloqueio=null;recado('Pessoa bloqueada');await sincronizar()}
+async function desbloquear(pid){if(!confirm('Desbloquear esta pessoa? Ela volta a poder cadastrar ações e dizer que vai.'))return
+  try{await API.desbloquear(pid)}catch(e){recado(MENSAGEM[e.codigo]||'Não deu.');return}recado('Pessoa desbloqueada');await sincronizar()}
 function telaFila(){const s=estado.sessao;if(!s||s.papel!=='moderador')return '<div class="pagina"><h1>Fila de moderação</h1><p>Só moderadores veem a fila.</p></div>';
-  const aba=estado.filaAba,lista=estado.fila||[],ex=API.modo==='exemplo';
+  const aba=estado.filaAba,lista=estado.fila||[];
   return `<div class="pagina"><h1>Fila de moderação</h1>
   <div class="quando" style="display:inline-flex;margin-bottom:12px"><button class="pill ${aba==='analise'?'ativo':''}" onclick="estado.filaAba='analise';render()">Em análise${aba==='analise'?` (${lista.length})`:''}</button><button class="pill ${aba==='publicadas'?'ativo':''}" onclick="estado.filaAba='publicadas';render()">Publicadas</button><button class="pill ${aba==='suspensas'?'ativo':''}" onclick="estado.filaAba='suspensas';render()">Suspensas</button><button class="pill ${aba==='org'?'ativo':''}" onclick="estado.filaAba='org';render()">Organizações</button><button class="pill ${aba==='msgs'?'ativo':''}" onclick="estado.filaAba='msgs';render()">Mensagens${aba==='msgs'&&!estado.msgsTratadas?` (${(estado.feedbacks||[]).length})`:''}</button></div>
   ${aba==='org'?filaOrganizacoesHtml()+'</div>':aba==='msgs'?filaMensagensHtml()+'</div>':`<p class="sec">Recuse se: não é ação de campanha; o lugar não é público; convoca para confronto; pede dinheiro; tem dado pessoal no texto.</p>
@@ -1022,9 +1032,10 @@ function telaFila(){const s=estado.sessao;if(!s||s.papel!=='moderador')return '<
    <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome)}, ${esc(lugarCurto(a.lugar))}`}. Turnos: ${m.turnos.map(quandoTurno).join('; ')||'nenhum'}.${a.detalhe?` Detalhe: ${esc(a.detalhe)}.`:''}${a.contatoLink?` Grupo: ${esc(a.contatoLink)}.`:''}</div>
    ${a.organizacaoDados?`<div class="sec">Em nome de: <strong>${esc(a.organizacaoDados.nome)}</strong> ${a.organizacaoDados.verificada?'<span class="selo">✓ verificada</span>':'(sem selo)'} · ${a.organizacaoLink?linkExterno(a.organizacaoLink,'post da organização anunciando ↗'):'sem post da organização'}${a.organizacaoDados.link_oficial?` · ${linkExterno(a.organizacaoDados.link_oficial)}`:''}</div>
    <div class="sec">Confira se o post é do perfil oficial da organização e anuncia esta ação (data e lugar).</div>`:''}
-   <div class="sec">Quem criou: ${esc(p.nome)}, ${esc(p.telefone||'sem telefone')}${p.email?`, ${esc(p.email)}`:''}. Já criou ${p.criadas} ações (${p.aprovadas} aprovadas, ${p.recusadas} recusadas).</div>
+   <div class="sec">Quem criou: ${esc(p.nome)}${p.bloqueada?' <span class="status recusada">bloqueada</span>':''}, ${esc(p.telefone||'sem telefone')}${p.email?`, ${esc(p.email)}`:''}. Já criou ${p.criadas} ações (${p.aprovadas} aprovadas, ${p.recusadas} recusadas).</div>
    ${aba==='suspensas'&&a.motivoRecusa?`<div class="sec">Motivo da suspensão: ${esc(a.motivoRecusa)}</div>`:''}
-   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${botoesModerar(a,true)}${aba==='analise'&&o&&!o.verificada?` <button class="btn sec mini" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}${aba==='publicadas'&&ex?` <button class="btn sec mini" onclick="bloquear(${p.id})">Bloquear organizador</button>`:''}</div>
+   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${botoesModerar(a,true)}${aba==='analise'&&o&&!o.verificada?` <button class="btn sec mini" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}${p.id==null?'':p.bloqueada?` <button class="btn sec mini" onclick="desbloquear(${p.id})">Desbloquear</button>`:` <button class="btn sec mini perigo" onclick="estado.bloqueando=${a.id};estado.erroBloqueio=null;render()">Bloquear organizador</button>`}</div>
+   ${estado.bloqueando===a.id?`<label>Motivo do bloqueio</label><input id="motivo-b${a.id}" placeholder="ex.: cadastrou ação falsa">${estado.erroBloqueio?`<div class="erro">${estado.erroBloqueio}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="bloquear(${p.id},${a.id})">Confirmar bloqueio</button> <button class="btn sec mini" onclick="estado.bloqueando=null;estado.erroBloqueio=null;render()">Cancelar</button></div>`:''}
    ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: pede dinheiro para o material">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="recusar(${a.id})">Confirmar recusa</button></div>`:''}</div>`}).join('')}`}</div>`}
 // ---------- roteamento ----------
 async function recarregar(){PUB=await API.publico();normalizarTipos(PUB.acoes);estado.sessao=await API.sessao()}
@@ -1035,7 +1046,7 @@ async function render(){
   const n=++renderN,manter=manterRolagem,y=window.scrollY;manterRolagem=false;
   const h=location.hash||'#/inicio';const [,rota,arg]=h.split('/');
   if(h!==hashAnterior){estado.contatoDe=hashAnterior;hashAnterior=h}
-  if(rota!=='acao'){estado.inscrevendo=null;estado.vouOk=null;estado.vouOnde=null}if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}if(rota!=='perfil')estado.perfil=null;if(rota!=='contato')estado.contato=null
+  if(rota!=='acao'){estado.inscrevendo=null;estado.vouOk=null;estado.vouOnde=null}if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null;estado.bloqueando=null;estado.erroBloqueio=null}if(rota!=='perfil')estado.perfil=null;if(rota!=='contato')estado.contato=null
   try{
     if(rota==='acao'){const r=await API.acao(Number(arg));if(n!==renderN)return;if(r)normalizarTipos([r.acao]);estado.acaoAberta=r}
     if((rota==='perfil'||rota==='minhas'||rota==='inscricoes'||rota==='criar')&&estado.sessao){const mo=await API.minhaOrganizacao();if(n!==renderN)return;estado.minhaOrg=mo}
