@@ -234,3 +234,19 @@ def test_trava_nao_encerra_acao_com_inscricao():
     itens = [{"fonte_id": "a"}, {"fonte_id": "b"}]
     assert pa.encerramentos_com_inscricao(itens, {"a", "c", "d"}) == ["c", "d"]
     assert pa.encerramentos_com_inscricao(itens, set()) == []
+
+
+def test_mesmo_card_frentes_diferentes_acoes_diferentes_na_mesma_hora():
+    card = "https://www.instagram.com/p/card/"
+    linhas = [linha(frente="rj", titulo="Camisetaço no Vidigal", hora="17:00", cidade="Rio de Janeiro", uf="RJ", bairro="", link=card),
+              linha(frente="x", titulo="Bandeiraço na Rocinha", hora="17:00", cidade="Rio de Janeiro", uf="RJ", bairro="", link=card)]
+    itens, revisao = pa.itens_do_consolidado(linhas, LUGARES, hoje="2026-10-09")
+    assert len(itens) == 2 and revisao == []
+
+
+def test_trava_so_olha_turnos_de_hoje_em_diante(monkeypatch):
+    consultas = []
+    monkeypatch.setattr(pa, "consultar_sql", lambda sql, ref=None: consultas.append(sql) or [{"fonte_id": "a"}])
+    monkeypatch.setattr(pa, "destino", lambda: ("management", None, "tok"))
+    assert pa.ids_com_inscricao("redes", "2026-10-11") == {"a"}
+    assert "t.inicio >= '2026-10-11'" in consultas[0] and "a.fonte = 'redes'" in consultas[0]

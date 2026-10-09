@@ -218,14 +218,17 @@ def marcas(item):
     return tokens(f'{item["titulo"]} {item.get("lugar_nome") or ""}') - fora
 
 
-def mesmo_ato(a, b, hora_explicita=True):
-    """Mesmo link no mesmo início e cidade; ou mesma data+cidade com título parecido; ou mesmo início+cidade com
-    título ou lugar em comum (só com hora explícita)."""
+def mesmo_ato(a, b, hora_explicita=True, link_basta=True):
+    """Mesmo link no mesmo início e cidade; ou mesma data+cidade com título parecido; ou mesmo início+cidade com título
+    ou lugar em comum (só com hora explícita). Sem link_basta (duas linhas das redes), o mesmo link só conta se as
+    palavras próprias não se contradizem."""
     if a["inicio"][:10] != b["inicio"][:10] or bl.sem_acento(a["cidade"]) != bl.sem_acento(b["cidade"]):
         return False
     link = a["link"].rstrip("/")
     if link and link == b["link"].rstrip("/") and a["inicio"] == b["inicio"]:
-        return True
+        ma, mb = marcas(a), marcas(b)
+        if link_basta or not (ma and mb) or ma & mb:  # card com Vidigal e Rocinha na mesma hora: duas ações
+            return True
     if parecidos(a["titulo"], b["titulo"]):
         return True
     return hora_explicita and not (a["online"] or b["online"]) and a["inicio"] == b["inicio"] and bool(marcas(a) & marcas(b))
@@ -257,7 +260,7 @@ def itens_do_consolidado(linhas, lugares, itens_feed=(), hoje=None, ate=ATE, geo
         frente = r.get("frente", "")
         # linhas do mesmo post lidas pela mesma frente são ações diferentes do card; só o id igual repete
         if any(o["fonte_id"] == item["fonte_id"]
-               or (not (f == frente and o["link"] and o["link"] == item["link"]) and mesmo_ato(o, item, hora_explicita))
+               or (not (f == frente and o["link"] and o["link"] == item["link"]) and mesmo_ato(o, item, hora_explicita, False))
                for f, o in aceitas):
             revisao.append((frente, r.get("titulo", ""), "repetido no consolidado"))
             continue
@@ -306,21 +309,27 @@ def destino():
     raise Falha("defina SUPABASE_URL + SUPABASE_SERVICE_KEY (local) ou SUPABASE_ACCESS_TOKEN (produção)")
 
 
-def ids_com_inscricao(fonte, ref=None):
-    """fonte_ids publicados com inscrição ativa ("Eu vou"). None quando não dá para consultar (pilha local via REST)."""
-    modo, _, chave = destino()
-    if modo == "rest":
-        return None
+def consultar_sql(sql, ref=None):
+    """Roda SQL na produção pela Management API."""
     import ir_ao_ar
+    _, _, token = destino()
     ref = ref or (ir_ao_ar.ARQ_REF.read_text().strip() if ir_ao_ar.ARQ_REF.exists() else None)
     if not ref:
         raise Falha("não sei o ref do projeto: passe --ref")
-    sql = ("select distinct a.fonte_id from acao a join turno t on t.acao = a.id join inscricao i on i.turno = t.id "
-           f"where a.fonte = '{fonte}' and a.status = 'publicada' and i.cancelada_em is null")
-    st, resp = _http("POST", f"{ir_ao_ar.API}/projects/{ref}/database/query", {"query": sql}, {"Authorization": "Bearer " + chave})
+    st, resp = _http("POST", f"{ir_ao_ar.API}/projects/{ref}/database/query", {"query": sql}, {"Authorization": "Bearer " + token})
     if not 200 <= st < 300:
-        raise Falha(f"consulta de inscrições: HTTP {st} {resp}")
-    return {x["fonte_id"] for x in resp}
+        raise Falha(f"SQL na produção: HTTP {st} {resp}")
+    return resp
+
+
+def ids_com_inscricao(fonte, hoje, ref=None):
+    """fonte_ids publicados com inscrição ativa ("Eu vou") em turno de hoje em diante (o que já passou sai da lista da
+    importação de qualquer jeito). None quando não dá para consultar (pilha local via REST)."""
+    if destino()[0] == "rest":
+        return None
+    sql = ("select distinct a.fonte_id from acao a join turno t on t.acao = a.id join inscricao i on i.turno = t.id "
+           f"where a.fonte = '{fonte}' and a.status = 'publicada' and i.cancelada_em is null and t.inicio >= '{hoje}'")
+    return {x["fonte_id"] for x in consultar_sql(sql, ref)}
 
 
 def publicar(fonte, itens, encerrar=True, ref=None):
@@ -329,18 +338,11 @@ def publicar(fonte, itens, encerrar=True, ref=None):
         st, resp = _http("POST", url.rstrip("/") + "/rest/v1/rpc/importar_acoes",
                          {"fonte": fonte, "itens": itens, "encerrar_faltantes": encerrar},
                          {"apikey": chave, "Authorization": "Bearer " + chave})
-    else:
-        import ir_ao_ar
-        ref = ref or (ir_ao_ar.ARQ_REF.read_text().strip() if ir_ao_ar.ARQ_REF.exists() else None)
-        if not ref:
-            raise Falha("não sei o ref do projeto: passe --ref")
-        st, resp = _http("POST", f"{ir_ao_ar.API}/projects/{ref}/database/query", {"query": sql_importar(fonte, itens, encerrar)},
-                         {"Authorization": "Bearer " + chave})
-        if 200 <= st < 300 and isinstance(resp, list) and resp:
-            resp = resp[0].get("r")
-    if not 200 <= st < 300:
-        raise Falha(f"importar_acoes: HTTP {st} {resp}")
-    return resp
+        if not 200 <= st < 300:
+            raise Falha(f"importar_acoes: HTTP {st} {resp}")
+        return resp
+    resp = consultar_sql(sql_importar(fonte, itens, encerrar), ref)
+    return resp[0].get("r") if isinstance(resp, list) and resp else resp
 
 
 # ---- linha de comando ----
@@ -421,6 +423,14 @@ def main(argv=None):
         if geo:
             geo.salvar()
             print(f"geocodificação: {geo.consultas} consultas novas ao Nominatim, cache em {bl.GEOCACHE}")
+        if args.aplicar and not args.sem_encerrar:  # antes das fotos: se travar, nada foi gravado nem subido
+            inscritas = ids_com_inscricao(args.fonte, args.hoje or date.today().isoformat(), args.ref)
+            perdidas = encerramentos_com_inscricao(itens, inscritas or ())
+            if inscritas is None:
+                print("AVISO: pilha local, sem checar inscrições antes de encerrar", file=sys.stderr)
+            elif perdidas and not args.forcar:
+                raise Falha(f"{len(perdidas)} ações com inscrição ativa seriam encerradas ({', '.join(perdidas[:10])}); "
+                            "nada gravado. Confira o consolidado ou use --sem-encerrar; --forcar encerra assim mesmo")
         mapa = fd.carregar_mapa()
         if args.aplicar and not args.sem_fotos:
             try:
@@ -435,14 +445,6 @@ def main(argv=None):
         if not args.aplicar:
             print("ensaio: nada gravado (use --aplicar)")
             return 0
-        if not args.sem_encerrar:
-            inscritas = ids_com_inscricao(args.fonte, args.ref)
-            if inscritas is None:
-                print("AVISO: pilha local, sem checar inscrições antes de encerrar", file=sys.stderr)
-            elif encerramentos_com_inscricao(itens, inscritas) and not args.forcar:
-                perdidas = encerramentos_com_inscricao(itens, inscritas)
-                raise Falha(f"{len(perdidas)} ações com inscrição ativa seriam encerradas ({', '.join(perdidas[:10])}); "
-                            "nada gravado. Confira o consolidado ou use --sem-encerrar; --forcar encerra assim mesmo")
         r = publicar(args.fonte, itens, encerrar=not args.sem_encerrar, ref=args.ref)
         print(f"gravado: {r}")
     except Falha as e:
