@@ -201,7 +201,7 @@ nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;fon
 .quando{display:flex;background:var(--nevoa);border-radius:999px;padding:3px}
 .pill{border:0;background:transparent;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--cinza);cursor:pointer;white-space:nowrap}
 .pill.ativo{background:#fff;color:var(--tinta);box-shadow:0 1px 4px rgba(23,23,26,.15)}
-#lista{overflow-y:auto;flex:1;padding:0 16px 24px}
+#lista{overflow-y:auto;flex:1;padding:0 16px 24px;overflow-anchor:none}
 .card{display:grid;grid-template-columns:60px minmax(0,1fr);gap:12px;padding:14px 0;border-top:1px solid var(--nevoa);text-decoration:none;color:inherit;align-items:start}
 .card:first-child{border-top:0}.card.foco{background:#f6f7f9;margin:0 -16px;padding:14px 16px}
 .card.sel{background:#fde7e9;margin:0 -16px;padding:14px 16px 14px 12px;border-left:4px solid var(--vermelho);border-top-color:transparent}
@@ -397,7 +397,7 @@ function acoesVisiveis(semTipo){const f=F();
   if(f.formato==='online')lista=lista.filter(x=>ehOnline(x.a));
   lista.forEach(x=>x.km=estado.onde&&!ehOnline(x.a)?distanciaKm(estado.onde,x.a.lugar):null);
   return lista.sort((p,q)=>p.t.inicio.localeCompare(q.t.inicio)||((p.km??0)-(q.km??0)))}
-const acoesOnline=()=>acoesVisiveis().filter(x=>ehOnline(x.a));
+const acoesOnline=(vistas=acoesVisiveis())=>vistas.filter(x=>ehOnline(x.a));
 function acoesNaArea(vistas){const todas=vistas.filter(x=>temPino(x.a));if(!mapa)return todas;const b=mapa.getBounds();return todas.filter(x=>b.contains([x.a.lugar.lat,x.a.lugar.lon]))}
 function fmtKm(km){return km<10?km.toFixed(1).replace('.',','):String(Math.round(km))}
 function pillFiltro(campo,k,v){return `<button class="pill ${F()[campo]===k?'ativo':''}" data-${campo}="${k}" onclick="F().${campo}='${k}';render()">${v}</button>`}
@@ -515,27 +515,34 @@ function desenharPinos(){
   marcadores.forEach(m=>m.remove());marcadores=[];
   const todas=acoesVisiveis().filter(x=>temPino(x.a)),pos=espalhar(todas);
   todas.forEach((x,i)=>{const m=L.marker(pos[i],{icon:etiquetaPino(x),riseOnHover:true,zIndexOffset:estado.sel===x.a.id?1000:0});m._acao=x.a.id;m.addTo(mapa);
-    m.on('click',()=>selecionar(x,pos[i]));marcadores.push(m)});
+    // a distância vale para o lugar buscado agora: a busca move o mapa sem redesenhar os pinos
+    m.on('click',()=>{x.km=estado.onde?distanciaKm(estado.onde,x.a.lugar):null;selecionar(x,pos[i])});marcadores.push(m)});
 }
 // a cada movimento do mapa só a contagem e a lista mudam. Com zoom afastado são centenas de cards: a lista sai em
 // lotes (os seguintes entram ao rolar) e nem é refeita se as ações na tela não mudaram; refazer tudo travava o fim do arrasto e do zoom
 const LOTE_CARDS=30;let listaAqui=[],listaFeita=0,listaChave=null;
 function atualizarLista(){
   if(!mapa)return;
-  const vistas=acoesVisiveis(),aqui=acoesNaArea(vistas),online=vistas.filter(x=>ehOnline(x.a)),el=document.getElementById('lista');
+  const vistas=acoesVisiveis(),aqui=acoesNaArea(vistas),online=acoesOnline(vistas),el=document.getElementById('lista');
   document.getElementById('contagem').textContent=aqui.length?`${aqui.length===1?'1 ação':aqui.length+' ações'} nesta área`:'Nenhuma ação nesta área';
-  const chave=(estado.onde?estado.onde.rotulo:'')+'|'+aqui.map(x=>x.a.id).join(',');
-  if(chave!==listaChave||!el.childElementCount){listaChave=chave;listaAqui=aqui;listaFeita=0;el.scrollTop=0;
+  const chave=(estado.onde?estado.onde.lat+','+estado.onde.lon:'')+'|'+aqui.map(x=>x.a.id).join(',');
+  if(chave!==listaChave||!el.childElementCount){listaChave=chave;listaAqui=aqui;listaFeita=0;const topo=el.scrollTop;
     el.innerHTML=(aqui.length?'<div id="cards-aqui"></div>':
       `<div class="vazio"><p>Ainda não tem ação por aqui.</p><p class="sec" style="font-weight:400">Afaste o mapa para ver outras, ou crie a primeira ação do seu bairro.</p><a class="btn" href="#/criar" onclick="novaCriacao()">Cadastrar ação</a></div>`)
       +(online.length?`<h2 style="margin-top:18px">Online, de qualquer lugar</h2>${online.map(cardAcao).join('')}`:'');
-    maisCards(LOTE_CARDS)}
+    // repõe a rolagem que a pessoa tinha: lotes até cobrir a posição, depois os de folga
+    maisCards(LOTE_CARDS);const box=document.getElementById('cards-aqui');
+    while(box&&listaFeita<listaAqui.length&&box.offsetHeight<topo+el.clientHeight)maisCards(listaFeita+LOTE_CARDS);
+    el.scrollTop=topo;maisCards()}
   if(rolarAteSel)rolarParaSel();
 }
-// põe mais um lote de cards quando a rolagem chega perto do fim (ou até o card pedido, ao selecionar um pino)
-function maisCards(ate){const el=document.getElementById('lista'),box=document.getElementById('cards-aqui');if(!el||!box||listaFeita>=listaAqui.length)return;
-  if(!ate){if(el.scrollTop+el.clientHeight<el.scrollHeight-600)return;ate=listaFeita+LOTE_CARDS}
-  box.insertAdjacentHTML('beforeend',listaAqui.slice(listaFeita,ate).map(cardAcao).join(''));listaFeita=Math.min(ate,listaAqui.length)}
+// sem `ate`: põe lotes enquanto o fim dos cards da área (não o da lista, que segue com o bloco Online) estiver perto da
+// parte visível; com `ate`: até o card pedido, ao selecionar um pino. A lista não tem âncora de rolagem (overflow-anchor):
+// com ela, o Chrome empurrava a rolagem a cada lote posto acima do bloco Online e o laço carregava tudo
+function maisCards(ate){const el=document.getElementById('lista'),box=document.getElementById('cards-aqui');if(!el||!box)return;
+  const por=n=>{box.insertAdjacentHTML('beforeend',listaAqui.slice(listaFeita,n).map(cardAcao).join(''));listaFeita=Math.min(n,listaAqui.length)};
+  if(ate){if(ate>listaFeita)por(ate);return}
+  while(listaFeita<listaAqui.length&&box.getBoundingClientRect().bottom-el.getBoundingClientRect().bottom<600)por(listaFeita+LOTE_CARDS)}
 function focar(id){estado.foco=id;document.querySelectorAll('.card').forEach(c=>c.classList.toggle('foco',c.id==='card-'+id));
   marcadores.forEach(m=>{const el=m.getElement();const e=el&&el.querySelector('.etiqueta');if(e)e.classList.toggle('foco',m._acao===id)})}
 function alternarGaveta(){abrirGaveta(estado.gaveta==='baixa'?'meio':estado.gaveta==='meio'?'cheia':'baixa')}
