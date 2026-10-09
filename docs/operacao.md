@@ -129,6 +129,8 @@ Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capt
   (bucket `fotos-acoes`, imagem obrigatória) aplicadas com `python scripts/ir_ao_ar.py migrar`; função
   `previa-instagram` publicada com `npx supabase functions deploy previa-instagram --project-ref ommitzndniqnmsjsjghb`
   (token do `.env`); o dono passou a `moderador`.
+- Em 2026-10-09 (fim da tarde): migrações 20261009000023 (organização própria, link do perfil oficial e do post da
+  organização anunciando a ação) e 20261009000030 (suspender, reativar e excluir ação) aplicadas com `ir_ao_ar.py migrar`.
 
 ## O que falta para ir ao ar
 

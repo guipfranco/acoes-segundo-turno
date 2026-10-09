@@ -41,7 +41,7 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   moderador, ou membro de organização verificada), que publica direto; limite de 10 por dia e 10 em análise
   (migração 20261009000021: `criar_acao`, `minhas_acoes`, `encerrar_acao`, `fila_moderacao`, `aprovar_acao`,
   `recusar_acao`). Fila (`#/fila`) só para moderador (abas Em análise, Publicadas e Organizações).
-  Organização (migração 20261009000023, branch `organizacao`): no Perfil a pessoa cadastra a sua (nome, tipo, logo);
+  Organização (migração 20261009000023, em produção desde 2026-10-09): no Perfil a pessoa cadastra a sua (nome, tipo, logo);
   nome novo cria sem selo e liga na hora, nome que já existe vira pedido para a moderação; selo dado na Fila. No
   cadastro, "Quem organiza?": eu mesmo(a), minha organização ou outra escrita à mão (criada sem selo).
   Verificação: no Perfil, link do perfil oficial da organização (`link_oficial`); em toda ação em nome de organização
