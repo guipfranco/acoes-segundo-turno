@@ -1,0 +1,98 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const ApiExemplo = require('../../app/api-exemplo.js');
+
+function dados() {
+  const src = fs.readFileSync(path.join(__dirname, '../../app/dados.js'), 'utf8');
+  const window = {};
+  new Function('window', src)(window);
+  return window.DADOS;
+}
+const turnoFuturo = (d, a) => d.turnos.find(t => t.acao === a.id && t.inicio.slice(0, 10) >= d.config.hoje);
+// ação de outro organizador (config.eu organizador já enxerga o combinado sem se inscrever), com contato por link e turno futuro
+const publicada = d => d.acoes.find(a => a.status === 'publicada' && a.contatoTipo === 'link_grupo' && a.organizador !== d.config.eu && turnoFuturo(d, a));
+
+test('publico só traz publicadas e nunca detalhe nem contato', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const pub = await api.publico();
+  assert.equal(pub.config.hoje, d.config.hoje);
+  assert.ok(pub.acoes.length > 0);
+  assert.ok(pub.acoes.every(a => a.status === 'publicada'));
+  for (const a of pub.acoes) {
+    assert.equal(a.detalhe, undefined); assert.equal(a.contatoLink, undefined); assert.equal(a.contatoWhatsapp, undefined);
+    assert.equal(typeof a.organizadorNome, 'string'); assert.ok(['organizador_chama', 'whatsapp', 'link_grupo'].includes(a.contatoTipo));
+  }
+  const t = pub.turnos[0];
+  assert.equal(typeof t.vao, 'number');
+});
+
+test('sessão começa como config.eu; sair e entrar', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  assert.equal((await api.sessao()).id, d.config.eu);
+  await api.sair(); assert.equal(await api.sessao(), null);
+  await api.entrar(); assert.equal((await api.sessao()).id, d.config.eu);
+});
+
+test('acao: combinado só para inscrito; inscrever e desistir mexem em vao e inscrita', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const a = publicada(d); const t = turnoFuturo(d, a);
+  // garante que config.eu não está inscrito nesse turno
+  d.inscricoes = d.inscricoes.filter(i => !(i.turno === t.id && i.pessoa === d.config.eu));
+  let r = await api.acao(a.id);
+  assert.equal(r.combinado, null); assert.deepEqual(r.inscrita, []);
+  const antes = r.turnos.find(x => x.id === t.id).vao;
+  const ins = await api.inscrever(t.id);
+  assert.equal(ins.combinado.contato.tipo, 'link_grupo'); assert.equal(ins.combinado.contato.link, a.contatoLink);
+  r = await api.acao(a.id);
+  assert.deepEqual(r.inscrita, [t.id]); assert.equal(r.turnos.find(x => x.id === t.id).vao, antes + 1);
+  await api.inscrever(t.id); // repetir não duplica
+  assert.equal((await api.acao(a.id)).turnos.find(x => x.id === t.id).vao, antes + 1);
+  await api.desistir(t.id);
+  r = await api.acao(a.id);
+  assert.equal(r.combinado, null); assert.equal(r.turnos.find(x => x.id === t.id).vao, antes);
+  await api.inscrever(t.id); // reinscrever depois de desistir
+  assert.equal((await api.acao(a.id)).turnos.find(x => x.id === t.id).vao, antes + 1);
+});
+
+test('erros: precisa_entrar, sem_telefone, bloqueada, lotado, turno_passado, nao_publicada', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const a = publicada(d); const t = turnoFuturo(d, a);
+  d.inscricoes = d.inscricoes.filter(i => !(i.turno === t.id && i.pessoa === d.config.eu));
+  await api.sair();
+  await assert.rejects(api.inscrever(t.id), e => e.codigo === 'precisa_entrar');
+  await api.entrar();
+  const eu = d.pessoas.find(p => p.id === d.config.eu);
+  eu.telefone = null;
+  await assert.rejects(api.inscrever(t.id), e => e.codigo === 'sem_telefone');
+  await api.salvarTelefone('(11) 9xxxx-xxxx');
+  eu.bloqueada = true;
+  await assert.rejects(api.inscrever(t.id), e => e.codigo === 'bloqueada');
+  eu.bloqueada = false;
+  d.inscricoes.push({ id: 99902, pessoa: 99, turno: t.id, criadaEm: d.config.hoje, canceladaEm: null, presenca: null });
+  t.lotacao = d.inscricoes.filter(i => i.turno === t.id && !i.canceladaEm).length; // >= 1
+  await assert.rejects(api.inscrever(t.id), e => e.codigo === 'lotado');
+  t.lotacao = null;
+  const passado = { id: 99901, acao: a.id, inicio: '2020-01-01T10:00', fim: '2020-01-01T12:00', lotacao: null };
+  d.turnos.push(passado);
+  await assert.rejects(api.inscrever(passado.id), e => e.codigo === 'turno_passado');
+  const naoPub = d.acoes.find(x => x.status !== 'publicada'); const tn = d.turnos.find(x => x.acao === naoPub.id);
+  await assert.rejects(api.inscrever(tn.id), e => e.codigo === 'nao_publicada');
+  await api.sair();
+  assert.equal(await api.acao(naoPub.id), null); // deslogado não vê ação fora de publicada
+});
+
+test('salvarTelefone valida 11 dígitos e minhasInscricoes lista só as ativas', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  await assert.rejects(api.salvarTelefone('123'), e => e.codigo === 'telefone_invalido');
+  const p = await api.salvarTelefone('11988887777');
+  assert.equal(p.telefone, '(11) 98888-7777');
+  const a = publicada(d); const t = turnoFuturo(d, a);
+  await api.inscrever(t.id);
+  const minhas = await api.minhasInscricoes();
+  assert.ok(minhas.some(m => m.turno.id === t.id && m.acao.id === a.id));
+  assert.ok(minhas.every(m => m.acao.detalhe === undefined));
+  await api.desistir(t.id);
+  assert.ok(!(await api.minhasInscricoes()).some(m => m.turno.id === t.id));
+});

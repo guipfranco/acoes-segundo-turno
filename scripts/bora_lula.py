@@ -150,7 +150,7 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25"):
         acoes.append({
             "id": item["id"], "titulo": (item.get("atividade") or "Ação")[:120], "tipo": tipo_mapa(item.get("tipo")),
             "tipoOrigem": item.get("tipo") or "", "descricao": descricao, "organizador": pessoa_feed["id"],
-            "organizacao": org_id, "lugar": lugar, "detalhe": "", "grupo": None, "status": "publicada",
+            "organizacao": org_id, "lugar": lugar, "detalhe": "", "contatoTipo": "organizador_chama", "contatoWhatsapp": None, "contatoLink": None, "status": "publicada",
             "motivoRecusa": None, "prioritaria": False, "criadaEm": hoje, "foto": None, "fonte": "bora-lula", "link": link,
         })
         turnos.append({"id": len(turnos) + 1, "acao": item["id"], "inicio": inicio, "fim": fim, "lotacao": None})
