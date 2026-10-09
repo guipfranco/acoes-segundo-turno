@@ -2,7 +2,7 @@ from pathlib import Path
 import re
 
 RAIZ = Path(__file__).resolve().parents[1]
-HTML = (RAIZ / "mockup" / "index.html").read_text(encoding="utf-8")
+HTML = (RAIZ / "app" / "index.html").read_text(encoding="utf-8")
 
 
 def test_tem_as_seis_telas():
@@ -16,7 +16,7 @@ def test_nav_e_doar():
     assert "Doar" in HTML
 import json
 
-DADOS_JS = (RAIZ / "mockup" / "dados.js").read_text(encoding="utf-8") if (RAIZ / "mockup" / "dados.js").exists() else ""
+DADOS_JS = (RAIZ / "app" / "dados.js").read_text(encoding="utf-8") if (RAIZ / "app" / "dados.js").exists() else ""
 
 
 def carregar_dados():
@@ -177,7 +177,7 @@ def test_marcadores_sem_imagem_externa():
 
 
 # Redesenho (Airbnb/Meetup): busca por lugar, lista acompanha o mapa, fundo da RMSP no artifact
-LUGARES_JS = (RAIZ / "mockup" / "lugares.js").read_text(encoding="utf-8")
+LUGARES_JS = (RAIZ / "app" / "lugares.js").read_text(encoding="utf-8")
 
 
 def test_lugares_tem_municipios_do_brasil_e_distritos_da_capital():
@@ -269,7 +269,7 @@ def test_mapa_virou_rota_propria():
 
 def test_workflow_do_pages_publica_so_a_pasta_mockup():
     assert "actions/upload-pages-artifact" in WORKFLOW and "actions/deploy-pages" in WORKFLOW
-    assert "path: mockup" in WORKFLOW
+    assert "path: app" in WORKFLOW
 
 
 # Fotos de verdade nos cards (Wikimedia Commons, licença livre), com o ícone de reserva
