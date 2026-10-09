@@ -313,9 +313,11 @@ const org=id=>PUB.organizacoes.find(o=>o.id===id);
 const pessoa=id=>DADOS.pessoas.find(p=>p.id===id); // só telas de organizador e moderador (modo exemplo)
 const eu=()=>estado.sessao?estado.sessao.id:null;
 const turnosDa=id=>PUB.turnos.filter(t=>t.acao===id).sort((a,b)=>a.inicio.localeCompare(b.inicio));
-// turno que ainda não terminou (fim depois de agora, em Brasília): o que já aconteceu hoje sai das listas e do mapa
-const agora=()=>PUB.config.agora||PUB.config.hoje+'T00:00';
-const turnoVale=t=>t.fim>agora();
+// hora atual em Brasília: ao vivo no site (aba aberta por horas continua certa); no exemplo, fixa em dados.config.agora
+const agora=()=>API.modo==='exemplo'?(PUB.config.agora||PUB.config.hoje+'T00:00'):ApiSupabase.agoraBrasilia();
+// turno que ainda vale: o exato até a hora em que termina; o aproximado (divulgação sem hora) até o fim do dia.
+// O que já aconteceu sai das listas, do mapa, do "Eu vou!" e da agenda
+const turnoVale=t=>t.horaAproximada?t.fim.slice(0,10)>=agora().slice(0,10):t.fim>agora();
 function turnosFuturos(id){return turnosDa(id).filter(turnoVale)}
 // filtro de data: lista de opções e o intervalo [de, até] (AAAA-MM-DD, inclusivo) que cada uma representa
 const QUANDO=[['breve','Em breve'],['hoje','Hoje'],['amanha','Amanhã'],['semana','Esta semana'],['fds','Fim de semana'],['proxima','Próxima semana'],['datas','Escolher datas']];
@@ -341,11 +343,12 @@ const vaoNaExemplo=id=>turnosDaExemplo(id).reduce((n,t)=>n+inscritosNo(t.id).len
 function vaoNa(id){const ts=turnosDa(id);return ts.length?ts.reduce((n,t)=>n+vaoNo(t),0):(API.modo==='exemplo'?vaoNaExemplo(id):0)}
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 function hora(d){return d.getHours()+'h'+(d.getMinutes()?String(d.getMinutes()).padStart(2,'0'):'')}
-function fmtData(iso){const d=new Date(iso);return `${DIAS[d.getDay()]} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}, ${hora(d)}`}
+function fmtDia(d){return `${DIAS[d.getDay()]} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`}
+function fmtData(iso){const d=new Date(iso);return `${fmtDia(d)}, ${hora(d)}`}
 function fmtCurta(iso){const d=new Date(iso);return `${DIAS[d.getDay()]} ${hora(d)}`}
 // horário aproximado (a divulgação só disse "à noite"): mostra o período em vez da hora
 function periodo(t){const h=new Date(t.inicio).getHours(),f=new Date(t.fim).getHours();if(h<12&&f>=18)return 'horário a confirmar';return h<12?'de manhã':h<18?'à tarde':'à noite'}
-function quandoTurno(t){if(!t.horaAproximada)return fmtData(t.inicio);const d=new Date(t.inicio);return `${DIAS[d.getDay()]} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}, ${periodo(t)}`}
+function quandoTurno(t){if(!t.horaAproximada)return fmtData(t.inicio);return `${fmtDia(new Date(t.inicio))}, ${periodo(t)}`}
 function quandoCurto(t){if(!t.horaAproximada)return fmtCurta(t.inicio);return `${DIAS[new Date(t.inicio).getDay()]} ${periodo(t)}`}
 function distanciaKm(a,b){const r=6371,x=(b.lat-a.lat)*Math.PI/180,y=(b.lon-a.lon)*Math.PI/180;const s=Math.sin(x/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(y/2)**2;return 2*r*Math.asin(Math.sqrt(s))}
 function quantosInscritos(n){return n===1?'1 inscrito':n+' inscritos'}
@@ -448,7 +451,7 @@ function blocoVitrine(titulo,lista,link,sub,extra,chave){const aberto=!!(estado.
   ${chave&&lista.length>POR_LINHA?`<button class="ver-todas" data-rotulo="${esc(rot)}" onclick="verTodas(this,'${esc(chave)}')">${aberto?'Ver menos':rot}</button>`:''}</section>`}
 // ações online: lista compacta (miniatura, título, quando, quem), em ordem de horário; não é um trilho de cartazes
 // (a pessoa não precisa passar card a card para achar a live das 19h). Mais de 4: "Ver todas" abre o resto.
-function cardOnline(x){const a=x.a;return `<a class="evento-online" href="#/acao/${a.id}"><div class="foto mini f-${CLASSE[a.tipo].slice(2)}" role="img" aria-label="${esc(a.tipo)}">${ICONES[a.tipo]}${logoCapa(a)?imgLogo(logoCapa(a)):''}${imgFoto(a)}</div>
+function cardOnline(x){const a=x.a,lg=logoCapa(a);return `<a class="evento-online" href="#/acao/${a.id}"><div class="foto mini f-${CLASSE[a.tipo].slice(2)}" role="img" aria-label="${esc(a.tipo)}">${ICONES[a.tipo]}${lg?imgLogo(lg):''}${imgFoto(a)}</div>
   <div class="txt"><div class="tit">${esc(a.titulo)}</div><div class="meta"><b>${quandoTurno(x.t)}</b> · Online</div><div class="meta quem-linha">${quemDivulga(a)}</div>${linhaVao(a)}</div></a>`}
 function blocoOnline(lista){const chave='online',aberto=!!(estado.vitrineAberta&&estado.vitrineAberta[chave]),rot=`Ver todas as ações online (${lista.length})`;
   return `<section class="bloco"><div class="cab"><h2>Online, de qualquer lugar</h2></div><p class="sub">Lives, ligatona e mutirão de mensagens: você participa de casa, pelo celular.</p>
@@ -652,13 +655,13 @@ function icsTexto(a,t){const e=s=>String(s||'').replace(/\\/g,'\\\\').replace(/;
 const agendaCache={};
 function baixarIcs(chave){const x=agendaCache[chave];if(!x)return;contar('agenda-ics');const blob=new Blob([icsTexto(x.a,x.t)],{type:'text/calendar;charset=utf-8'});
   const url=URL.createObjectURL(blob),l=document.createElement('a');l.href=url;l.download=`acao-${x.a.id}.ics`;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-function botaoAgenda(a,t){if(t.inicio.slice(0,10)<PUB.config.hoje)return '';const k=a.id+'-'+t.id;agendaCache[k]={a,t};
+function botaoAgenda(a,t){if(!turnoVale(t))return '';const k=a.id+'-'+t.id;agendaCache[k]={a,t};
   return `<details class="agenda"><summary>📅 Adicionar à agenda</summary><div class="opcoes">
    <a href="${esc(linkGoogleAgenda(a,t))}" target="_blank" rel="noopener" onclick="contar('agenda-google')">Google Agenda</a>
    <button onclick="baixarIcs('${k}')">Apple ou Outlook (arquivo .ics)</button></div></details>`}
 function compartilhar(){contar('compartilhar');const u=location.href;if(navigator.share)navigator.share({url:u});else{navigator.clipboard&&navigator.clipboard.writeText(u);alert('Link copiado')}}
 function botaoTurno(a,t,onde='lado'){const n=vaoNo(t);
-  if(t.inicio.slice(0,10)<PUB.config.hoje)return `<button class="btn" disabled>horário encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
+  if(!turnoVale(t))return `<button class="btn" disabled>horário encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
   const div=semInscricao(a)&&a.linkDivulgacao?`<div style="margin-top:8px">${botaoDivulgacao(a)}</div>`:'';
   if(estouInscrito(t.id))return `<div class="vai"><span class="selo">✓ Você vai</span>${menuMais(`<button class="perigo" onclick="desistir(${t.id})">Desistir de ir</button>`)}</div>${div}`;
   if(t.lotacao&&n>=t.lotacao)return `<button class="btn" disabled>lotado</button>${div}`;
@@ -930,7 +933,7 @@ function telaContato(arg){const c=estado.contato||(estado.contato=novoContato())
    ${a?`<div class="aviso">Sobre a ação <strong>${esc(a.titulo)}</strong></div>`:''}
    <label>Sua mensagem</label><textarea id="ctexto" rows="5" maxlength="2000" placeholder="O que aconteceu? Se for um erro, diga o que você estava fazendo e em qual tela." oninput="estado.contato.texto=this.value">${esc(c.texto)}</textarea>
    <label>Como te responder? (opcional)</label><input id="ccontato" maxlength="120" placeholder="e-mail ou WhatsApp" value="${esc(c.contato)}" oninput="estado.contato.contato=this.value">
-   <p class="sec" style="margin-top:8px">${s?`Você está como <strong>${esc(s.nome)}</strong>: a mensagem vai com seu nome e e-mail.`:'Você não precisa entrar para mandar a mensagem.'} Só a moderação lê.</p>
+   <p class="sec" style="margin-top:8px">${s?`Você está como <strong>${esc(s.nome)}</strong>: a mensagem vai com seu nome, e-mail e telefone.`:'Você não precisa entrar para mandar a mensagem.'} Só a moderação lê.</p>
    ${c.erro?`<div class="erro">${esc(c.erro)}</div>`:''}
    <p style="margin-top:18px"><button class="btn" onclick="enviarContato(${id==null?'null':id})" ${c.enviando?'disabled':''}>${c.enviando?'Enviando…':'Enviar mensagem'}</button></p></div>`}
 async function enviarContato(acaoId){const c=estado.contato;if(!c)return;const texto=c.texto.trim();
@@ -940,8 +943,10 @@ async function enviarContato(acaoId){const c=estado.contato;if(!c)return;const t
   catch(e){c.erro=MENSAGEM[e.codigo]||'Não deu para enviar. Tente de novo.'}
   c.enviando=false;rerender()}
 // só o essencial do navegador (sistema e navegador), para reproduzir um erro; sem versão completa nem identificador
-function navegador(){const u=navigator.userAgent||'';const so=/iPhone|iPad/.test(u)?'iOS':/Android/.test(u)?'Android':/Windows/.test(u)?'Windows':/Mac/.test(u)?'Mac':/Linux/.test(u)?'Linux':'';
-  const nav=/Edg\//.test(u)?'Edge':/SamsungBrowser/.test(u)?'Samsung':/Firefox/.test(u)?'Firefox':/Chrome\//.test(u)?'Chrome':/Safari/.test(u)?'Safari':'';return `${so} ${nav}`.trim()||null}
+// iPad novo se apresenta como Mac (só o toque entrega); Chrome e Firefox no iPhone são CriOS e FxiOS, antes do Safari
+function navegador(){const u=navigator.userAgent||'';const ipad=/Mac/.test(u)&&(navigator.maxTouchPoints||0)>1;
+  const so=/iPhone|iPad/.test(u)||ipad?'iOS':/Android/.test(u)?'Android':/Windows/.test(u)?'Windows':/Mac/.test(u)?'Mac':/Linux/.test(u)?'Linux':'';
+  const nav=/CriOS/.test(u)?'Chrome':/FxiOS/.test(u)?'Firefox':/EdgiOS|Edg\//.test(u)?'Edge':/SamsungBrowser/.test(u)?'Samsung':/Firefox/.test(u)?'Firefox':/Chrome\//.test(u)?'Chrome':/Safari/.test(u)?'Safari':'';return `${so} ${nav}`.trim()||null}
 // ---------- fila ----------
 async function aprovar(id){try{await API.aprovar(id)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}await sincronizar()}
 async function recusar(id){const m=(document.getElementById('motivo'+id)||{}).value||'';if(!m.trim()){estado.recusando=id;estado.erroRecusa='Escreva o motivo.';render();return}

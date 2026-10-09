@@ -13,10 +13,16 @@ def dados():
 
 
 def test_turno_que_ja_terminou_sai_das_listas_e_da_pagina():
-    # as listas e a página da ação comparam o fim do turno com "agora", não só a data
-    assert "const turnoVale=t=>t.fim>agora()" in HTML
+    # as listas, a página da ação, o "Eu vou!" e a agenda comparam o fim do turno com "agora", não só a data;
+    # turno aproximado (sem hora na divulgação) vale até o fim do dia
+    assert "const turnoVale=t=>t.horaAproximada?t.fim.slice(0,10)>=agora().slice(0,10):t.fim>agora()" in HTML
     assert "function turnosFuturos(id){return turnosDa(id).filter(turnoVale)}" in HTML
     assert "futuros=ts.filter(turnoVale)" in HTML
+    assert "function botaoAgenda(a,t){if(!turnoVale(t))return '';" in HTML
+    assert "if(!turnoVale(t))return `<button class=\"btn\" disabled>horário encerrado</button>" in HTML
+    assert "t.inicio.slice(0,10)<PUB.config.hoje" not in HTML
+    # no site a hora é ao vivo (aba aberta por horas continua certa); no exemplo é a fixa dos dados
+    assert "ApiSupabase.agoraBrasilia()" in HTML and "API.modo==='exemplo'?(PUB.config.agora" in HTML
     d = dados()
     assert d["config"]["agora"].startswith(d["config"]["hoje"] + "T")
     # no exemplo tem uma ação de hoje que já terminou, para a prévia mostrar o caso
@@ -59,8 +65,11 @@ def test_fale_com_a_gente_em_toda_parte():
     assert "API.enviarFeedback({texto" in HTML and "contar('feedback-enviar')" in HTML
     assert "Você não precisa entrar para mandar a mensagem." in HTML
     assert "sem_texto:" in HTML and "muitas_mensagens:" in HTML
-    # só o sistema e o navegador, sem identificar o aparelho
+    # só o sistema e o navegador, sem identificar o aparelho; Chrome e Firefox no iPhone não viram "Safari"
     assert "function navegador()" in HTML and "navigator.userAgent" in HTML
+    assert "/CriOS/.test(u)?'Chrome':/FxiOS/.test(u)?'Firefox'" in HTML and "navigator.maxTouchPoints" in HTML
+    # a moderação vê também o telefone de quem mandou logado, e os textos dizem isso
+    assert "a mensagem vai com seu nome, e-mail e telefone." in HTML
 
 
 def test_moderacao_le_as_mensagens_na_fila():

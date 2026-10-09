@@ -76,6 +76,32 @@ begin
   return json_build_object('inseridas', n_ins, 'atualizadas', n_atu, 'encerradas', n_enc);
 end $$;
 
+-- inscrever: igual à migração 20, mas "já passou" olha o fim do turno (exato) ou o dia (aproximado), como o app
+create or replace function inscrever(turno_id bigint) returns json language plpgsql security definer set search_path = public as $$
+declare p pessoa; t turno; a acao; ativa inscricao;
+begin
+  if auth.uid() is null then raise exception 'precisa_entrar'; end if;
+  select * into p from pessoa where id = auth.uid();
+  if p.bloqueada then raise exception 'bloqueada'; end if;
+  select * into t from turno where id = turno_id for update;
+  if not found then raise exception 'nao_publicada'; end if;
+  select * into a from acao where id = t.acao;
+  if a.status <> 'publicada' then raise exception 'nao_publicada'; end if;
+  if a.contato_tipo::text <> 'divulgacao' and p.telefone is null then raise exception 'sem_telefone'; end if;
+  if (case when t.hora_aproximada then t.fim::date < hoje_brasilia() else t.fim < (now() at time zone 'America/Sao_Paulo') end) then
+    raise exception 'turno_passado';
+  end if;
+  select * into ativa from inscricao where pessoa = p.id and turno = t.id and cancelada_em is null;
+  if not found then
+    if t.lotacao is not null and (select count(*) from inscricao where turno = t.id and cancelada_em is null) >= t.lotacao then
+      raise exception 'lotado';
+    end if;
+    insert into inscricao (pessoa, turno) values (p.id, t.id)
+      on conflict (pessoa, turno) do update set cancelada_em = null, criada_em = now();
+  end if;
+  return json_build_object('combinado', combinado_json(a));
+end $$;
+
 -- ---------- 2. feedback ----------
 create table feedback (
   id bigint generated always as identity primary key,

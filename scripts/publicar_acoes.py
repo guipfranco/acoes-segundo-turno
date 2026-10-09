@@ -66,12 +66,12 @@ def item_do_feed(x, lugares, geo=None):
     online = bool(x.get("online"))
     cidade, uf = (x.get("cidade") or "").strip(), (x.get("uf") or "").strip()
     local, endereco = (x.get("local") or "").strip(), (x.get("endereco") or "").strip()
-    h_ini, h_fim = bl.faixa(x.get("hora"), x.get("hora_ord"))
+    h_ini, h_fim, aprox = bl.faixa_aproximada(x.get("hora"), x.get("atividade"), x.get("hora_ord"))
     data = x["data"]
     item = {
         "fonte_id": str(x["id"]), "titulo": (x.get("atividade") or "Ação")[:120], "tipo": bl.tipo_mapa(x.get("tipo"), x.get("atividade")),
         "organizacao": (x.get("organizacao") or "").strip() or None, "link": (x.get("link") or "").strip(),
-        "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}",
+        "inicio": f"{data}T{h_ini}", "fim": f"{data}T{h_fim}", "hora_aproximada": aprox,
     }
     item["organizacao_tipo"] = bl.tipo_org(item["organizacao"]) if item["organizacao"] else None
     item["organizacao_foto"] = bl.logo_org(item["organizacao"]) if item["organizacao"] else None

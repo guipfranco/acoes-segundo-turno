@@ -433,6 +433,18 @@ def test_importar_acoes_grava_hora_aproximada_e_a_view_publica_a_expoe(cenario):
     assert ta["hora_aproximada"] is False and ta["inicio"] == "2099-02-01T20:00:00"
 
 
+def test_inscrever_recusa_turno_que_ja_terminou_hoje_mas_aceita_o_aproximado_do_dia(cenario):
+    import datetime
+    hoje = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3))).strftime("%Y-%m-%d")
+    sb.rpc("salvar_telefone", {"telefone": "11988887777"}, jwt=cenario["jwt_a"])
+    r = sb.admin("POST", "/rest/v1/turno", {"acao": cenario["acao"], "inicio": f"{hoje}T00:00:00", "fim": f"{hoje}T00:01:00"})
+    assert r.status == 201, r.corpo
+    assert sb.rpc("inscrever", {"turno_id": r.corpo[0]["id"]}, jwt=cenario["jwt_a"]).corpo["message"] == "turno_passado"
+    r = sb.admin("POST", "/rest/v1/turno", {"acao": cenario["acao"], "inicio": f"{hoje}T00:00:00", "fim": f"{hoje}T00:01:00", "hora_aproximada": True})
+    assert r.status == 201, r.corpo
+    assert sb.rpc("inscrever", {"turno_id": r.corpo[0]["id"]}, jwt=cenario["jwt_a"]).status == 200
+
+
 def test_feedback_qualquer_pessoa_manda_e_so_moderador_le(cenario):
     # sem entrar: vai sem pessoa; texto curto não vai
     assert sb.rpc("enviar_feedback", {"texto": "oi"}).corpo["message"] == "sem_texto"

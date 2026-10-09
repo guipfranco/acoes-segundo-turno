@@ -26,6 +26,25 @@ def test_faixa_aproximada_exata_quando_tem_hora_ou_dia_todo():
     assert bl.faixa_aproximada("Dia todo", "") == ("09:00", "18:00", False)
 
 
+def test_faixa_aproximada_no_feed_usa_hora_ord_e_so_cai_no_periodo_sem_ela():
+    assert bl.faixa_aproximada("Noite", "x", 19.5) == ("19:30", "21:30", False)
+    assert bl.faixa_aproximada("Noite", "x", None) == ("19:00", "23:00", True)
+    feed, _ = pa.item_do_feed(_feed(hora="Noite", hora_ord=None), LUGARES)
+    assert feed["inicio"] == "2026-10-10T19:00" and feed["hora_aproximada"] is True
+    feed, _ = pa.item_do_feed(_feed(hora="9h", hora_ord=9), LUGARES)
+    assert feed["inicio"] == "2026-10-10T09:00" and feed["hora_aproximada"] is False
+    d = bl.converter({"acoes": [_feed(hora="Noite", hora_ord=None), _feed(id=2)]}, LUGARES, hoje="2026-10-09")
+    assert [t["horaAproximada"] for t in d["turnos"]] == [True, False]
+
+
+def _feed(**k):
+    base = {"id": 1, "data": "2026-10-10", "hora": "9h", "hora_ord": 9, "uf": "SP", "cidade": "Diadema", "local": "Praça da Moça",
+            "endereco": "Praça da Moça, 10 - Centro", "atividade": "Panfletagem no centro", "tipo": "Panfletagem",
+            "organizacao": "PT de Diadema", "link": "https://www.instagram.com/p/x/", "online": False, "plataforma": ""}
+    base.update(k)
+    return base
+
+
 def test_faixa_aproximada_pelo_periodo_ou_sem_hora():
     assert bl.faixa_aproximada("Noite", "") == ("19:00", "23:00", True)
     assert bl.faixa_aproximada("", "Noite Giro nos Bares Pontos: Pinheiros (Largo da Batata)") == ("19:00", "23:00", True)
