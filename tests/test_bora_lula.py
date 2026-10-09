@@ -29,10 +29,17 @@ def test_tipo_do_feed_para_tipo_do_mapa():
     assert bl.tipo_mapa("Panfletagem") == "panfletagem"
     assert bl.tipo_mapa("Adesivaço") == "adesivaço"
     assert bl.tipo_mapa("Bandeiraço") == "bandeiraço"
-    assert bl.tipo_mapa("Encontro") == "roda de conversa"
-    assert bl.tipo_mapa("Caminhada") == "outro"
-    assert bl.tipo_mapa("Ato") == "outro"
+    assert bl.tipo_mapa("Encontro") == "encontro"
+    assert bl.tipo_mapa("Caminhada") == "caminhada"
+    assert bl.tipo_mapa("Ato") == "ato"
+    assert bl.tipo_mapa("Cultural") == "cultural"
     assert bl.tipo_mapa("") == "outro"
+    # tipo "Outro" no feed: o título decide
+    assert bl.tipo_mapa("Outro", "Plenária de Mobilização Cajamar") == "encontro"
+    assert bl.tipo_mapa("Outro", "Carreata Carapicuíba quer Lula") == "caminhada"
+    assert bl.tipo_mapa("Outro", "Ato unificado pela Democracia") == "ato"
+    assert bl.tipo_mapa("Outro", "Pintura de Camiseta") == "outro"
+    assert bl.tipo_mapa("Panfletagem", "Plenária") == "panfletagem"  # tipo do feed conhecido vence o título
 
 
 def test_geocodifica_por_cidade_e_uf():

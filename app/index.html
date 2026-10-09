@@ -40,6 +40,7 @@ nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-conte
 nav a span:first-child{font-size:20px;line-height:1}
 nav a.ativo{color:var(--tinta)}
 nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
+nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 78px;font-size:14px}nav a.entrar span:first-child{display:none}
 /* inicial: busca grande, filtros e vitrine de cidades */
 .inicio-pg{max-width:1100px;margin:0 auto;padding:22px 16px calc(var(--nav) + 24px)}
 .hero{max-width:640px;margin:8px auto 14px;text-align:center}
@@ -72,8 +73,34 @@ nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
 .foto .data{left:10px;background:#fff;box-shadow:0 1px 5px rgba(23,23,26,.2)}.foto .online{right:10px;background:var(--tinta);color:#fff}
 .evento .tit{font-weight:600;font-size:16px;line-height:1.25;margin:10px 0 2px}
 .evento .meta{font-size:14px;color:var(--cinza)}.evento .meta b{color:var(--tinta);font-weight:600}
-.f-panfletagem{background:linear-gradient(135deg,#fde7e9,#f3a9b0)}.f-adesivaco{background:linear-gradient(135deg,#fff1d6,#f7c978)}.f-roda{background:linear-gradient(135deg,#e6f0ff,#a9c4f5)}
+.f-panfletagem{background:linear-gradient(135deg,#fde7e9,#f3a9b0)}.f-adesivaco{background:linear-gradient(135deg,#fff1d6,#f7c978)}.f-encontro{background:linear-gradient(135deg,#e6f0ff,#a9c4f5)}
 .f-ligatona{background:linear-gradient(135deg,#e8f4ec,#9fd3b0)}.f-porta{background:linear-gradient(135deg,#f1e8ff,#c5aef2)}.f-bandeiraco{background:linear-gradient(135deg,#fde7e9,#e07b84)}.f-outro{background:linear-gradient(135deg,#eef0f3,#c8ccd4)}
+.f-ato{background:linear-gradient(135deg,#ffe4d6,#f29b72)}.f-caminhada{background:linear-gradient(135deg,#e0f5f3,#8fd1c8)}.f-cultural{background:linear-gradient(135deg,#fbe3f4,#e5a3d3)}
+/* cidade do bloco "Perto de você": vira um botão que abre a busca */
+.cab-cidade{position:relative}
+.cidade{background:none;border:0;padding:0;font:inherit;color:var(--vinho);cursor:pointer;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+.cidade:hover{color:var(--vermelho)}.cidade span{font-size:.7em;text-decoration:none;display:inline-block;margin-left:2px}
+.pop-cidade{position:absolute;left:0;top:calc(100% + 8px);width:min(420px,100%);background:#fff;border-radius:16px;box-shadow:0 8px 28px rgba(23,23,26,.2);padding:10px;z-index:900}
+.pop-cidade .busca{box-shadow:none;border:1.5px solid #d4d6db}
+#sug-cidade div{padding:10px 12px;cursor:pointer;border-top:1px solid var(--nevoa);border-radius:8px}#sug-cidade div:first-child{border:0}
+#sug-cidade div:hover,#sug-cidade div.foco{background:var(--nevoa)}#sug-cidade small{color:var(--cinza);display:block}
+/* adicionar à agenda */
+.agenda{display:inline-block;position:relative;margin-top:8px}
+.agenda summary{list-style:none;cursor:pointer;color:var(--vinho);font-weight:600;font-size:14px;padding:4px 0}.agenda summary::-webkit-details-marker{display:none}
+.agenda summary:hover{text-decoration:underline}
+.agenda .opcoes{position:absolute;left:0;top:100%;background:#fff;border-radius:12px;box-shadow:0 8px 28px rgba(23,23,26,.2);padding:6px;z-index:50;min-width:210px}
+.agenda .opcoes a,.agenda .opcoes button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 12px;border-radius:8px;font-size:14px;cursor:pointer;text-decoration:none;color:var(--tinta)}
+.agenda .opcoes a:hover,.agenda .opcoes button:hover{background:var(--nevoa)}
+.trilho .agenda .opcoes{position:static;box-shadow:none;padding:0;min-width:0}
+/* mapa: prévia da ação ao clicar no pino (estilo Airbnb) */
+.previa .leaflet-popup-content-wrapper{position:relative;z-index:1;padding:0;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(23,23,26,.28)}
+.previa .leaflet-popup-content{margin:0;width:260px!important;font-family:'Public Sans',sans-serif}
+.leaflet-container .previa a.leaflet-popup-close-button{z-index:2;background:#fff;color:var(--tinta);border-radius:50%;width:28px;height:28px;top:8px;right:8px;font:600 20px/26px 'Public Sans',sans-serif;text-align:center;box-shadow:0 1px 5px rgba(23,23,26,.3)}
+.previa a.corpo{display:block;text-decoration:none;color:var(--tinta)}
+.previa .foto{border-radius:0;aspect-ratio:16/9;font-size:44px}
+.previa .txt{padding:10px 14px 12px}.previa .tit{font-weight:700;font-size:15px;line-height:1.25;margin-bottom:3px}
+.previa .meta{font-size:13px;color:var(--cinza);line-height:1.4}.previa .meta b{color:var(--tinta);font-weight:600}
+.previa .ver{display:inline-block;margin-top:6px;font-size:13px;font-weight:700;color:var(--vinho)}
 .vitrine-vazia{color:var(--cinza);font-size:14px;padding:10px 0}
 /* mapa: mapa + busca + gaveta */
 #tela-mapa{position:fixed;inset:0 0 var(--nav) 0;overflow:hidden}
@@ -101,14 +128,18 @@ nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
 .pill.ativo{background:#fff;color:var(--tinta);box-shadow:0 1px 4px rgba(23,23,26,.15)}
 #lista{overflow-y:auto;flex:1;padding:0 16px 24px}
 .card{display:grid;grid-template-columns:60px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--nevoa);text-decoration:none;color:inherit;align-items:start}
-.card:first-child{border-top:0}.card.foco{background:#fbf3f4;margin:0 -16px;padding:14px 16px}
+.card:first-child{border-top:0}.card.foco{background:#f6f7f9;margin:0 -16px;padding:14px 16px}
+.card.sel{background:#fde7e9;margin:0 -16px;padding:14px 16px 14px 12px;border-left:4px solid var(--vermelho);border-top-color:transparent}
+.card.sel+.card{border-top-color:transparent}.card.sel .tit{color:var(--vinho)}
 .cubo{width:60px;height:60px;border-radius:14px;display:grid;place-items:center;font-size:28px}
 .card .tit{font-weight:600;font-size:16px;line-height:1.25;margin-bottom:2px}
 .card .meta{font-size:14px;color:var(--cinza)}.card .meta b{color:var(--tinta);font-weight:600}
 .vazio{padding:28px 8px;text-align:center}.vazio p{font-size:17px;font-weight:600;margin-bottom:12px}
 .etiqueta{background:#fff;border-radius:999px;padding:4px 9px;font:600 12px/1 'Public Sans',sans-serif;color:var(--tinta);box-shadow:0 1px 5px rgba(23,23,26,.3);white-space:nowrap;display:inline-block;transform:translate(-50%,-50%)}
 .etiqueta.foco{background:var(--vinho);color:#fff}
-.t-panfletagem{background:#fde7e9}.t-adesivaco{background:#fff1d6}.t-roda{background:#e6f0ff}.t-ligatona{background:#e8f4ec}.t-porta{background:#f1e8ff}.t-bandeiraco{background:#fde7e9}.t-outro{background:var(--nevoa)}
+.etiqueta.sel{background:var(--vermelho);color:#fff;font-size:13px;padding:6px 11px;box-shadow:0 3px 12px rgba(214,35,46,.5);outline:2px solid #fff}
+.t-ato{background:#ffe4d6}.t-caminhada{background:#e0f5f3}.t-cultural{background:#fbe3f4}
+.t-panfletagem{background:#fde7e9}.t-adesivaco{background:#fff1d6}.t-encontro{background:#e6f0ff}.t-ligatona{background:#e8f4ec}.t-porta{background:#f1e8ff}.t-bandeiraco{background:#fde7e9}.t-outro{background:var(--nevoa)}
 .leaflet-container{font-family:inherit}#tela-mapa .leaflet-top,#tela-mapa .leaflet-bottom{z-index:650}.leaflet-bottom.leaflet-right{margin-bottom:126px}
 .leaflet-control-attribution{font-size:10px}
 /* desktop: coluna a esquerda, mapa a direita */
@@ -127,6 +158,7 @@ nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
   nav a{flex:0 0 auto;flex-direction:row;gap:7px;font-size:14px;padding:0 14px;height:40px;border-radius:10px}
   nav a span:first-child{font-size:17px}nav a:hover{background:var(--nevoa)}nav a.ativo{color:var(--tinta);background:var(--nevoa)}
   nav a.doar{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.doar:hover{background:var(--vinho)}
+  nav a.entrar{flex:0 0 auto;padding:0 20px;margin-left:10px;font-size:15px}nav a.entrar:hover{background:#34343b}
   /* páginas internas mais largas e com respiro */
   .pagina{max-width:760px;padding:32px 24px 56px}.pagina.estreita{max-width:620px}
   h1{font-size:34px}
@@ -172,10 +204,20 @@ nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
 <script src="api.js"></script>
 <script>
 // ---------- dados e helpers ----------
-const ICONES={'panfletagem':'📄','adesivaço':'🏷️','roda de conversa':'🗣️','ligatona':'📞','porta a porta':'🚪','bandeiraço':'🚩','outro':'✨'};
-const CLASSE={'panfletagem':'t-panfletagem','adesivaço':'t-adesivaco','roda de conversa':'t-roda','ligatona':'t-ligatona','porta a porta':'t-porta','bandeiraço':'t-bandeiraco','outro':'t-outro'};
+// tipos de ação, na ordem dos chips; revistos em 2026-10-09 a partir das ações reais da agenda Bora Lula
+// (encontro e plenária, ato e caminhada dominam; ligatona e porta a porta ficam para quem cria ação)
+const ICONES={'panfletagem':'📄','encontro':'🗣️','ato':'📣','caminhada':'🚶','cultural':'🎶','bandeiraço':'🚩','adesivaço':'🏷️','porta a porta':'🚪','ligatona':'📞','outro':'✨'};
+const CLASSE={'panfletagem':'t-panfletagem','encontro':'t-encontro','ato':'t-ato','caminhada':'t-caminhada','cultural':'t-cultural','bandeiraço':'t-bandeiraco','adesivaço':'t-adesivaco','porta a porta':'t-porta','ligatona':'t-ligatona','outro':'t-outro'};
 const TIPOS=Object.keys(ICONES);
-const estado={onde:null,quando:'breve',de:'',ate:'',formato:'qualquer',tipo:null,perto:null,geoTentada:false,gaveta:'baixa',vista:{lat:-23.62,lon:-46.62,zoom:10},foco:null,filaAba:'analise',inscrevendo:null,minhasAberta:null,avisoTexto:null,recusando:null,erroRecusa:null,aviso:null,sessao:null,acaoAberta:null};
+// nomes antigos que ainda podem vir do banco antes da migração dos tipos
+const TIPO_ANTIGO={'roda de conversa':'encontro'};
+const tipoAtual=t=>TIPO_ANTIGO[t]||(ICONES[t]?t:'outro');
+function normalizarTipos(acoes){(acoes||[]).forEach(a=>{if(a)a.tipo=tipoAtual(a.tipo)});return acoes}
+// filtros da inicial e do mapa são separados: cada tela tem o seu e ele não vaza para a outra
+const filtroNovo=()=>({quando:'breve',de:'',ate:'',formato:'qualquer',tipo:null});
+const estado={onde:null,filtros:{inicio:filtroNovo(),mapa:filtroNovo()},perto:null,geoTentada:false,gaveta:'baixa',vista:{lat:-23.62,lon:-46.62,zoom:10},foco:null,sel:null,filaAba:'analise',inscrevendo:null,minhasAberta:null,avisoTexto:null,recusando:null,erroRecusa:null,aviso:null,sessao:null,acaoAberta:null};
+let telaAtual='inicio',rotaAnterior=null,ultimaLista=null;
+const F=()=>estado.filtros[telaAtual==='mapa'?'mapa':'inicio'];
 let PUB={config:{hoje:'',frase:'',vaquinha:'#'},organizacoes:[],acoes:[],turnos:[]};
 const org=id=>PUB.organizacoes.find(o=>o.id===id);
 const pessoa=id=>DADOS.pessoas.find(p=>p.id===id); // só telas de organizador e moderador (modo exemplo)
@@ -184,15 +226,14 @@ const turnosDa=id=>PUB.turnos.filter(t=>t.acao===id).sort((a,b)=>a.inicio.locale
 function turnosFuturos(id){return turnosDa(id).filter(t=>t.inicio.slice(0,10)>=PUB.config.hoje)}
 // filtro de data: lista de opções e o intervalo [de, até] (AAAA-MM-DD, inclusivo) que cada uma representa
 const QUANDO=[['breve','Em breve'],['hoje','Hoje'],['amanha','Amanhã'],['semana','Esta semana'],['fds','Fim de semana'],['proxima','Próxima semana'],['datas','Escolher datas']];
-const FORMATOS=[['qualquer','Presencial e online'],['presencial','Presencial'],['online','Online']];
-function intervaloQuando(){const h=PUB.config.hoje,w=new Date(h+'T00:00').getDay(),fim='9999-12-31';
-  switch(estado.quando){
+function intervaloQuando(){const h=PUB.config.hoje,w=new Date(h+'T00:00').getDay(),fim='9999-12-31',f=F();
+  switch(f.quando){
     case 'hoje':return[h,h];
     case 'amanha':{const a=somaDias(h,1);return[a,a]}
     case 'semana':return[h,somaDias(h,(7-w)%7)];
     case 'fds':{if(w===0)return[h,h];const sab=somaDias(h,(6-w+7)%7);return[sab,somaDias(sab,1)]}
     case 'proxima':{const seg=somaDias(h,((8-w)%7)||7);return[seg,somaDias(seg,6)]}
-    case 'datas':return[estado.de&&estado.de>=h?estado.de:h,estado.ate||fim];
+    case 'datas':return[f.de&&f.de>=h?f.de:h,f.ate||fim];
     default:return[h,fim]}}
 function turnosNoFiltro(id){const[de,ate]=intervaloQuando();return turnosFuturos(id).filter(t=>{const d=t.inicio.slice(0,10);return d>=de&&d<=ate})}
 const ehOnline=a=>!!(a.lugar&&a.lugar.online);
@@ -250,23 +291,26 @@ async function fundoBase(mapa){
 // ---------- filtros comuns (inicial e mapa) ----------
 let mapa=null,marcadores=[];
 // cada ação publicada entra com o primeiro turno que cabe no filtro de data; ordem: próximos turnos primeiro
-function acoesVisiveis(){
+// semTipo: ignora o chip de tipo (para contar quantas ações cada chip teria)
+function acoesVisiveis(semTipo){const f=F();
   let lista=PUB.acoes.filter(a=>a.status==='publicada').map(a=>({a,t:turnosNoFiltro(a.id)[0]})).filter(x=>x.t);
-  if(estado.tipo)lista=lista.filter(x=>x.a.tipo===estado.tipo);
-  if(estado.formato==='online')lista=lista.filter(x=>ehOnline(x.a));
-  if(estado.formato==='presencial')lista=lista.filter(x=>!ehOnline(x.a));
+  if(f.tipo&&!semTipo)lista=lista.filter(x=>x.a.tipo===f.tipo);
+  if(f.formato==='online')lista=lista.filter(x=>ehOnline(x.a));
   lista.forEach(x=>x.km=estado.onde&&!ehOnline(x.a)?distanciaKm(estado.onde,x.a.lugar):null);
   return lista.sort((p,q)=>p.t.inicio.localeCompare(q.t.inicio)||((p.km??0)-(q.km??0)))}
 const acoesOnline=()=>acoesVisiveis().filter(x=>ehOnline(x.a));
 function acoesNaArea(){const todas=acoesVisiveis().filter(x=>temPino(x.a));if(!mapa)return todas;const b=mapa.getBounds();return todas.filter(x=>b.contains([x.a.lugar.lat,x.a.lugar.lon]))}
 function fmtKm(km){return km<10?km.toFixed(1).replace('.',','):String(Math.round(km))}
-function pillFiltro(campo,k,v){return `<button class="pill ${estado[campo]===k?'ativo':''}" data-${campo}="${k}" onclick="estado.${campo}='${k}';render()">${v}</button>`}
-function filtrosHtml(){const h=PUB.config.hoje;
+function pillFiltro(campo,k,v){return `<button class="pill ${F()[campo]===k?'ativo':''}" data-${campo}="${k}" onclick="F().${campo}='${k}';render()">${v}</button>`}
+// só o filtro "Quando": presencial ou online sai do filtro (na inicial vira o link "Prefiro ajudar online")
+function filtrosHtml(){const h=PUB.config.hoje,f=F();
   return `<div class="filtros">
    <div class="filtro"><span class="rot">Quando</span>${QUANDO.map(([k,v])=>pillFiltro('quando',k,v)).join('')}</div>
-   ${estado.quando==='datas'?`<div class="datas"><span>de</span><input type="date" aria-label="de" value="${estado.de}" min="${h}" onchange="estado.de=this.value;if(estado.ate&&estado.ate<this.value)estado.ate='';render()"><span>até</span><input type="date" aria-label="até" value="${estado.ate}" min="${estado.de||h}" onchange="estado.ate=this.value;render()"></div>`:''}
-   <div class="filtro"><span class="rot">Formato</span>${FORMATOS.map(([k,v])=>pillFiltro('formato',k,v)).join('')}</div></div>`}
-function tiposHtml(){return `<div class="tipos">${TIPOS.map(t=>`<button class="chip ${estado.tipo===t?'ativo':''}" onclick="estado.tipo=estado.tipo==='${t}'?null:'${t}';render()"><b>${ICONES[t]}</b>${t}</button>`).join('')}</div>`}
+   ${f.quando==='datas'?`<div class="datas"><span>de</span><input type="date" aria-label="de" value="${f.de}" min="${h}" onchange="F().de=this.value;if(F().ate&&F().ate<this.value)F().ate='';render()"><span>até</span><input type="date" aria-label="até" value="${f.ate}" min="${f.de||h}" onchange="F().ate=this.value;render()"></div>`:''}</div>`}
+// chips só dos tipos que têm ação com os filtros atuais (o ativo fica sempre, para poder desmarcar)
+function tiposHtml(){const f=F(),n={};acoesVisiveis(true).forEach(x=>n[x.a.tipo]=(n[x.a.tipo]||0)+1);
+  const vis=TIPOS.filter(t=>n[t]||f.tipo===t);if(!vis.length)return '';
+  return `<div class="tipos">${vis.map(t=>`<button class="chip ${f.tipo===t?'ativo':''}" onclick="F().tipo=F().tipo==='${t}'?null:'${t}';render()"><b>${ICONES[t]}</b>${t}</button>`).join('')}</div>`}
 // ---------- inicial: busca por cidade e vitrine de ações pelo Brasil ----------
 const VITRINE=[['São Paulo','SP',-23.55,-46.63],['Recife','PE',-8.05,-34.9],['Belo Horizonte','MG',-19.92,-43.94],['Porto Alegre','RS',-30.03,-51.23],['Salvador','BA',-12.97,-38.51]];
 const PADRAO={rotulo:'São Paulo',lat:-23.55,lon:-46.63,chute:true};
@@ -281,29 +325,41 @@ function cardEvento(x){const a=x.a;return `<a class="evento" href="#/acao/${a.id
   <div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
   <div class="meta">${esc(lugarCurto(a.lugar))}</div>
   <div class="meta">${nomeOrganizador(a)}, ${quantosVao(vaoNa(a.id))}</div></a>`}
-function blocoVitrine(titulo,lista,link,sub){return `<section class="bloco"><div class="cab"><h2>${titulo}</h2>${link||''}</div>${sub?`<p class="sub">${sub}</p>`:''}
+function blocoVitrine(titulo,lista,link,sub,extra){return `<section class="bloco"><div class="cab${extra?' cab-cidade':''}"><h2>${titulo}</h2>${link||''}${extra||''}</div>${sub?`<p class="sub">${sub}</p>`:''}
   ${lista.length?`<div class="trilho">${lista.map(cardEvento).join('')}</div>`:'<p class="vitrine-vazia">Nenhuma ação com esses filtros por aqui.</p>'}</section>`}
-function telaInicio(){const perto=estado.perto||PADRAO;
+function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='online';
   const linkMapa=c=>`<a href="#/mapa" onclick="irParaCidade(${c.lat},${c.lon},'${esc(c.rotulo)}');return false">Ver no mapa</a>`;
-  return `<div class="inicio-pg"><header class="hero"><h1>${esc(PUB.config.frase)}</h1><p>Panfletagem, adesivaço, roda de conversa, ligatona. Encontre uma ação perto de você e diga que vai.</p>
+  const tituloPerto=`Perto de você: <button class="cidade" id="cidade-btn" aria-haspopup="true" aria-expanded="false" title="Trocar a cidade" onclick="abrirCidade(event)">${esc(perto.rotulo)}<span aria-hidden="true">▾</span></button>`;
+  const popCidade=`<div class="pop-cidade" id="pop-cidade" hidden><div class="busca"><span>🔍</span><input id="busca-cidade" placeholder="Digite sua cidade" autocomplete="off" oninput="sugerir(this.value,'cidade')" onkeydown="teclaBusca(event)">
+    <button class="ico" title="Usar minha localização" onclick="localizarCidade()">📍</button></div><div id="sug-cidade"></div></div>`;
+  return `<div class="inicio-pg"><header class="hero"><h1>${esc(PUB.config.frase)}</h1><p>Panfletagem, encontro, ato, caminhada, bandeiraço. Encontre uma ação perto de você e diga que vai.</p>
    <div class="caixa"><div class="busca"><span>🔍</span><input id="busca-lugar" placeholder="Em que cidade você está?" autocomplete="off" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
     <button class="ico" title="Usar minha localização" onclick="usarLocalizacao()">📍</button></div><div id="sugestoes"></div></div>
-   <button class="link" onclick="estado.formato='online';render();document.getElementById('bloco-online').scrollIntoView({behavior:'smooth'})">Prefiro ajudar online, de onde estiver</button></header>
+   ${soOnline?`<button class="link" onclick="F().formato='qualquer';render()">Ver também as ações presenciais</button>`:
+     `<button class="link" onclick="F().formato='online';render();document.getElementById('bloco-online').scrollIntoView({behavior:'smooth'})">Prefiro ajudar online, de onde estiver</button>`}</header>
   ${filtrosHtml()}${tiposHtml()}
-  ${estado.formato==='online'?'':blocoVitrine(`Perto de você: ${esc(perto.rotulo)}`,acoesPerto(perto),linkMapa(perto),perto.chute?'Chutamos a cidade. Não é aí? Digite a sua na busca.':'')}
-  ${estado.formato==='online'?'':VITRINE.filter(c=>c[0]!==perto.rotulo).map(c=>blocoVitrine(esc(c[0]),acoesPerto({lat:c[2],lon:c[3]}),linkMapa({rotulo:c[0],lat:c[2],lon:c[3]}))).join('')}
-  ${estado.formato==='presencial'?'':`<div id="bloco-online">${blocoVitrine('Online, de qualquer lugar',acoesOnline(),'','Ligatona e mutirão de mensagens: você participa de casa, pelo celular.')}</div>`}
+  ${soOnline?'':blocoVitrine(tituloPerto,acoesPerto(perto),linkMapa(perto),'',popCidade)}
+  ${soOnline?'':VITRINE.filter(c=>c[0]!==perto.rotulo).map(c=>blocoVitrine(esc(c[0]),acoesPerto({lat:c[2],lon:c[3]}),linkMapa({rotulo:c[0],lat:c[2],lon:c[3]}))).join('')}
+  <div id="bloco-online">${blocoVitrine('Online, de qualquer lugar',acoesOnline(),'','Ligatona e mutirão de mensagens: você participa de casa, pelo celular.')}</div>
   <section class="bloco"><div class="vazio"><p>Não achou ação na sua cidade?</p><a class="btn" href="#/criar" onclick="novaCriacao()">Criar a primeira ação</a></div></section>
   <p class="credito" style="text-align:center;margin-top:24px">Fotos de exemplo do Wikimedia Commons, com licenças livres. O crédito de cada uma está na página da ação.</p></div>`}
 function irParaCidade(lat,lon,rotulo){estado.onde={rotulo,lat,lon};estado.vista={lat,lon,zoom:11};location.hash='#/mapa'}
 // chute da cidade: pede a localização uma vez e escolhe o município mais próximo (capital se estiver a até 40 km)
+function cidadeMaisProxima(p){const eu={lat:p.coords.latitude,lon:p.coords.longitude};let melhor=null,cap=null;
+  for(const l of LUGARES_BR){if(l[4]==='d')continue;const km=distanciaKm(eu,{lat:l[2],lon:l[3]});if(!melhor||km<melhor.km)melhor={l,km};if(l[4]==='c'&&(!cap||km<cap.km))cap={l,km}}
+  const e=cap&&cap.km<=40?cap:melhor;return e?{rotulo:e.l[0],lat:e.l[2],lon:e.l[3],chute:false}:null}
 function chutarCidade(){if(estado.geoTentada||!navigator.geolocation)return;estado.geoTentada=true;
-  navigator.geolocation.getCurrentPosition(p=>{const eu={lat:p.coords.latitude,lon:p.coords.longitude};let melhor=null,cap=null;
-    for(const l of LUGARES_BR){if(l[4]==='d')continue;const km=distanciaKm(eu,{lat:l[2],lon:l[3]});if(!melhor||km<melhor.km)melhor={l,km};if(l[4]==='c'&&(!cap||km<cap.km))cap={l,km}}
-    const e=cap&&cap.km<=40?cap:melhor;if(!e)return;estado.perto={rotulo:e.l[0],lat:e.l[2],lon:e.l[3],chute:false};
+  navigator.geolocation.getCurrentPosition(p=>{const c=cidadeMaisProxima(p);if(!c||(estado.perto&&!estado.perto.chute))return;estado.perto=c;
     if((location.hash||'#/inicio').startsWith('#/inicio'))render()},()=>{},{timeout:8000,maximumAge:600000})}
+// "Perto de você: <cidade>": a cidade é um botão que abre uma busca de cidade ali mesmo
+function abrirCidade(ev){if(ev)ev.stopPropagation();const pop=document.getElementById('pop-cidade');if(!pop)return;const abrir=pop.hidden;pop.hidden=!abrir;
+  document.getElementById('cidade-btn').setAttribute('aria-expanded',String(abrir));
+  if(abrir){const i=document.getElementById('busca-cidade');i.value='';document.getElementById('sug-cidade').innerHTML='';i.focus()}}
+function fecharCidade(){const pop=document.getElementById('pop-cidade');if(pop&&!pop.hidden){pop.hidden=true;document.getElementById('cidade-btn').setAttribute('aria-expanded','false')}}
+function escolherCidade(l){estado.perto={rotulo:l[4]==='d'?`${l[0]}, São Paulo`:l[0],lat:l[2],lon:l[3],chute:false};render()}
+function localizarCidade(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{const c=cidadeMaisProxima(p);if(c){estado.perto=c;render()}},()=>{},{timeout:8000})}
 // ---------- mapa ----------
-function cardAcao(x){const a=x.a;return `<a class="card ${estado.foco===a.id?'foco':''}" id="card-${a.id}" href="#/acao/${a.id}" onmouseenter="focar(${a.id})" onmouseleave="focar(null)">
+function cardAcao(x){const a=x.a;return `<a class="card ${estado.foco===a.id?'foco':''} ${estado.sel===a.id?'sel':''}" id="card-${a.id}" href="#/acao/${a.id}" onmouseenter="focar(${a.id})" onmouseleave="focar(null)">
   ${cuboAcao(a)}
   <div><div class="tit">${esc(a.titulo)}</div>
   <div class="meta">${nomeOrganizador(a)}</div>
@@ -323,36 +379,58 @@ function montarMapa(){
   mapa=L.map(el,{zoomControl:false}).setView([estado.vista.lat,estado.vista.lon],estado.vista.zoom);
   L.control.zoom({position:'bottomright'}).addTo(mapa);
   fundoBase(mapa);
-  mapa.on('moveend',()=>{const c=mapa.getCenter();estado.vista={lat:c.lat,lon:c.lng,zoom:mapa.getZoom()};atualizarLista()});
+  const este=mapa;mapa.on('moveend',()=>{if(mapa!==este)return;const c=mapa.getCenter();estado.vista={lat:c.lat,lon:c.lng,zoom:mapa.getZoom()};atualizarLista()});
   atualizarLista();
 }
-function etiquetaPino(x){return L.divIcon({html:`<span class="etiqueta ${estado.foco===x.a.id?'foco':''}">${ICONES[x.a.tipo]} ${fmtCurta(x.t.inicio)}</span>`,className:'',iconSize:[0,0]})}
+function etiquetaPino(x){return L.divIcon({html:`<span class="etiqueta ${estado.foco===x.a.id?'foco':''} ${estado.sel===x.a.id?'sel':''}">${ICONES[x.a.tipo]} ${fmtCurta(x.t.inicio)}</span>`,className:'',iconSize:[0,0]})}
+// prévia da ação sobre o mapa, como no Airbnb: foto, título, quando, onde e link para a página
+function previaHtml(x){const a=x.a;return `<a class="corpo" href="#/acao/${a.id}">${fotoEvento(x)}<div class="txt">
+  <div class="tit">${esc(a.titulo)}</div><div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
+  <div class="meta">${esc(lugarCurto(a.lugar))}${x.km!=null?`, a ${fmtKm(x.km)} km`:''}</div>
+  <div class="meta">${nomeOrganizador(a)}</div><span class="ver">Ver ação →</span></div></a>`}
+let popupPrevia=null,rolarAteSel=false;
+const ehDesktop=()=>window.matchMedia('(min-width:900px)').matches;
+// selecionar (clique no pino) é diferente de focar (passar o mouse): fica marcado até fechar a prévia
+function selecionar(x,pos){estado.sel=x.a.id;marcarSelecao();
+  const pad=ehDesktop()?{autoPanPaddingTopLeft:[480,80],autoPanPaddingBottomRight:[40,40]}:{autoPanPaddingTopLeft:[16,150],autoPanPaddingBottomRight:[16,150]};
+  if(popupPrevia)popupPrevia.off('remove');
+  popupPrevia=L.popup(Object.assign({className:'previa',maxWidth:260,minWidth:260,offset:[0,-10]},pad)).setLatLng(pos).setContent(previaHtml(x)).openOn(mapa);
+  popupPrevia.on('remove',()=>{popupPrevia=null;if(estado.sel===x.a.id){estado.sel=null;marcarSelecao()}});
+  if(ehDesktop()){rolarAteSel=true;rolarParaSel();setTimeout(()=>{rolarAteSel=false},800)}}
+function marcarSelecao(){document.querySelectorAll('.card').forEach(c=>c.classList.toggle('sel',c.id==='card-'+estado.sel));
+  marcadores.forEach(m=>{const s=m._acao===estado.sel;m.setZIndexOffset(s?1000:0);const el=m.getElement();const e=el&&el.querySelector('.etiqueta');if(e)e.classList.toggle('sel',s)})}
+function rolarParaSel(){const c=document.getElementById('card-'+estado.sel);if(c)c.scrollIntoView({block:'center',behavior:'smooth'})}
 function abrirGaveta(nivel){estado.gaveta=nivel;const g=document.getElementById('gaveta');if(g)g.className=nivel==='baixa'?'':nivel}
 function atualizarLista(){
   if(!mapa)return;
   const todas=acoesVisiveis().filter(x=>temPino(x.a)),aqui=acoesNaArea();
   marcadores.forEach(m=>m.remove());marcadores=[];
   const pos=espalhar(todas);
-  todas.forEach((x,i)=>{const m=L.marker(pos[i],{icon:etiquetaPino(x),riseOnHover:true});m._acao=x.a.id;m.addTo(mapa);
-    m.on('click',()=>{focar(x.a.id);if(estado.gaveta==='baixa')abrirGaveta('meio');const c=document.getElementById('card-'+x.a.id);if(c)c.scrollIntoView({block:'nearest'})});marcadores.push(m)});
-  const online=estado.formato==='presencial'?[]:acoesOnline();
+  todas.forEach((x,i)=>{const m=L.marker(pos[i],{icon:etiquetaPino(x),riseOnHover:true,zIndexOffset:estado.sel===x.a.id?1000:0});m._acao=x.a.id;m.addTo(mapa);
+    m.on('click',()=>selecionar(x,pos[i]));marcadores.push(m)});
+  const online=acoesOnline();
   document.getElementById('contagem').textContent=aqui.length?`${aqui.length===1?'1 ação':aqui.length+' ações'} nesta área`:'Nenhuma ação nesta área';
   document.getElementById('lista').innerHTML=(aqui.length?aqui.map(cardAcao).join(''):
     `<div class="vazio"><p>Ainda não tem ação por aqui.</p><p class="sec" style="font-weight:400">Afaste o mapa para ver outras, ou crie a primeira ação do seu bairro.</p><a class="btn" href="#/criar" onclick="novaCriacao()">Criar ação</a></div>`)
     +(online.length?`<h2 style="margin-top:18px">Online, de qualquer lugar</h2>${online.map(cardAcao).join('')}`:'');
+  if(rolarAteSel)rolarParaSel();
 }
 function focar(id){estado.foco=id;document.querySelectorAll('.card').forEach(c=>c.classList.toggle('foco',c.id==='card-'+id));
   marcadores.forEach(m=>{const el=m.getElement();const e=el&&el.querySelector('.etiqueta');if(e)e.classList.toggle('foco',m._acao===id)})}
 function alternarGaveta(){abrirGaveta(estado.gaveta==='baixa'?'meio':estado.gaveta==='meio'?'cheia':'baixa')}
 function arrastar(ev){const y0=ev.touches[0].clientY;const fim=e=>{document.removeEventListener('touchend',fim);const dy=e.changedTouches[0].clientY-y0;if(Math.abs(dy)<30)return;
   const ordem=['baixa','meio','cheia'];let i=ordem.indexOf(estado.gaveta)+(dy<0?1:-1);abrirGaveta(ordem[Math.max(0,Math.min(2,i))])};document.addEventListener('touchend',fim)}
-let sugFoco=-1,sugAtual=[];
-function sugerir(q){const box=document.getElementById('sugestoes');sugAtual=buscarLugares(q);sugFoco=-1;
+// duas caixas usam as mesmas sugestões: a busca principal (leva ao mapa) e a troca de cidade da inicial
+const SUG={busca:{box:'sugestoes',ao:l=>{document.getElementById('busca-lugar').value=nomeLugar(l);irParaLugar(l)}},
+  cidade:{box:'sug-cidade',ao:l=>escolherCidade(l)}};
+let sugFoco=-1,sugAtual=[],sugAlvo='busca';
+function sugerir(q,alvo='busca'){sugAlvo=alvo;const box=document.getElementById(SUG[alvo].box);if(!box)return;sugAtual=buscarLugares(q);sugFoco=-1;
   box.innerHTML=sugAtual.map((l,i)=>`<div onclick="escolherSugestao(${i})">${rotuloLugar(l)}</div>`).join('');box.style.display=sugAtual.length?'block':'none'}
-function teclaBusca(e){if(!sugAtual.length)return;if(e.key==='ArrowDown'){sugFoco=Math.min(sugAtual.length-1,sugFoco+1)}else if(e.key==='ArrowUp'){sugFoco=Math.max(0,sugFoco-1)}else if(e.key==='Enter'){escolherSugestao(sugFoco<0?0:sugFoco);return}else if(e.key==='Escape'){document.getElementById('sugestoes').style.display='none';return}else return;
-  document.querySelectorAll('#sugestoes div').forEach((d,i)=>d.classList.toggle('foco',i===sugFoco))}
+function teclaBusca(e){if(e.key==='Escape'){if(sugAlvo==='cidade')fecharCidade();else document.getElementById('sugestoes').style.display='none';return}
+  if(!sugAtual.length)return;if(e.key==='ArrowDown'){sugFoco=Math.min(sugAtual.length-1,sugFoco+1)}else if(e.key==='ArrowUp'){sugFoco=Math.max(0,sugFoco-1)}else if(e.key==='Enter'){escolherSugestao(sugFoco<0?0:sugFoco);return}else return;
+  document.querySelectorAll('#'+SUG[sugAlvo].box+' div').forEach((d,i)=>d.classList.toggle('foco',i===sugFoco))}
 const nomeLugar=l=>l[4]==='d'?`${l[0]}, São Paulo`:`${l[0]}, ${l[1]}`;
-function escolherSugestao(i){const l=sugAtual[i];if(!l)return;document.getElementById('busca-lugar').value=nomeLugar(l);document.getElementById('sugestoes').style.display='none';irParaLugar(l)}
+function escolherSugestao(i){const l=sugAtual[i];if(!l)return;const s=SUG[sugAlvo];const box=document.getElementById(s.box);if(box)box.style.display='none';s.ao(l)}
 function irParaLugar(l){estado.onde={rotulo:nomeLugar(l),lat:l[2],lon:l[3]};const zoom=l[4]==='d'?13:l[4]==='c'?11:12;
   if(mapa)mapa.setView([l[2],l[3]],zoom);else{estado.vista={lat:l[2],lon:l[3],zoom};location.hash='#/mapa'}
   if(estado.gaveta==='baixa')abrirGaveta('meio')}
@@ -364,7 +442,7 @@ function contaClique(){(estado.sessao?sair():entrar()).catch(e=>console.error(e)
 function telaInscricoes(){
   if(!estado.sessao)return `<div class="pagina estreita"><h1>Minhas inscrições</h1><p>Entre para ver em que ações você disse que vai.</p><button class="btn" onclick="entrar()">Entrar com Google</button></div>`;
   const lista=estado.minhasInscricoes||[],proxima=m=>m.acao.status==='publicada'&&m.turno.inicio.slice(0,10)>=PUB.config.hoje;
-  const card=m=>`<div>${cardEvento({a:m.acao,t:m.turno})}<div style="margin-top:6px">${proxima(m)?'':`<span class="selo">${m.acao.status==='publicada'?'já aconteceu':'ação encerrada'}</span> `}<button class="btn sec mini" onclick="desistir(${m.turno.id})">desistir</button></div></div>`;
+  const card=m=>`<div>${cardEvento({a:m.acao,t:m.turno})}<div style="margin-top:6px">${proxima(m)?'':`<span class="selo">${m.acao.status==='publicada'?'já aconteceu':'ação encerrada'}</span> `}<button class="btn sec mini" onclick="desistir(${m.turno.id})">desistir</button>${proxima(m)?`<div>${botaoAgenda(m.acao,m.turno)}</div>`:''}</div></div>`;
   const grupo=(t,l)=>l.length?`<h2>${t}</h2><div class="trilho">${l.map(card).join('')}</div>`:'';
   return `<div class="pagina"><h1>Minhas inscrições</h1><p class="sec" style="font-size:15px">${esc(estado.sessao.nome)}${estado.sessao.telefone?`, ${esc(estado.sessao.telefone)}`:''}</p>
   ${lista.length?grupo('Próximas',lista.filter(proxima))+grupo('Passadas ou encerradas',lista.filter(m=>!proxima(m))):'<div class="vazio"><p>Você ainda não se inscreveu em nenhuma ação.</p><a class="btn" href="#/inicio">Ver ações</a></div>'}</div>`}
@@ -381,6 +459,33 @@ async function confirmarVou(tid){const ins=estado.inscrevendo;const tel=(documen
   catch(e){ins.erro=MENSAGEM[e.codigo]||'Não deu. Tente de novo.';ins.telefone=tel;render();return}
   estado.inscrevendo=null;await sincronizar()}
 async function inscrever(tid){return confirmarVou(tid)}
+// ---------- adicionar à agenda (Google Agenda por link, Apple e Outlook por arquivo .ics) ----------
+// os horários são de Brasília (sem horário de verão desde 2019): convertemos para UTC somando 3 horas
+const fmtUtc=d=>d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+const deBrasilia=iso=>new Date(iso.slice(0,16)+':00-03:00');
+const utcAgenda=iso=>fmtUtc(deBrasilia(iso));
+const fimAgenda=t=>t.fim?utcAgenda(t.fim):fmtUtc(new Date(deBrasilia(t.inicio).getTime()+2*3600e3)); // sem fim: 2 horas
+const linkAcao=a=>location.origin+location.pathname+'#/acao/'+a.id;
+const ondeAgenda=a=>ehOnline(a)?'Online':[a.lugar.nome,lugarCurto(a.lugar)].filter(Boolean).join(', ');
+const textoAgenda=a=>`${(a.descricao||'').slice(0,600)}\n\nMais informações: ${linkAcao(a)}`;
+function linkGoogleAgenda(a,t){const fim=fimAgenda(t);
+  const q=new URLSearchParams({action:'TEMPLATE',text:a.titulo,dates:`${utcAgenda(t.inicio)}/${fim}`,details:textoAgenda(a),location:ondeAgenda(a)});
+  return 'https://calendar.google.com/calendar/render?'+q.toString()}
+function icsTexto(a,t){const e=s=>String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+  const dobra=l=>{const out=[];while(l.length>74){out.push(l.slice(0,74));l=' '+l.slice(74)}out.push(l);return out.join('\r\n')};
+  const fim=fimAgenda(t);
+  const agora=fmtUtc(new Date());
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//acoes-segundo-turno//pt-BR','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',
+    `UID:turno-${t.id}@acoes-segundo-turno`,`DTSTAMP:${agora}`,`DTSTART:${utcAgenda(t.inicio)}`,`DTEND:${fim}`,
+    `SUMMARY:${e(a.titulo)}`,`LOCATION:${e(ondeAgenda(a))}`,`DESCRIPTION:${e(textoAgenda(a))}`,`URL:${linkAcao(a)}`,
+    'BEGIN:VALARM','TRIGGER:-PT2H','ACTION:DISPLAY',`DESCRIPTION:${e(a.titulo)}`,'END:VALARM','END:VEVENT','END:VCALENDAR'].map(dobra).join('\r\n')+'\r\n'}
+const agendaCache={};
+function baixarIcs(chave){const x=agendaCache[chave];if(!x)return;const blob=new Blob([icsTexto(x.a,x.t)],{type:'text/calendar;charset=utf-8'});
+  const url=URL.createObjectURL(blob),l=document.createElement('a');l.href=url;l.download=`acao-${x.a.id}.ics`;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function botaoAgenda(a,t){if(t.inicio.slice(0,10)<PUB.config.hoje)return '';const k=a.id+'-'+t.id;agendaCache[k]={a,t};
+  return `<details class="agenda"><summary>📅 Adicionar à agenda</summary><div class="opcoes">
+   <a href="${esc(linkGoogleAgenda(a,t))}" target="_blank" rel="noopener">Google Agenda</a>
+   <button onclick="baixarIcs('${k}')">Apple ou Outlook (arquivo .ics)</button></div></details>`}
 function compartilhar(){const u=location.href;if(navigator.share)navigator.share({url:u});else{navigator.clipboard&&navigator.clipboard.writeText(u);alert('Link copiado')}}
 function botaoTurno(a,t){const n=vaoNo(t);
   if(t.inicio.slice(0,10)<PUB.config.hoje)return `<button class="btn" disabled>horário encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
@@ -400,7 +505,7 @@ function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina
   `<div><strong>${esc(a.lugar.nome)}</strong></div><div class="sec" style="font-size:15px">${esc(lugarCurto(a.lugar))}</div>${lugarAproximadoNota(a.lugar)}
   <div id="minimapa" style="height:200px;border-radius:14px;margin:10px 0"></div>`}</div>
   <aside class="acao-lado"><h2>Quando</h2>
-  ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${semInscricao(a)?'Sem inscrição':quantosVao(vaoNo(t))+(t.lotacao?` de ${t.lotacao} vagas`:'')}</div><div style="margin-top:8px">${fechada?'':botaoTurno(a,t)}</div>
+  ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${semInscricao(a)?'Sem inscrição':quantosVao(vaoNo(t))+(t.lotacao?` de ${t.lotacao} vagas`:'')}</div><div style="margin-top:8px">${fechada?'':botaoTurno(a,t)}</div>${fechada?'':botaoAgenda(a,t)}
     ${ins&&ins.turno===t.id?`<div class="sec" style="margin-top:8px">Você: <strong>${esc(estado.sessao.nome)}</strong></div><label>Seu WhatsApp</label><input id="vtel" value="${esc(ins.telefone)}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p>${ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}<div style="margin-top:8px"><button class="btn" onclick="confirmarVou(${t.id})">Confirmar</button> <button class="btn sec mini" onclick="estado.inscrevendo=null;render()">Cancelar</button></div>`:''}</div>`).join('')}</aside>
   <div class="acao-resto">${ab.combinado?blocoCombinado(a,ab.combinado):''}
   <h2>Quem organiza</h2><div class="sec" style="font-size:15px">${nomeOrganizador(a)}</div></div></div></div>`}
@@ -416,7 +521,10 @@ function montarMiniMapa(l,arrastavel){const el=document.getElementById('minimapa
 const MODELOS={
  'panfletagem':{titulo:'Panfletagem na estação',descricao:'Vamos distribuir material do Lula na saída da estação. Traga disposição; o material a gente leva.',dica:'Leve 2 pessoas por saída e combine um ponto de encontro fácil de achar.'},
  'adesivaço':{titulo:'Adesivaço no semáforo',descricao:'Adesivos do Lula para carros, motos e quem passar. Material garantido.',dica:'Escolha um cruzamento com semáforo longo e calçada larga.'},
- 'roda de conversa':{titulo:'Roda de conversa no bairro',descricao:'Conversa aberta sobre por que votar no Lula e como responder às dúvidas de vizinhos e família.',dica:'Lugar com sombra e lugar para sentar. Uma hora basta.'},
+ 'encontro':{titulo:'Plenária no bairro',descricao:'Encontro aberto para organizar a campanha no bairro: quem pode panfletar, conversar com vizinhos, ligar para indecisos.',dica:'Plenária, assembleia ou roda de conversa. Lugar com sombra e lugar para sentar. Uma hora basta.'},
+ 'ato':{titulo:'Ato pelo Lula na praça',descricao:'Ato aberto com falas, música e bandeiras. Venha com a família e traga quem ainda está em dúvida.',dica:'Praça ou largo conhecido, com som combinado e horário curto.'},
+ 'caminhada':{titulo:'Caminhada pelo centro',descricao:'Caminhada com bandeiras e material, conversando com quem passa. Saída do ponto de encontro.',dica:'Caminhada, carreata ou bicicletada. Trajeto curto e ponto de saída fácil de achar.'},
+ 'cultural':{titulo:'Sarau com Lula',descricao:'Sarau aberto com música, poesia e conversa sobre o segundo turno. Traga seu instrumento.',dica:'Sarau, show, oficina de cartaz ou cineclube. Diga o que a pessoa pode trazer.'},
  'ligatona':{titulo:'Ligatona para indecisos',descricao:'Cada pessoa liga para os próprios contatos com um roteiro simples. Pode ser de casa.',dica:'Cada pessoa traz a lista dos próprios contatos; a gente passa o roteiro.'},
  'porta a porta':{titulo:'Porta a porta na vila',descricao:'Em duplas, conversa na porta com quem mora na região. Roteiro e material no ponto de encontro.',dica:'Sempre em dupla. Combine horário de voltar ao ponto.'},
  'bandeiraço':{titulo:'Bandeiraço na avenida',descricao:'Bandeiras e faixas do Lula na hora do rush. Traga bandeira se tiver.',dica:'Hora do rush, calçada larga, longe da faixa de pedestres.'},
@@ -508,18 +616,25 @@ function telaFila(){const aba=estado.filaAba;
      `<button class="btn sec mini" onclick="despublicar(${a.id})">Despublicar</button> <button class="btn sec mini" onclick="bloquear(${p.id})">Bloquear organizador</button>`}</div>
    ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: pede dinheiro para o material">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="recusar(${a.id})">Confirmar recusa</button></div>`:''}</div>`}).join('')}</div>`}
 // ---------- roteamento ----------
-async function recarregar(){PUB=await API.publico();estado.sessao=await API.sessao()}
+async function recarregar(){PUB=await API.publico();normalizarTipos(PUB.acoes);estado.sessao=await API.sessao()}
 let renderN=0;
 async function render(){
   const n=++renderN;
   const h=location.hash||'#/inicio';const [,rota,arg]=h.split('/');
   if(rota!=='acao')estado.inscrevendo=null;if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}
   try{
-    if(rota==='acao'){const r=await API.acao(Number(arg));if(n!==renderN)return;estado.acaoAberta=r}
-    if(rota==='inscricoes'){const r=await API.minhasInscricoes();if(n!==renderN)return;estado.minhasInscricoes=r}
+    if(rota==='acao'){const r=await API.acao(Number(arg));if(n!==renderN)return;if(r)normalizarTipos([r.acao]);estado.acaoAberta=r}
+    if(rota==='inscricoes'){const r=await API.minhasInscricoes();if(n!==renderN)return;normalizarTipos(r.map(m=>m.acao));estado.minhasInscricoes=r}
   }catch(e){if(n!==renderN)return;console.error(e);if(mapa){mapa.remove();mapa=null;marcadores=[]}
     document.getElementById('app').innerHTML='<div class="pagina"><p class="erro">Não foi possível carregar. Tente de novo.</p></div>';return}
   if(mapa){mapa.remove();mapa=null;marcadores=[]}
+  // filtro vale só na tela onde foi escolhido: ao chegar na inicial ou no mapa vindo de outra tela, começa limpo;
+  // a exceção é voltar da página de uma ação para a mesma lista de onde se saiu
+  const r=rota||'inicio';
+  if((r==='inicio'||r==='mapa')&&rotaAnterior!==r&&!(rotaAnterior==='acao'&&ultimaLista===r))estado.filtros[r]=filtroNovo();
+  if(r==='inicio'||r==='mapa')ultimaLista=r;
+  if(r!=='mapa')estado.sel=null;
+  rotaAnterior=r;telaAtual=r;
   const app=document.getElementById('app');
   const soExemplo=['criar','minhas','fila'].includes(rota)&&API.modo!=='exemplo';
   app.innerHTML=soExemplo?'<div class="pagina"><h1>Em breve</h1><p>Criar ação, Minhas ações e a Fila chegam na próxima etapa.</p></div>':
@@ -527,6 +642,7 @@ async function render(){
   document.querySelectorAll('nav a[data-rota]').forEach(a=>a.classList.toggle('ativo',a.dataset.rota===(rota||'inicio')));
   document.querySelectorAll('nav a[data-so-exemplo]').forEach(a=>a.style.display=API.modo==='exemplo'?'':'none');
   document.getElementById('conta-rotulo').textContent=estado.sessao?'Sair':'Entrar';
+  document.getElementById('conta').classList.toggle('entrar',!estado.sessao); // "Entrar" com destaque, como o Doar
   document.getElementById('doar').href=PUB.config.vaquinha||'#';
   if(rota==='mapa')montarMapa();
   if((rota||'inicio')==='inicio')chutarCidade();
@@ -542,7 +658,9 @@ async function sincronizar(){
   if(location.search.includes('code=')){history.replaceState(null,'',location.pathname+location.hash)}
   if(estado.sessao&&localStorage.getItem('vouPendente')){await continuarVouPendente();return}
   await render()}
-document.addEventListener('click',e=>{if(!e.target.closest('#topo,.caixa')){const s=document.getElementById('sugestoes');if(s)s.style.display='none'}});
+document.addEventListener('click',e=>{if(!e.target.closest('#topo,.caixa')){const s=document.getElementById('sugestoes');if(s)s.style.display='none'}
+  if(!e.target.closest('.cab-cidade'))fecharCidade();
+  document.querySelectorAll('details.agenda[open]').forEach(d=>{if(!d.contains(e.target))d.open=false})});
 window.addEventListener('hashchange',render);
 window.addEventListener('DOMContentLoaded',sincronizar);
 </script>

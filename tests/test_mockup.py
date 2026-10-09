@@ -36,7 +36,7 @@ def test_dados_tem_pelo_menos_12_acoes_e_todas_com_turno():
 def test_dados_cobrem_os_tipos_e_os_status():
     d = carregar_dados()
     tipos = {a["tipo"] for a in d["acoes"]}
-    assert tipos >= {"panfletagem", "adesivaço", "roda de conversa", "ligatona", "porta a porta", "bandeiraço"}
+    assert tipos >= {"panfletagem", "adesivaço", "encontro", "ato", "caminhada", "cultural", "ligatona", "porta a porta", "bandeiraço"}
     status = {a["status"] for a in d["acoes"]}
     assert status >= {"publicada", "em análise", "recusada", "encerrada"}
 
@@ -218,10 +218,12 @@ WORKFLOW = (RAIZ / ".github" / "workflows" / "pages.yml").read_text(encoding="ut
 def test_inicial_sem_mapa_com_busca_e_vitrine():
     i = HTML.index("function telaInicio"); corpo = HTML[i:HTML.index("function irParaCidade")]
     assert 'id="mapa"' not in corpo
-    for s in ["Em que cidade você está?", "Perto de você", "Chutamos a cidade", "Online, de qualquer lugar", "Ver no mapa",
+    for s in ["Em que cidade você está?", "Perto de você", "Online, de qualquer lugar", "Ver no mapa",
               "blocoVitrine", "Criar a primeira ação"]:
         assert s in corpo, s
     assert "function chutarCidade" in HTML and "getCurrentPosition" in HTML
+    assert "Chutamos a cidade" not in HTML  # a cidade virou botão que abre a busca
+    assert 'id="cidade-btn"' in corpo and 'id="pop-cidade"' in corpo and "function escolherCidade" in HTML
 
 
 def test_vitrine_tem_cidades_exemplo_pelo_brasil_e_foto_por_acao():
@@ -249,14 +251,15 @@ def test_organizacoes_de_exemplo_sao_ficticias():
 
 def test_filtro_de_data_claro_com_proximos_primeiro_e_intervalo():
     for k in ["'breve'", "'hoje'", "'amanha'", "'semana'", "'fds'", "'proxima'", "'datas'"]:
-        assert k in HTML[HTML.index("const QUANDO"):HTML.index("const FORMATOS")], k
+        assert k in HTML[HTML.index("const QUANDO"):HTML.index("function intervaloQuando")], k
     for s in ["Escolher datas", 'type="date"', "function intervaloQuando", "function turnosNoFiltro",
               "p.t.inicio.localeCompare(q.t.inicio)"]:
         assert s in HTML, s
 
 
 def test_formato_presencial_ou_online_em_toda_a_cadeia():
-    for s in ["const FORMATOS", "'presencial'", "'online'", "const ehOnline", "acoesOnline", "LUGAR_ONLINE",
+    assert "const FORMATOS" not in HTML and "data-formato" not in HTML  # sem filtro de formato na inicial e no mapa
+    for s in ["Prefiro ajudar online", "Ver também as ações presenciais", "'online'", "const ehOnline", "acoesOnline", "LUGAR_ONLINE",
               "Ação online (ligatona", "O link da chamada vai para quem se inscreve", "if(!c.online){"]:
         assert s in HTML, s
     assert "!ehOnline(ab.acao)" in HTML  # ação online não monta minimapa
@@ -346,3 +349,32 @@ def test_acao_importada_tem_divulgacao_e_lugar_aproximado_na_tela():
     assert "sem_inscricao:" in HTML  # mensagem da função SQL inscrever
     assert "lugarAproximadoNota(a.lugar)" in HTML and "function espalhar" in HTML
     assert "Ponto aproximado" in HTML
+
+
+def test_filtro_vale_so_na_tela_onde_foi_escolhido():
+    assert "filtros:{inicio:filtroNovo(),mapa:filtroNovo()}" in HTML and "const F=()=>" in HTML
+    assert "estado.filtros[r]=filtroNovo()" in HTML  # chegar na inicial ou no mapa vindo de outra tela limpa o filtro
+    assert "rotaAnterior==='acao'&&ultimaLista===r" in HTML  # voltar da ação para a mesma lista mantém
+
+
+def test_tipos_revistos_e_nome_antigo_aceito():
+    i = HTML.index("const ICONES"); bloco = HTML[i:HTML.index("const CLASSE")]
+    for t in ["'encontro'", "'ato'", "'caminhada'", "'cultural'", "'panfletagem'", "'outro'"]:
+        assert t in bloco, t
+    assert "'roda de conversa':'encontro'" in HTML and "normalizarTipos(PUB.acoes)" in HTML
+    assert "function tiposHtml(){const f=F(),n={}" in HTML  # chips só dos tipos com ação
+
+
+def test_adicionar_a_agenda():
+    for s in ["Adicionar à agenda", "calendar.google.com/calendar/render", "BEGIN:VCALENDAR", "text/calendar", "function baixarIcs",
+              "':00-03:00'"]:
+        assert s in HTML, s
+
+
+def test_mapa_previa_e_selecao_do_pino():
+    for s in ["function previaHtml", "function selecionar", "className:'previa'", ".card.sel{", ".etiqueta.sel{", "rolarParaSel"]:
+        assert s in HTML, s
+
+
+def test_entrar_tem_destaque_como_doar():
+    assert "nav a.entrar{" in HTML and "classList.toggle('entrar',!estado.sessao)" in HTML

@@ -218,7 +218,7 @@ window.DADOS = {
   {
    "id": 2,
    "titulo": "Roda de conversa em Parelheiros",
-   "tipo": "roda de conversa",
+   "tipo": "encontro",
    "descricao": "Conversa aberta sobre por que votar no Lula e como responder às dúvidas de vizinhos e família.",
    "organizador": 2,
    "organizacao": null,
@@ -381,9 +381,9 @@ window.DADOS = {
   },
   {
    "id": 8,
-   "titulo": "Roda de conversa na Brasilândia",
-   "tipo": "roda de conversa",
-   "descricao": "Conversa aberta sobre por que votar no Lula e como responder às dúvidas de vizinhos e família.",
+   "titulo": "Sarau com Lula na Brasilândia",
+   "tipo": "cultural",
+   "descricao": "Sarau aberto com poesia, música e conversa sobre o segundo turno. Traga seu poema ou seu instrumento.",
    "organizador": 4,
    "organizacao": 4,
    "lugar": {
@@ -546,7 +546,7 @@ window.DADOS = {
   {
    "id": 14,
    "titulo": "Roda de conversa no Capão Redondo",
-   "tipo": "roda de conversa",
+   "tipo": "encontro",
    "descricao": "Conversa aberta sobre por que votar no Lula e como responder às dúvidas de vizinhos e família.",
    "organizador": 4,
    "organizacao": 4,
@@ -601,9 +601,9 @@ window.DADOS = {
   },
   {
    "id": 16,
-   "titulo": "Adesivaço em Boa Viagem",
-   "tipo": "adesivaço",
-   "descricao": "Adesivos do Lula na orla no fim de tarde. Traga água e boné.",
+   "titulo": "Caminhada na orla de Boa Viagem",
+   "tipo": "caminhada",
+   "descricao": "Caminhada com bandeiras e conversa com quem passa pela orla no fim de tarde. Traga água e boné.",
    "organizador": 9,
    "organizacao": 6,
    "lugar": {
@@ -658,7 +658,7 @@ window.DADOS = {
   {
    "id": 18,
    "titulo": "Roda de conversa na Savassi",
-   "tipo": "roda de conversa",
+   "tipo": "encontro",
    "descricao": "Como conversar com quem ainda está em dúvida. Aberto a todo mundo.",
    "organizador": 10,
    "organizacao": 7,
@@ -741,9 +741,9 @@ window.DADOS = {
   },
   {
    "id": 21,
-   "titulo": "Adesivaço no Campo Grande",
-   "tipo": "adesivaço",
-   "descricao": "Adesivos do Lula no semáforo do Campo Grande. Material garantido.",
+   "titulo": "Ato no Campo Grande",
+   "tipo": "ato",
+   "descricao": "Ato aberto pelo Lula na praça, com microfone aberto para quem quiser falar. Traga bandeira.",
    "organizador": 12,
    "organizacao": 9,
    "lugar": {
