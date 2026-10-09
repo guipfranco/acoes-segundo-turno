@@ -77,9 +77,10 @@ def test_tela_acao_regras_de_inscricao():
 
 
 def test_detalhe_e_grupo_so_para_inscritos():
-    # o bloco "Combinado" só é montado dentro do ramo que checa inscrição
+    # o bloco "Combinado" só é montado quando a API devolve o combinado, e a API só devolve a quem se inscreveu
     i = HTML.index("Combinado")
-    assert "inscritoEmAlgum" in HTML[i-400:i]
+    assert "ab.combinado?" in HTML[i-400:i]
+    assert "combinado: podeVer(a) ?" in (RAIZ / "app" / "api-exemplo.js").read_text(encoding="utf-8")
 
 
 def test_turno_lotado_e_inscricao_duplicada_nos_dados_e_no_codigo():
@@ -88,7 +89,7 @@ def test_turno_lotado_e_inscricao_duplicada_nos_dados_e_no_codigo():
     n5 = len([i for i in d["inscricoes"] if i["turno"] == 5 and not i["canceladaEm"]])
     assert t5["lotacao"] == n5 == 2
     assert any(i["turno"] == 7 and i["pessoa"] == d["config"]["eu"] for i in d["inscricoes"])
-    assert "if(estouInscrito(tid))return" in HTML  # não duplica
+    assert "if (!(ja && !ja.canceladaEm))" in (RAIZ / "app" / "api-exemplo.js").read_text(encoding="utf-8")  # não duplica
     assert "n>=t.lotacao" in HTML
 
 
@@ -258,7 +259,7 @@ def test_formato_presencial_ou_online_em_toda_a_cadeia():
     for s in ["const FORMATOS", "'presencial'", "'online'", "const ehOnline", "acoesOnline", "LUGAR_ONLINE",
               "Ação online (ligatona", "O link da chamada vai para quem se inscreve", "if(!c.online){"]:
         assert s in HTML, s
-    assert "!ehOnline(acao(Number(arg)))" in HTML  # ação online não monta minimapa
+    assert "!ehOnline(ab.acao)" in HTML  # ação online não monta minimapa
     assert "if(l.online)return 'Online'" in HTML
 
 
@@ -292,3 +293,11 @@ def test_mapa_ignora_acao_presencial_sem_coordenada():
     # ação importada sem cidade reconhecida tem lat/lon null e não pode quebrar o mapa
     assert "const temPino=" in HTML
     assert "function acoesNaArea(){const todas=acoesVisiveis().filter(x=>temPino(x.a))" in HTML
+
+
+def test_telas_de_participante_leem_pela_api():
+    for s in ['src="api.js"', 'src="api-exemplo.js"', 'src="config.js"', "async function render", "await API.acao(",
+              "API.publico()", "const vaoNo=", "estado.acaoAberta", "data-so-exemplo"]:
+        assert s in HTML, s
+    inicio = HTML[HTML.index("function acoesVisiveis"):HTML.index("function telaCriar")]
+    assert "DADOS.acoes" not in inicio and "DADOS.inscricoes" not in inicio and "DADOS.config" not in inicio
