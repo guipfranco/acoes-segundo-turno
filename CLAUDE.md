@@ -55,6 +55,14 @@ Nasceu do `mapa-segundo-turno` em 2026-10-08. URL, repo e projeto Supabase segue
   de contato); importada encerrada mostra "Saiu da agenda" ou "Já aconteceu"; desistência fica no histórico do Perfil
   ("você desistiu") e quem organiza vê quem desistiu, só pelo nome. O formulário do "Eu vou!" abre onde a pessoa tocou
   (topo no celular, coluna "Quando" no computador).
+  Correções do primeiro uso real e "Fale com a gente" (branch `feedback-1009`, migração 20261009000050): turno que já
+  terminou some das listas, do mapa e do "Eu vou!" (`config.agora`, em Brasília; no exemplo, `dados.config.agora`);
+  `turno.hora_aproximada` (divulgação que só diz "à noite": o app mostra "sex 09/10, à noite" e avisa; a importação das
+  redes marca pelo texto, `bl.faixa_aproximada`); bloco Online da inicial é lista compacta por horário; o cadastro não
+  recarrega a tela ao mudar horário ou "Vagas limitadas" (no iPhone fechava o seletor e rolava ao topo) e `rerender()`
+  mantém a rolagem nos filtros. Feedback: `#/contato` (e `#/contato/<acao>` na página da ação), logado ou não, texto +
+  contato opcional + tela + navegador resumido, tabela `feedback` sem acesso direto (`enviar_feedback`, freio de 10/h por
+  pessoa e 100/h anônimas; `feedbacks` e `tratar_feedback` só moderador), aba Mensagens na Fila.
 - Spec em `docs/superpowers/specs/`, desenho visual em `docs/2026-10-08-design-mockup.md`, capturas em
   `docs/capturas/`.
 - Decisões do Gui: inscrição com nome e telefone desde a v1; moderação humana por voluntários no

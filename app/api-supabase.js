@@ -8,6 +8,12 @@
   function hojeBrasilia() {
     return new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   }
+  // "AAAA-MM-DDTHH:MM" em Brasília: o app esconde o turno que já terminou (compara com turno.fim, no mesmo formato)
+  function emBrasilia(d) {
+    const s = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
+    return s.slice(0, 10) + 'T' + s.slice(11, 16);
+  }
+  const agoraBrasilia = () => emBrasilia(new Date());
   function deAcao(r) {
     return {
       id: r.id, titulo: r.titulo, tipo: r.tipo, descricao: r.descricao || '', organizador: r.organizador,
@@ -23,7 +29,10 @@
   }
   const deOrg = o => ({ id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada,
     foto: o.foto_url ? { url: o.foto_url, credito: o.foto_credito || '', pagina: o.foto_pagina || null } : null });
-  const deTurno = r => ({ id: r.id, acao: r.acao, inicio: semSeg(r.inicio), fim: semSeg(r.fim), lotacao: r.lotacao == null ? null : r.lotacao, vao: r.vao || 0 });
+  const deTurno = r => ({ id: r.id, acao: r.acao, inicio: semSeg(r.inicio), fim: semSeg(r.fim), lotacao: r.lotacao == null ? null : r.lotacao, vao: r.vao || 0, horaAproximada: !!r.hora_aproximada });
+  const deFeedback = f => ({ id: f.id, texto: f.texto, contato: f.contato || null, tela: f.tela || null, acao: f.acao == null ? null : f.acao, acaoTitulo: f.acao_titulo || null,
+    navegador: f.navegador || null, criadoEm: f.criado_em ? emBrasilia(new Date(f.criado_em)) : null, tratadoEm: f.tratado_em ? emBrasilia(new Date(f.tratado_em)) : null,
+    pessoa: f.pessoa ? { nome: f.pessoa.nome, email: f.pessoa.email || null, telefone: f.pessoa.telefone || null } : null });
   const dePessoa = p => ({ id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, papel: p.papel, bloqueada: !!p.bloqueada, organizacao: p.organizacao == null ? null : p.organizacao });
   // ação de quem organiza (ou da fila): turnos com a lista de quem vai
   const comInscritos = m => ({ acao: Object.assign(deAcao(m.acao), { detalhe: m.acao.detalhe || null, contatoLink: m.acao.contato_link || null,
@@ -45,7 +54,7 @@
   }
   function montarPublico(cfgLinhas, orgs, acoes, turnos) {
     const hoje = hojeBrasilia();
-    const config = { hoje, frase: '', vaquinha: '#' };
+    const config = { hoje, agora: agoraBrasilia(), frase: '', vaquinha: '#' };
     for (const c of cfgLinhas) config[c.chave] = c.valor;
     return { config, organizacoes: orgs.map(deOrg), acoes: acoes.map(deAcao),
       turnos: turnos.filter(t => String(t.inicio).slice(0, 16) >= hoje + 'T00:00').map(deTurno) };
@@ -143,8 +152,12 @@
       async bloquear(pessoaId, motivo) { await rpc('bloquear_pessoa', { pessoa_id: pessoaId, motivo: motivo || null }); },
       async desbloquear(pessoaId) { await rpc('desbloquear_pessoa', { pessoa_id: pessoaId }); },
       async minhasInscricoes() { return (await rpc('minhas_inscricoes')).map(m => ({ acao: deAcao(m.acao), turno: deTurno(m.turno), desistiu: !!m.desistiu })); },
+      // feedback: qualquer pessoa manda (logada ou não); só moderador lê e marca como tratado
+      async enviarFeedback(d) { return rpc('enviar_feedback', { texto: d.texto, contato: d.contato || null, tela: d.tela || null, acao_id: d.acaoId == null ? null : d.acaoId, navegador: d.navegador || null }); },
+      async feedbacks(pendentes = true) { return (await rpc('feedbacks', { pendentes })).map(deFeedback); },
+      async tratarFeedback(id, tratado = true) { await rpc('tratar_feedback', { feedback_id: id, tratado }); },
     };
     return api;
   }
-  return { criar, deAcao, deTurno, dePessoa, deOrg, hojeBrasilia };
+  return { criar, deAcao, deTurno, dePessoa, deOrg, deFeedback, hojeBrasilia, agoraBrasilia };
 });
