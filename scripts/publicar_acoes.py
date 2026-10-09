@@ -201,14 +201,29 @@ def parecidos(a, b):
     return bool(ta and tb) and len(ta & tb) / len(ta | tb) >= 0.5
 
 
-def repetido_no_feed(item, itens_feed):
-    """Mesmo link, ou mesma data+cidade com título parecido."""
+# palavras de campanha que todo ato tem e não distinguem um do outro
+COMUNS = {"lula", "com", "pela", "pelo", "para", "contra", "ato", "democracia", "frente", "concentracao", "praca", "rua",
+          "centro", "campanha", "turno", "todos", "nos", "das", "dos", "uma", "estudantes", "estudantil"}
+
+
+def marcas(item):
+    """Palavras do título e do lugar que identificam o ato, sem o nome da cidade e sem as palavras comuns."""
+    fora = tokens(item.get("cidade") or "") | COMUNS
+    return tokens(f'{item["titulo"]} {item.get("lugar_nome") or ""}') - fora
+
+
+def repetido_no_feed(item, itens_feed, hora_explicita=True):
+    """Mesmo link; ou mesma data+cidade com título parecido; ou mesma data+cidade+hora com título ou lugar em comum."""
     link = item["link"].rstrip("/")
     for f in itens_feed:
         if link and f["link"].rstrip("/") == link:
             return f["fonte_id"]
-        if f["inicio"][:10] == item["inicio"][:10] and bl.sem_acento(f["cidade"]) == bl.sem_acento(item["cidade"]) \
-                and parecidos(f["titulo"], item["titulo"]):
+        if f["inicio"][:10] != item["inicio"][:10] or bl.sem_acento(f["cidade"]) != bl.sem_acento(item["cidade"]):
+            continue
+        if parecidos(f["titulo"], item["titulo"]):
+            return f["fonte_id"]
+        if hora_explicita and not (f["online"] or item["online"]) and f["inicio"] == item["inicio"] \
+                and marcas(f) & marcas(item):
             return f["fonte_id"]
     return None
 
@@ -224,7 +239,7 @@ def itens_do_consolidado(linhas, lugares, itens_feed=(), hoje=None, ate=ATE, geo
         if not item:
             revisao.append((r.get("frente", ""), r.get("titulo", ""), motivo))
             continue
-        dup = repetido_no_feed(item, itens_feed)
+        dup = repetido_no_feed(item, itens_feed, bool((r.get("hora") or "").strip()))
         if dup:
             revisao.append((r.get("frente", ""), r.get("titulo", ""), f"já está no feed Bora Lula (id {dup})"))
             continue
