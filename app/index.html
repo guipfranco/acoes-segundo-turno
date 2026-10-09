@@ -543,7 +543,6 @@ const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_inscricao:'Esta a�
   limite_diario:'Você já criou 10 ações hoje. Tente de novo amanhã.',limite_em_analise:'Você tem 10 ações esperando a moderação. Espere a análise antes de criar mais.',
   sem_titulo:'Dê um título.',sem_lugar:'Marque o lugar da ação.',turno_invalido:'Confira os horários: início antes do fim e nada no passado.',
   grupo_invalido:'O link do grupo precisa começar com https://chat.whatsapp.com/',
-  importada:'Ação importada de outra agenda não se exclui (voltaria na próxima importação): suspenda.',
   organizador_bloqueado:'Quem criou esta ação está bloqueado: ela não volta ao ar.',
   sem_foto:'A ação precisa de uma imagem: a arte da divulgação ou uma foto.',imagem_invalida:'Escolha um arquivo de imagem (foto ou arte).',
   imagem_grande:'Essa imagem é grande demais. Tente outra.',falha_envio:'Não deu para enviar a imagem. Tente de novo.',
@@ -592,14 +591,14 @@ function botaoTurno(a,t){const n=vaoNo(t);
 // no celular o "Eu vou!" aparece logo abaixo do título (os horários ficam depois do mapa); com vários horários, leva até eles
 function ctaTopo(a,futuros){return `<div class="cta-topo">${futuros.length===1?botaoTurno(a,futuros[0]):`<a class="btn vou" href="#" onclick="document.querySelector('.acao-lado').scrollIntoView({behavior:'smooth'});return false">Eu vou!</a> <span class="sec">escolha o horário</span>`}</div>`}
 const FORA_DO_AR={'em análise':'Esta ação está em análise: só aparece para todo mundo depois que a moderação aprovar.',
-  rascunho:'Esta ação foi suspensa pela moderação e está fora do ar.',recusada:'Esta ação foi recusada pela moderação.',encerrada:'Esta ação foi encerrada.'};
+  rascunho:'Esta ação foi suspensa pela moderação e está fora do ar.',recusada:'Esta ação foi recusada pela moderação.','excluída':'Esta ação foi excluída pela moderação.',encerrada:'Esta ação foi encerrada.'};
 // o que a moderação faz em cada status: em análise aprova ou recusa; publicada suspende; suspensa reativa;
-// qualquer uma se exclui, menos a importada (voltaria na próxima importação)
+// qualquer uma se exclui (fica marcada 'excluída', não se apaga)
 function botoesModerar(a,naFila){const st=a.status;
   return (st==='em análise'?`<button class="btn mini" onclick="aprovar(${a.id})">Aprovar</button> `+(naFila?`<button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Recusar</button>`:`<a class="btn sec mini" href="#/fila">Recusar na fila</a>`):'')
     +(st==='publicada'?`<button class="btn sec mini" onclick="suspender(${a.id})">Suspender</button>`:'')
     +(st==='rascunho'?`<button class="btn mini" onclick="reativar(${a.id})">Reativar</button>`:'')
-    +(a.fonte?'':` <button class="btn sec mini perigo" onclick="excluir(${a.id})">Excluir</button>`)}
+    +(st==='excluída'?'':` <button class="btn sec mini perigo" onclick="excluir(${a.id})">Excluir</button>`)}
 function barraModerar(a){if(!estado.sessao||estado.sessao.papel!=='moderador')return '';
   return `<div class="moderar"><strong>Moderação · ${esc((ROTULO_STATUS[a.status]||[a.status])[0])}</strong>${botoesModerar(a,false)}</div>`}
 function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const a=ab.acao,fechada=a.status!=='publicada';
@@ -747,7 +746,7 @@ const linkWhats=tel=>'https://wa.me/55'+String(tel||'').replace(/\D/g,'');
 async function encerrar(id){try{await API.encerrarAcao(id)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}await sincronizar()}
 function editar(id){const a=acaoExemplo(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,online:ehOnline(a),titulo:a.titulo,foto:a.foto&&a.foto.url||'',descricao:a.descricao,lugar:Object.assign({},a.lugar),buscaLugar:lugarCurto(a.lugar),detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,telefone:pessoa(a.organizador).telefone,quando:quandoDe(turnosDaExemplo(id)[0])});estado.criar=c;location.hash='#/criar'}
 // ---------- perfil: a conta, o WhatsApp, onde vou, as ações que criei (com a situação) e o Sair ----------
-const ROTULO_STATUS={'em análise':['Em análise','analise'],'publicada':['Publicada','publicada'],'recusada':['Recusada','recusada'],'encerrada':['Encerrada',''],'rascunho':['Suspensa','recusada']};
+const ROTULO_STATUS={'em análise':['Em análise','analise'],'publicada':['Publicada','publicada'],'recusada':['Recusada','recusada'],'encerrada':['Encerrada',''],'rascunho':['Suspensa','recusada'],'excluída':['Excluída','recusada']};
 async function salvarTelPerfil(){const v=(document.getElementById('ptel')||{}).value||'';
   try{estado.sessao=await API.salvarTelefone(v);estado.perfil={ok:true}}catch(e){estado.perfil={erro:MENSAGEM[e.codigo]||'Não deu. Tente de novo.'}}render()}
 // um horário da minha ação: quem vai, cada pessoa com o número num botão que abre a conversa no WhatsApp
@@ -784,14 +783,14 @@ async function aprovar(id){try{await API.aprovar(id)}catch(e){alert(MENSAGEM[e.c
 async function recusar(id){const m=(document.getElementById('motivo'+id)||{}).value||'';if(!m.trim()){estado.recusando=id;estado.erroRecusa='Escreva o motivo.';render();return}
   try{await API.recusar(id,m)}catch(e){estado.erroRecusa=MENSAGEM[e.codigo]||'Não deu.';render();return}
   estado.recusando=null;estado.erroRecusa=null;await sincronizar()}
-// suspender tira do ar e dá para reativar; excluir apaga a ação com turnos e inscrições
+// suspender tira do ar e dá para reativar; excluir tira do site e da fila (fica no banco como 'excluída')
 async function moderar(fazer,id,pergunta,feito,motivo){if(pergunta&&!confirm(pergunta))return
   try{await API[fazer](id,motivo)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}
   recado(feito);if(fazer==='excluir'&&(location.hash||'').startsWith('#/acao/'))location.hash='#/fila';await sincronizar()}
 function suspender(id){const m=prompt('Suspender esta ação? Ela sai do ar até alguém da moderação reativar.\nMotivo (vai para quem criou; pode deixar em branco):','');
   if(m!==null)moderar('suspender',id,null,'Ação suspensa',m)}
 const reativar=id=>moderar('reativar',id,null,'Ação de volta ao ar');
-const excluir=id=>moderar('excluir',id,'Excluir esta ação de vez? Some junto a lista de quem disse que vai. Não dá para desfazer.','Ação excluída');
+const excluir=id=>moderar('excluir',id,'Excluir esta ação? Ela sai do site e da fila de moderação.','Ação excluída');
 // só no modo exemplo (ainda sem função no banco): selo e bloquear
 function darSelo(oid){DADOS.organizacoes.find(o=>o.id===oid).verificada=true;sincronizar()}
 function bloquear(pid){pessoa(pid).bloqueada=true;DADOS.acoes.filter(a=>a.organizador===pid&&a.status==='publicada').forEach(a=>a.status='rascunho');sincronizar()}

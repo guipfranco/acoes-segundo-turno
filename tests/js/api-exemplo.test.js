@@ -166,7 +166,7 @@ test('fila: só moderador; aprovar publica e recusar exige motivo', async () => 
   assert.ok((await api2.publico()).acoes.some(a => a.id === id));
 });
 
-test('moderação: suspender tira do ar, reativar volta, excluir apaga (importada não)', async () => {
+test('moderação: suspender tira do ar, reativar volta, excluir marca excluída', async () => {
   const d = dados(); const api = ApiExemplo.criar(d);
   const a = d.acoes.find(x => x.status === 'publicada' && !x.fonte && turnoFuturo(d, x));
   await assert.rejects(api.suspender(a.id), { codigo: 'so_moderador' });
@@ -178,11 +178,11 @@ test('moderação: suspender tira do ar, reativar volta, excluir apaga (importad
   await mod.reativar(a.id);
   assert.ok((await mod.publico()).acoes.some(x => x.id === a.id));
   await mod.excluir(a.id);
-  assert.equal(await mod.acao(a.id), null);
-  assert.ok(!d.turnos.some(t => t.acao === a.id));
-  // importada: não se exclui, suspende e aparece em Suspensas
+  assert.equal((await mod.acao(a.id)).acao.status, 'excluída');
+  assert.ok(!(await mod.publico()).acoes.some(x => x.id === a.id) && d.turnos.some(t => t.acao === a.id));
+  await assert.rejects(mod.excluir(a.id), { codigo: 'nao_pode' });
+  // importada suspensa aparece em Suspensas
   const imp = d.acoes.find(x => x.status === 'publicada' && x.id !== a.id); imp.fonte = 'bora-lula';
-  await assert.rejects(mod.excluir(imp.id), { codigo: 'importada' });
   await mod.suspender(imp.id);
   assert.ok((await mod.fila('rascunho')).some(m => m.acao.id === imp.id));
   // em análise não se suspende (recusa); pessoa bloqueada não volta ao ar
