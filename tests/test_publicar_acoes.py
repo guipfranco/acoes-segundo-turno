@@ -183,13 +183,16 @@ def test_card_com_varias_acoes_no_mesmo_post_vira_uma_acao_por_linha():
         linha(titulo="Camisetaço no Vidigal", cidade="Rio de Janeiro", uf="RJ", bairro="", hora="17:00", link=card),
         linha(titulo="Bandeiraço no Vidigal", cidade="Rio de Janeiro", uf="RJ", bairro="", hora="17:30", link=card),
         linha(titulo="Caminhada Macaé com Lula", cidade="Macaé", uf="RJ", bairro="", hora="17:00", link=card),
+        # mesma hora e cidade, outro lugar: outra ação
+        linha(titulo="Adesivaço na Prefeitura", cidade="Macaé", uf="RJ", bairro="", hora="17:00", link=card,
+              endereco="Sinal em frente à Prefeitura"),
         # a mesma ação do card vista por outra frente, com outro título: continua repetida
         linha(frente="x", titulo="Caminhada em Macaé", cidade="Macaé", uf="RJ", bairro="", hora="17:00", link=card),
         linha(titulo="Plenária das mulheres", link="https://x/p"),
     ]
     itens, revisao = pa.itens_do_consolidado(linhas, LUGARES, hoje="2026-10-09")
     assert [i["titulo"] for i in itens] == ["Camisetaço no Vidigal", "Bandeiraço no Vidigal", "Caminhada Macaé com Lula",
-                                            "Plenária das mulheres"]
+                                            "Adesivaço na Prefeitura", "Plenária das mulheres"]
     assert [m for _, _, m in revisao] == ["repetido no consolidado"]
     # link de um post só: o id continua sendo o do link, como antes (não muda o que já está publicado)
-    assert itens[3]["fonte_id"] == pa.id_redes(linhas[4])
+    assert itens[4]["fonte_id"] == pa.id_redes(linhas[5])
