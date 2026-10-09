@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/ir_ao_ar.py migrar)",
+      "Bash(python scripts/publicar_acoes.py * --aplicar)"
+    ]
+  }
+}
