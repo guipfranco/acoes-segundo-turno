@@ -66,8 +66,43 @@ def faixa(hora, hora_ord):
     return inicio, ("23:59" if h_fim >= 24 else f"{h_fim:02d}:{m:02d}")
 
 
+def bairro_do_endereco(endereco, cidade=""):
+    """Bairro no fim do endereço ("Av. X, 704 - Centro"). Nada se tiver número, UF/CEP ou for a própria cidade."""
+    m = re.search(r"[-–,]\s*([^-–,\d]{3,40})\s*$", str(endereco or ""))
+    if not m:
+        return ""
+    b = m.group(1).strip()
+    if sem_acento(b) == sem_acento(cidade) or re.fullmatch(r"[A-Z]{2}", b):
+        return ""
+    return b
+
+
+PARTIDOS = ("pt ", "pt-", "psol", "pcdob", "pdt", "psb", "rede ", "pv ", "pco", "up ", "pstu", "partido ")
+MANDATOS = ("mandato", "vereador", "deputad", "senador", "gabinete")
+MOVIMENTOS = ("movimento", "mst", "mtst", "une ", "ubes", "cut ", "ctb", "sindicato", "frente", "central", "levante", "juventude")
+
+
+def tipo_org(nome):
+    n = sem_acento(nome) + " "
+    if n.startswith(PARTIDOS) or " pt " in n or n.startswith("diretorio"):
+        return "partido"
+    if any(k in n for k in MANDATOS):
+        return "mandato"
+    if any(k in n for k in MOVIMENTOS):
+        return "movimento"
+    return "coletivo"
+
+
+def chave_cidade(s):
+    """Chave de busca do município: sem acento, hífen, apóstrofo e parênteses ("Santa Bárbara d'Oeste" = "... do Oeste")."""
+    s = sem_acento(s).replace("'", " ").replace("-", " ").replace("–", " ")
+    s = re.sub(r"\(.*?\)", " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return re.sub(r"\bd (?=[aeiou])", "do ", s)
+
+
 def carregar_lugares():
-    """Índice (cidade sem acento, uf) -> (lat, lon) a partir de app/lugares.js (municípios do IBGE)."""
+    """Índice (chave_cidade, uf) -> (lat, lon) a partir de app/lugares.js (municípios do IBGE)."""
     txt = LUGARES_JS.read_text(encoding="utf-8")
     txt = txt.split("LUGARES_BR", 1)[1]
     corpo = txt[txt.index("["): txt.rindex("]") + 1]
@@ -75,15 +110,25 @@ def carregar_lugares():
     for nome, uf, lat, lon, tipo in json.loads(corpo):
         if tipo == "d":  # distritos de São Paulo não são municípios
             continue
-        indice.setdefault((sem_acento(nome), uf), (lat, lon))
+        indice.setdefault((chave_cidade(nome), uf), (lat, lon))
     return indice
 
 
 def coordenada(cidade, uf, lugares):
     if not cidade:
         return None
-    chave = re.sub(r"\s+", " ", sem_acento(cidade))
-    return lugares.get((chave, uf))
+    return lugares.get((chave_cidade(cidade), uf))
+
+
+def resolver_lugar(cidade, uf, lugares):
+    """(cidade oficial, bairro sugerido, (lat, lon)) ou None. Região administrativa do DF vira Brasília."""
+    c = coordenada(cidade, uf, lugares)
+    limpa = re.sub(r"\s*\(.*?\)", "", str(cidade or "")).strip()
+    if c:
+        return limpa, "", c
+    if uf == "DF" and limpa:
+        return "Brasília", limpa, coordenada("Brasília", "DF", lugares)
+    return None
 
 
 def baixar(destino_pasta=PASTA):
@@ -124,7 +169,7 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25"):
         if nome_org:
             if nome_org not in idx_org:
                 idx_org[nome_org] = len(organizacoes) + 1
-                organizacoes.append({"id": idx_org[nome_org], "nome": nome_org, "tipo": "coletivo", "verificada": False})
+                organizacoes.append({"id": idx_org[nome_org], "nome": nome_org, "tipo": tipo_org(nome_org), "verificada": False})
             org_id = idx_org[nome_org]
         online = bool(item.get("online"))
         cidade = (item.get("cidade") or "").strip()
@@ -135,7 +180,7 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25"):
             lugar = {"nome": "Online", "bairro": "Online", "cidade": "Online", "lat": None, "lon": None, "online": True}
         else:
             c = coordenada(cidade, uf, lugares)
-            lugar = {"nome": local or endereco or cidade or "A confirmar", "bairro": "", "cidade": cidade or "A confirmar",
+            lugar = {"nome": local or endereco or cidade or "A confirmar", "bairro": bairro_do_endereco(endereco, cidade), "cidade": cidade or "A confirmar",
                      "uf": uf, "endereco": endereco, "lat": c[0] if c else None, "lon": c[1] if c else None,
                      "precisao": "cidade" if c else "nenhuma"}
         h_ini, h_fim = faixa(item.get("hora"), item.get("hora_ord"))
@@ -150,7 +195,7 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25"):
         acoes.append({
             "id": item["id"], "titulo": (item.get("atividade") or "Ação")[:120], "tipo": tipo_mapa(item.get("tipo")),
             "tipoOrigem": item.get("tipo") or "", "descricao": descricao, "organizador": pessoa_feed["id"],
-            "organizacao": org_id, "lugar": lugar, "detalhe": "", "contatoTipo": "organizador_chama", "contatoWhatsapp": None, "contatoLink": None, "status": "publicada",
+            "organizacao": org_id, "lugar": lugar, "detalhe": "", "contatoTipo": "divulgacao" if link else "organizador_chama", "contatoWhatsapp": None, "contatoLink": link or None, "status": "publicada",
             "motivoRecusa": None, "prioritaria": False, "criadaEm": hoje, "foto": None, "fonte": "bora-lula", "link": link,
         })
         turnos.append({"id": len(turnos) + 1, "acao": item["id"], "inicio": inicio, "fim": fim, "lotacao": None})

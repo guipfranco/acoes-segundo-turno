@@ -141,3 +141,60 @@ def test_anon_nao_chama_rpcs_de_sessao(cenario):
     assert sb.rpc("salvar_telefone", {"telefone": "11988887777"}).status in (401, 403)
     assert sb.rpc("desistir", {"turno_id": cenario["turno"]}).status in (401, 403)
     assert sb.rpc("minhas_inscricoes", {}).status in (401, 403)
+
+
+def _item(fonte_id, **extra):
+    base = {"fonte_id": fonte_id, "titulo": f"Importada {fonte_id}", "tipo": "panfletagem", "descricao": "Fonte: teste.",
+            "organizacao": "Org Importada Teste", "organizacao_tipo": "movimento", "online": False, "lugar_nome": "Centro",
+            "bairro": "", "cidade": "Diadema", "lat": -23.68, "lon": -46.62, "lugar_aproximado": True,
+            "link": "https://www.instagram.com/p/x/", "inicio": "2099-02-01T09:00", "fim": "2099-02-01T11:00"}
+    base.update(extra)
+    return base
+
+
+def test_importar_acoes_e_idempotente_e_encerra_o_que_sumiu(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    r = sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a"), _item("b", link="", online=True, lat=None, lon=None, lugar_nome=None)]}, jwt=sb.SERVICE)
+    assert r.status == 200, r.corpo
+    assert r.corpo == {"inseridas": 2, "atualizadas": 0, "encerradas": 0}
+    pub = sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}&order=titulo").corpo
+    assert [a["titulo"] for a in pub] == ["Importada a", "Importada b"]
+    a, b = pub
+    assert a["organizador_nome"] == "Agenda Bora Lula" and a["lugar_aproximado"] is True
+    assert a["contato_tipo"] == "divulgacao" and a["link_divulgacao"] == "https://www.instagram.com/p/x/"
+    assert b["online"] is True and b["contato_tipo"] == "organizador_chama" and b["link_divulgacao"] is None
+    assert "contato_link" not in a
+    org = sb.chamar("GET", "/rest/v1/organizacao_publica?nome=eq.Org%20Importada%20Teste").corpo
+    assert len(org) == 1 and org[0]["tipo"] == "movimento" and org[0]["verificada"] is False
+    turnos = sb.chamar("GET", f"/rest/v1/turno_publico?acao=eq.{a['id']}").corpo
+    assert [t["inicio"] for t in turnos] == ["2099-02-01T09:00:00"]
+
+    # reimporta só "a" com horário novo: "a" atualiza no lugar (mesmo turno), "b" encerra
+    r = sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", inicio="2099-02-01T10:00", fim="2099-02-01T12:00")]}, jwt=sb.SERVICE)
+    assert r.corpo == {"inseridas": 0, "atualizadas": 1, "encerradas": 1}
+    turnos2 = sb.chamar("GET", f"/rest/v1/turno_publico?acao=eq.{a['id']}").corpo
+    assert [(t["id"], t["inicio"]) for t in turnos2] == [(turnos[0]["id"], "2099-02-01T10:00:00")]
+    assert [x["titulo"] for x in sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo] == ["Importada a"]
+
+    # "b" volta ao feed: republica sem duplicar
+    r = sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a"), _item("b")]}, jwt=sb.SERVICE)
+    assert r.corpo == {"inseridas": 0, "atualizadas": 2, "encerradas": 0}
+    assert len(sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo) == 2
+
+    # recusa do moderador é respeitada numa reimportação
+    assert sb.admin("PATCH", f"/rest/v1/acao?id=eq.{b['id']}", {"status": "recusada", "motivo_recusa": "x"}).status == 200
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a"), _item("b")]}, jwt=sb.SERVICE)
+    assert sb.admin("GET", f"/rest/v1/acao?id=eq.{b['id']}&select=status").corpo == [{"status": "recusada"}]
+
+
+def test_importar_acoes_so_pela_chave_de_servico_e_divulgacao_nao_tem_inscricao(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a")]}).status >= 400
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a")]}, jwt=cenario["jwt_org"]).status >= 400
+    assert sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo == []
+    r = sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a")]}, jwt=sb.SERVICE)
+    assert r.status == 200, r.corpo
+    acao = sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo[0]["id"]
+    turno = sb.chamar("GET", f"/rest/v1/turno_publico?acao=eq.{acao}").corpo[0]["id"]
+    sb.rpc("salvar_telefone", {"telefone": "11988887777"}, jwt=cenario["jwt_a"])
+    assert sb.rpc("inscrever", {"turno_id": turno}, jwt=cenario["jwt_a"]).corpo["message"] == "sem_inscricao"

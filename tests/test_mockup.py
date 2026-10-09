@@ -339,3 +339,10 @@ def test_carregamento_inicial_tem_estado_e_erro():
     assert "catch" in sinc and "Não foi possível carregar" in sinc and "data-so-exemplo" in sinc
     api = (RAIZ / "app" / "api.js").read_text(encoding="utf-8")
     assert "window.supabase" in api and "Supabase indisponível; usando dados de exemplo" in api
+
+
+def test_acao_importada_tem_divulgacao_e_lugar_aproximado_na_tela():
+    assert "function botaoDivulgacao" in HTML and "semInscricao(a)" in HTML
+    assert "sem_inscricao:" in HTML  # mensagem da função SQL inscrever
+    assert "lugarAproximadoNota(a.lugar)" in HTML and "function espalhar" in HTML
+    assert "Ponto aproximado" in HTML

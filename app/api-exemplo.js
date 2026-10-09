@@ -18,8 +18,9 @@
     const publica = a => ({
       id: a.id, titulo: a.titulo, tipo: a.tipo, descricao: a.descricao, organizador: a.organizador,
       organizadorNome: (pessoa(a.organizador) || { nome: '' }).nome, organizacao: a.organizacao,
-      lugar: Object.assign({}, a.lugar), foto: a.foto ? Object.assign({}, a.foto) : null,
+      lugar: Object.assign({}, a.lugar, a.lugar.online ? {} : { aproximado: a.lugar.precisao === 'cidade' }), foto: a.foto ? Object.assign({}, a.foto) : null,
       prioritaria: !!a.prioritaria, status: a.status, contatoTipo: a.contatoTipo || 'organizador_chama', criadaEm: a.criadaEm,
+      fonte: a.fonte || null, linkDivulgacao: a.contatoTipo === 'divulgacao' ? a.contatoLink || null : null,
     });
     const turno = t => ({ id: t.id, acao: t.acao, inicio: t.inicio, fim: t.fim, lotacao: t.lotacao || null, vao: ativas(t.id).length });
     const turnosDa = aid => dados.turnos.filter(t => t.acao === aid).sort((a, b) => a.inicio.localeCompare(b.inicio)).map(turno);

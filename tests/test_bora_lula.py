@@ -42,6 +42,9 @@ def test_geocodifica_por_cidade_e_uf():
     assert bl.coordenada("Sào Paulo", "SP", lugares) == (lat, lon)  # acento errado no feed
     assert bl.coordenada("", "RS", lugares) is None
     assert bl.coordenada("Cidade Inexistente", "SP", lugares) is None
+    assert bl.coordenada("Brasília (Ceilândia)", "DF", lugares) is not None
+    assert bl.resolver_lugar("Ceilândia (Brasília)", "DF", lugares)[:2] == ("Brasília", "Ceilândia")
+    assert bl.resolver_lugar("Campo Grande", "RJ", lugares) is None
 
 
 def test_converte_feed_para_formato_do_mockup():

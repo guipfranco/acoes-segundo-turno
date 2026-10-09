@@ -212,7 +212,12 @@ function fmtCurta(iso){const d=new Date(iso);return `${DIAS[d.getDay()]} ${hora(
 function distanciaKm(a,b){const r=6371,x=(b.lat-a.lat)*Math.PI/180,y=(b.lon-a.lon)*Math.PI/180;const s=Math.sin(x/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(y/2)**2;return 2*r*Math.asin(Math.sqrt(s))}
 function quantosInscritos(n){return n===1?'1 inscrito':n+' inscritos'}
 function quantosVao(n){return n===1?'1 vai':n+' vão'}
-function lugarCurto(l){if(l.online)return 'Online';return l.bairro===l.cidade?l.cidade:`${l.bairro}, ${l.cidade}`}
+function lugarCurto(l){if(l.online)return 'Online';return !l.bairro||l.bairro===l.cidade?l.cidade:`${l.bairro}, ${l.cidade}`}
+const semInscricao=a=>a.contatoTipo==='divulgacao';
+function botaoDivulgacao(a){return a.linkDivulgacao?`<a class="btn" href="${esc(a.linkDivulgacao)}" target="_blank" rel="noopener">Ver a divulgação original ↗</a>`:'<span class="sec">Sem inscrição: é só aparecer.</span>'}
+function lugarAproximadoNota(l){return l.aproximado?`<div class="sec" style="font-size:14px;margin-top:4px">📍 Ponto aproximado: o mapa marca o centro de ${esc(l.cidade)}. O local exato está na divulgação.</div>`:''}
+// pinos no centro da mesma cidade abrem em espiral para não se empilharem
+function espalhar(lista){const grupos={};return lista.map(x=>{const l=x.a.lugar;if(!l.aproximado)return [l.lat,l.lon];const k=l.lat.toFixed(3)+','+l.lon.toFixed(3);const i=grupos[k]=(grupos[k]||0)+1;if(i===1)return [l.lat,l.lon];const r=0.0025*Math.sqrt(i),ang=i*2.4;return [l.lat+r*Math.sin(ang),l.lon+r*Math.cos(ang)*1.1]})}
 function nomeOrganizador(a){if(a.organizacao){const o=org(a.organizacao)||DADOS.organizacoes.find(x=>x.id===a.organizacao);return esc(o.nome)+(o.verificada?' <span class="selo">✓ verificada</span>':'')}return esc(a.organizadorNome!=null?a.organizadorNome:(pessoa(a.organizador)||{}).nome)}
 function somaDias(iso,n){const d=new Date(iso+'T00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -303,8 +308,8 @@ function cardAcao(x){const a=x.a;return `<a class="card ${estado.foco===a.id?'fo
   <div><div class="tit">${esc(a.titulo)}</div>
   <div class="meta">${nomeOrganizador(a)}</div>
   <div class="meta"><b>${fmtData(x.t.inicio)}</b></div>
-  <div class="meta">${esc(lugarCurto(a.lugar))}${x.km!=null?`, a ${fmtKm(x.km)} km`:''}</div>
-  <div class="meta">${quantosVao(vaoNa(a.id))}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div></div></a>`}
+  <div class="meta">${esc(lugarCurto(a.lugar))}${x.km!=null?`, a ${fmtKm(x.km)} km`:''}${a.lugar.aproximado?' <span class="sec">(ponto aproximado)</span>':''}</div>
+  <div class="meta">${semInscricao(a)?'Sem inscrição':quantosVao(vaoNa(a.id))}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div></div></a>`}
 function telaMapa(){
   return `<div id="tela-mapa"><div id="mapa" aria-label="Mapa das ações"></div>
   <div id="topo"><div class="busca"><span>🔍</span><input id="busca-lugar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(estado.onde?estado.onde.rotulo:'')}" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
@@ -327,7 +332,8 @@ function atualizarLista(){
   if(!mapa)return;
   const todas=acoesVisiveis().filter(x=>temPino(x.a)),aqui=acoesNaArea();
   marcadores.forEach(m=>m.remove());marcadores=[];
-  todas.forEach(x=>{const m=L.marker([x.a.lugar.lat,x.a.lugar.lon],{icon:etiquetaPino(x),riseOnHover:true});m._acao=x.a.id;m.addTo(mapa);
+  const pos=espalhar(todas);
+  todas.forEach((x,i)=>{const m=L.marker(pos[i],{icon:etiquetaPino(x),riseOnHover:true});m._acao=x.a.id;m.addTo(mapa);
     m.on('click',()=>{focar(x.a.id);if(estado.gaveta==='baixa')abrirGaveta('meio');const c=document.getElementById('card-'+x.a.id);if(c)c.scrollIntoView({block:'nearest'})});marcadores.push(m)});
   const online=estado.formato==='presencial'?[]:acoesOnline();
   document.getElementById('contagem').textContent=aqui.length?`${aqui.length===1?'1 ação':aqui.length+' ações'} nesta área`:'Nenhuma ação nesta área';
@@ -369,15 +375,16 @@ async function iniciarVou(tid){
 async function continuarVouPendente(){const tid=Number(localStorage.getItem('vouPendente'));if(!tid)return;
   estado.sessao=await API.sessao();if(!estado.sessao)return;localStorage.removeItem('vouPendente');
   estado.inscrevendo={turno:tid,telefone:estado.sessao.telefone||'',erro:null};await render()}
-const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_telefone:'Informe seu WhatsApp.',telefone_invalido:'Telefone no formato (11) 9xxxx-xxxx.',bloqueada:'Sua conta está bloqueada.',lotado:'Esse horário lotou.',turno_passado:'Esse horário já passou.',nao_publicada:'Esta ação não está aberta a inscrições.'};
+const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_inscricao:'Esta ação não tem inscrição: siga a divulgação original.',sem_telefone:'Informe seu WhatsApp.',telefone_invalido:'Telefone no formato (11) 9xxxx-xxxx.',bloqueada:'Sua conta está bloqueada.',lotado:'Esse horário lotou.',turno_passado:'Esse horário já passou.',nao_publicada:'Esta ação não está aberta a inscrições.'};
 async function confirmarVou(tid){const ins=estado.inscrevendo;const tel=(document.getElementById('vtel')||{}).value||'';
   try{if(tel!==(estado.sessao.telefone||''))estado.sessao=await API.salvarTelefone(tel);await API.inscrever(tid)}
   catch(e){ins.erro=MENSAGEM[e.codigo]||'Não deu. Tente de novo.';ins.telefone=tel;render();return}
   estado.inscrevendo=null;await sincronizar()}
 async function inscrever(tid){return confirmarVou(tid)}
 function compartilhar(){const u=location.href;if(navigator.share)navigator.share({url:u});else{navigator.clipboard&&navigator.clipboard.writeText(u);alert('Link copiado')}}
-function botaoTurno(t){const n=vaoNo(t);
+function botaoTurno(a,t){const n=vaoNo(t);
   if(t.inicio.slice(0,10)<PUB.config.hoje)return `<button class="btn" disabled>horário encerrado</button>${estouInscrito(t.id)?' <span class="selo">você estava inscrito</span>':''}`;
+  if(semInscricao(a))return botaoDivulgacao(a);
   if(estouInscrito(t.id))return `<span class="selo">Inscrito ✓</span> <button class="btn sec mini" onclick="desistir(${t.id})">desistir</button>`;
   if(t.lotacao&&n>=t.lotacao)return `<button class="btn" disabled>lotado</button>`;
   return `<button class="btn" onclick="iniciarVou(${t.id})">Inscreva-se</button>`}
@@ -388,12 +395,12 @@ function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina
   <h1>${esc(a.titulo)}</h1>
   <div class="sec" style="font-size:15px">${nomeOrganizador(a)}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div>
   ${fechada?`<p class="erro">Esta ação não está aberta a inscrições (${a.status}).</p>`:futuros.length?'':'<p class="erro">Esta ação já aconteceu.</p>'}
-  <p style="margin-top:12px">${esc(a.descricao)}</p>
+  <p style="margin-top:12px;white-space:pre-line">${esc(a.descricao)}</p>
   <h2>Onde</h2>${ehOnline(a)?`<div><strong>Online</strong></div><div class="sec" style="font-size:15px">Você participa de casa. O link da chamada vai para quem se inscreve.</div>`:
-  `<div><strong>${esc(a.lugar.nome)}</strong></div><div class="sec" style="font-size:15px">${esc(lugarCurto(a.lugar))}</div>
+  `<div><strong>${esc(a.lugar.nome)}</strong></div><div class="sec" style="font-size:15px">${esc(lugarCurto(a.lugar))}</div>${lugarAproximadoNota(a.lugar)}
   <div id="minimapa" style="height:200px;border-radius:14px;margin:10px 0"></div>`}</div>
   <aside class="acao-lado"><h2>Quando</h2>
-  ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${quantosVao(vaoNo(t))}${t.lotacao?` de ${t.lotacao} vagas`:''}</div><div style="margin-top:8px">${fechada?'':botaoTurno(t)}</div>
+  ${ts.map(t=>`<div class="linha"><div><strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}</div><div class="sec">${semInscricao(a)?'Sem inscrição':quantosVao(vaoNo(t))+(t.lotacao?` de ${t.lotacao} vagas`:'')}</div><div style="margin-top:8px">${fechada?'':botaoTurno(a,t)}</div>
     ${ins&&ins.turno===t.id?`<div class="sec" style="margin-top:8px">Você: <strong>${esc(estado.sessao.nome)}</strong></div><label>Seu WhatsApp</label><input id="vtel" value="${esc(ins.telefone)}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><p class="sec" style="margin-top:8px">Seu nome e telefone vão para quem organiza esta ação.</p>${ins.erro?`<div class="erro">${esc(ins.erro)}</div>`:''}<div style="margin-top:8px"><button class="btn" onclick="confirmarVou(${t.id})">Confirmar</button> <button class="btn sec mini" onclick="estado.inscrevendo=null;render()">Cancelar</button></div>`:''}</div>`).join('')}</aside>
   <div class="acao-resto">${ab.combinado?blocoCombinado(a,ab.combinado):''}
   <h2>Quem organiza</h2><div class="sec" style="font-size:15px">${nomeOrganizador(a)}</div></div></div></div>`}
@@ -403,6 +410,7 @@ function blocoCombinado(a,c){const ct=c.contato;const tel=ct.whatsapp?ct.whatsap
     ct.tipo==='link_grupo'&&ct.link?`<a class="btn" href="${esc(ct.link)}" target="_blank" rel="noopener">Entrar no grupo do WhatsApp</a> `:'';
   return `<h2>Combinado</h2><div class="aviso">${c.detalhe?`<p>${esc(c.detalhe)}</p>`:''}${como}<button class="btn sec" onclick="compartilhar()">Compartilhar</button></div>`}
 function montarMiniMapa(l,arrastavel){const el=document.getElementById('minimapa');if(!el)return null;const m=L.map(el,{zoomControl:false,attributionControl:false}).setView([l.lat,l.lon],arrastavel?14:15);fundoBase(m);
+  if(l.aproximado&&!arrastavel){m.setView([l.lat,l.lon],12);L.circle([l.lat,l.lon],{radius:2500,color:'#c0392b',weight:2,fillOpacity:.12}).addTo(m);return {m,mk:null}}
   const mk=L.marker([l.lat,l.lon],{icon:L.divIcon({html:'<span class="etiqueta">📍 aqui</span>',className:'',iconSize:[0,0]}),draggable:!!arrastavel}).addTo(m);return {m,mk}}
 // ---------- criar ----------
 const MODELOS={

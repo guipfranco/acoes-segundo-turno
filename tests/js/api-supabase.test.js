@@ -6,12 +6,17 @@ test('deAcao converte linha da view no formato AcaoPublica', () => {
   const a = deAcao({ id: 7, titulo: 'T', tipo: 'panfletagem', descricao: 'd', organizador: 'u1', organizador_nome: 'Carlos', organizacao: null,
     lugar_nome: 'Praça', bairro: 'Centro', cidade: 'São Paulo', lat: -23.5, lon: -46.6, online: false,
     foto_url: null, foto_credito: null, foto_pagina: null, prioritaria: true, contato_tipo: 'whatsapp', status: 'publicada', criada_em: '2026-10-08T12:00:00+00:00' });
-  assert.deepEqual(a.lugar, { nome: 'Praça', bairro: 'Centro', cidade: 'São Paulo', lat: -23.5, lon: -46.6, online: false });
+  assert.deepEqual(a.lugar, { nome: 'Praça', bairro: 'Centro', cidade: 'São Paulo', lat: -23.5, lon: -46.6, online: false, aproximado: false });
+  assert.equal(a.fonte, null); assert.equal(a.linkDivulgacao, null);
   assert.equal(a.foto, null); assert.equal(a.organizadorNome, 'Carlos'); assert.equal(a.contatoTipo, 'whatsapp');
   assert.equal(a.criadaEm, '2026-10-08'); assert.equal(a.detalhe, undefined);
   const on = deAcao({ online: true, lugar_nome: null, bairro: null, cidade: null, lat: null, lon: null, foto_url: 'https://x/y.jpg', foto_credito: 'c', foto_pagina: null });
   assert.deepEqual(on.lugar, { nome: 'Online', bairro: 'Online', cidade: 'Online', lat: null, lon: null, online: true });
   assert.deepEqual(on.foto, { url: 'https://x/y.jpg', credito: 'c', pagina: null });
+  const imp = deAcao({ online: false, lugar_nome: 'Praça', bairro: null, cidade: 'Recife', lat: -8, lon: -34, lugar_aproximado: true,
+    fonte: 'bora-lula', contato_tipo: 'divulgacao', link_divulgacao: 'https://www.instagram.com/p/x/' });
+  assert.equal(imp.lugar.aproximado, true); assert.equal(imp.fonte, 'bora-lula');
+  assert.equal(imp.contatoTipo, 'divulgacao'); assert.equal(imp.linkDivulgacao, 'https://www.instagram.com/p/x/');
 });
 
 test('deTurno corta os segundos e dePessoa mantém o contrato', () => {

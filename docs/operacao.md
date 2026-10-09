@@ -64,6 +64,27 @@ insert into turno (acao, inicio, fim) select id, (hoje_brasilia() + 2)::timestam
 
 Sem dado real de terceiros: o organizador é o próprio dono do projeto.
 
+## Importar ações de fontes públicas (agenda Bora Lula e redes)
+
+Migração `20261009000001_origem_importacao.sql` (pessoa de sistema, campos `fonte`/`fonte_id`/`lugar_aproximado`,
+contato `divulgacao`, função `importar_acoes`). Em produção ela ainda precisa ser aplicada: `python scripts/ir_ao_ar.py migrar`
+(pede `SUPABASE_ACCESS_TOKEN` e `SUPABASE_DB_PASSWORD`) ou colar o arquivo no SQL Editor e registrar em
+`supabase_migrations.schema_migrations`.
+
+```bash
+python scripts/publicar_acoes.py bora-lula             # baixa o feed e ensaia: resumo + levantamento/publicar-*.json e revisao-*.csv
+python scripts/publicar_acoes.py bora-lula --aplicar   # grava (insere, atualiza, encerra o que sumiu do feed)
+python scripts/publicar_acoes.py redes --de levantamento/acoes-consolidado-2026-10-08.csv --feed levantamento/bora-lula/<data>.json --aplicar
+```
+
+Destino pelas variáveis de ambiente: `SUPABASE_URL` + `SUPABASE_SERVICE_KEY` (REST com a chave de serviço; é o
+caminho da pilha local) ou, sem elas, `SUPABASE_ACCESS_TOKEN` + ref em `supabase/.temp/project-ref` (Management API,
+produção). Rode o ensaio e leia o `revisao-*.csv` antes do `--aplicar`. Reimportar é seguro: a chave é
+(`fonte`, `fonte_id`). Ação recusada por moderador não volta. Para o feed, o plano é rodar 2x por dia.
+
+Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capturas em
+`docs/capturas/2026-10-09-acao-importada.png` e `2026-10-09-mapa-importadas.png`.
+
 ## Estado da produção (2026-10-09)
 
 - Supabase: projeto `acoes-segundo-turno`, ref `ommitzndniqnmsjsjghb`, São Paulo, plano Free. As três

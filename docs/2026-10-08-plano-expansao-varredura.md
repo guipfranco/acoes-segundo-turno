@@ -78,19 +78,23 @@ Varrer na véspera dessas datas rende mais que em qualquer outro dia.
 
 ## Publicar os dados reais (liberado pelo Gui em 2026-10-09)
 Ações e organizações públicas podem ir para produção (Supabase) e para o modo exemplo (`app/dados.js`). O app agora lê
-do Supabase em produção, então publicar = inserir no banco, não trocar o `dados.js`. Antes de inserir:
-1. **Organizador de sistema.** `acao.organizador` é uuid de `pessoa` (not null). Criar uma pessoa de sistema
-   "Agenda Bora Lula (importação)" com papel organizador e usar em toda ação importada. Nunca pessoa real.
-2. **Coordenada obrigatória.** O banco exige lat/lon e lugar_nome para ação presencial. Ação sem cidade reconhecida
-   (20 no feed) fica de fora ou vai para fila de revisão. Ação com só a cidade recebe o centro do município: gravar
-   isso em `detalhe` ou num campo próprio e o mapa precisa agrupar/rotular como "lugar aproximado", senão dezenas de
-   ações de uma capital se empilham num pino.
-3. **Link da divulgação original** em `contato_link` com `contato_tipo` adequado, e crédito da fonte na descrição.
-   Esconder inscrição e grupo para ação importada quando não houver contato real.
-4. **Idempotência.** Guardar o id do feed (ex.: `fonte = 'bora-lula'`, `fonte_id`) para reimportar 2x/dia sem duplicar
-   e para marcar como encerrada o que sumir do feed. Precisa de migração com esses campos.
-5. **Converter também o consolidado das redes** (`levantamento/acoes-consolidado-*.csv`), com geocodificação por
-   cidade via `app/lugares.js` e dedup contra o feed.
-6. **Miudezas:** vírgula sobrando sem bairro; organizador "Agenda Bora Lula" quando o feed não informa;
-   duplicatas do mesmo ato com títulos diferentes.
-7. Nunca versionar `levantamento/`. Se usar `supabase/seed.sql`, só com dados públicos.
+do Supabase em produção, então publicar = inserir no banco, não trocar o `dados.js`. Os sete itens abaixo foram
+resolvidos em 2026-10-09 (migração `supabase/migrations/20261009000001_origem_importacao.sql`, script
+`scripts/publicar_acoes.py`, tela); como rodar está em `docs/operacao.md`, seção "Importar ações de fontes públicas".
+1. **Organizador de sistema.** Feito: a migração cria a pessoa "Agenda Bora Lula" (uuid fixo `...b07a`, usuário banido,
+   sem senha nem provedor) e `importar_acoes` assina toda ação importada com ela. Nunca pessoa real.
+2. **Coordenada obrigatória.** Feito: ação presencial recebe o centro do município (`app/lugares.js`) com
+   `acao.lugar_aproximado = true`; região administrativa do DF vira Brasília com o bairro; sem cidade reconhecida vai
+   para `levantamento/revisao-<fonte>-<data>.csv`. A tela avisa "ponto aproximado", o minimapa mostra um círculo e o
+   mapa abre os pinos da mesma cidade em espiral.
+3. **Link da divulgação original.** Feito: `contato_tipo = 'divulgacao'` com o link em `contato_link`, exposto na view
+   como `link_divulgacao`; crédito da fonte na descrição. A tela troca "Inscreva-se" por "Ver a divulgação original" e
+   a função `inscrever` recusa (`sem_inscricao`).
+4. **Idempotência.** Feito: `acao.fonte` + `acao.fonte_id` (únicos) e `importada_em`; `importar_acoes(fonte, itens)`
+   insere ou atualiza, encerra o que sumiu da fonte, republica o que voltou e respeita recusa de moderador.
+5. **Consolidado das redes.** Feito: `publicar_acoes.py redes --de CSV --feed JSON` geocodifica por cidade, descarta o que
+   já vem do feed (mesmo link, ou mesma data e cidade com título parecido), sem Lula explícito e confiança baixa.
+6. **Miudezas.** Feito: bairro extraído do fim do endereço e `lugarCurto` sem vírgula sobrando; organizador de
+   sistema chama "Agenda Bora Lula"; mesmo ato com títulos diferentes (mesma data, cidade, hora e local) fica só o
+   primeiro id e o resto vai para a revisão.
+7. `levantamento/` continua fora do git; `supabase/seed.sql` continua só com dados fictícios.

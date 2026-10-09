@@ -96,3 +96,17 @@ test('salvarTelefone valida 11 dígitos e minhasInscricoes lista só as ativas',
   await api.desistir(t.id);
   assert.ok(!(await api.minhasInscricoes()).some(m => m.turno.id === t.id));
 });
+
+test('ação importada no modo exemplo: lugar aproximado e link de divulgação público, contato ainda escondido', async () => {
+  const d = dados();
+  d.acoes.push({ id: 9901, titulo: 'Importada', tipo: 'outro', descricao: 'Fonte: teste.', organizador: d.acoes[0].organizador, organizacao: null,
+    lugar: { nome: 'Praça', bairro: '', cidade: 'Recife', uf: 'PE', lat: -8, lon: -34, precisao: 'cidade' }, detalhe: '',
+    contatoTipo: 'divulgacao', contatoWhatsapp: null, contatoLink: 'https://www.instagram.com/p/x/', status: 'publicada', fonte: 'bora-lula', criadaEm: d.config.hoje });
+  d.turnos.push({ id: 9901, acao: 9901, inicio: d.config.hoje + 'T10:00', fim: d.config.hoje + 'T12:00', lotacao: null });
+  const api = ApiExemplo.criar(d);
+  const a = (await api.publico()).acoes.find(x => x.id === 9901);
+  assert.equal(a.lugar.aproximado, true); assert.equal(a.fonte, 'bora-lula');
+  assert.equal(a.linkDivulgacao, 'https://www.instagram.com/p/x/'); assert.equal(a.contatoLink, undefined);
+  const comum = (await api.publico()).acoes.find(x => x.id !== 9901 && !x.lugar.online);
+  assert.equal(comum.lugar.aproximado, false); assert.equal(comum.linkDivulgacao, null);
+});
