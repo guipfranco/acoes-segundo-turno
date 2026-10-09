@@ -301,17 +301,26 @@ def test_foto_tem_reserva_e_credito_e_imagem_obrigatoria_no_cadastro():
 def test_mapa_ignora_acao_presencial_sem_coordenada():
     # ação importada sem cidade reconhecida tem lat/lon null e não pode quebrar o mapa
     assert "const temPino=" in HTML
-    assert "function acoesNaArea(vistas=acoesVisiveis()){const todas=vistas.filter(x=>temPino(x.a))" in HTML
+    assert "function acoesNaArea(vistas){const todas=vistas.filter(x=>temPino(x.a))" in HTML
     assert "const todas=acoesVisiveis().filter(x=>temPino(x.a)),pos=espalhar(todas)" in HTML
 
 
 def test_mover_o_mapa_nao_recria_os_pinos():
-    # recriar centenas de pinos a cada moveend travava o arrasto no celular: os pinos saem só no montarMapa
-    lista = HTML[HTML.index("function atualizarLista"):HTML.index("function focar")]
+    # recriar centenas de pinos a cada moveend pesava no fim do arrasto: os pinos saem só no montarMapa
+    ini = HTML.index("function atualizarLista")
+    lista = HTML[ini:HTML.index("\nfunction ", ini)]
+    assert "acoesNaArea(vistas)" in lista
     assert "L.marker" not in lista and "marcadores" not in lista
     assert "desenharPinos();atualizarLista();" in HTML
     # com zoom afastado, cada pino virava uma camada própria do compositor e o arrasto travava no PC
     assert "#mapa .leaflet-marker-pane{will-change:transform}" in HTML
+
+
+def test_lista_do_mapa_sai_em_lotes():
+    # com zoom afastado são centenas de cards: refazer todos a cada movimento travava o fim do arrasto e do zoom
+    for s in ["const LOTE_CARDS=30", "if(chave!==listaChave||!el.childElementCount)", "maisCards(LOTE_CARDS)",
+              'id="lista" onscroll="maisCards()"', "function maisCards(ate)", "if(i>=listaFeita)maisCards(i+1)"]:
+        assert s in HTML, s
 
 
 def test_telas_de_participante_leem_pela_api():

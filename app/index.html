@@ -398,7 +398,7 @@ function acoesVisiveis(semTipo){const f=F();
   lista.forEach(x=>x.km=estado.onde&&!ehOnline(x.a)?distanciaKm(estado.onde,x.a.lugar):null);
   return lista.sort((p,q)=>p.t.inicio.localeCompare(q.t.inicio)||((p.km??0)-(q.km??0)))}
 const acoesOnline=()=>acoesVisiveis().filter(x=>ehOnline(x.a));
-function acoesNaArea(vistas=acoesVisiveis()){const todas=vistas.filter(x=>temPino(x.a));if(!mapa)return todas;const b=mapa.getBounds();return todas.filter(x=>b.contains([x.a.lugar.lat,x.a.lugar.lon]))}
+function acoesNaArea(vistas){const todas=vistas.filter(x=>temPino(x.a));if(!mapa)return todas;const b=mapa.getBounds();return todas.filter(x=>b.contains([x.a.lugar.lat,x.a.lugar.lon]))}
 function fmtKm(km){return km<10?km.toFixed(1).replace('.',','):String(Math.round(km))}
 function pillFiltro(campo,k,v){return `<button class="pill ${F()[campo]===k?'ativo':''}" data-${campo}="${k}" onclick="F().${campo}='${k}';render()">${v}</button>`}
 function filtrosHtml(){const h=PUB.config.hoje,f=F();
@@ -482,7 +482,7 @@ function telaMapa(){
   <div id="gaveta" class="${estado.gaveta==='meio'?'meio':estado.gaveta==='cheia'?'cheia':''}"><div class="puxa" ontouchstart="arrastar(event)">
    <button class="alca" onclick="alternarGaveta()" aria-label="Abrir ou fechar a lista"><span></span></button>
    <div class="cabeca"><div class="topo-gaveta"><strong id="contagem" onclick="alternarGaveta()"></strong></div>${filtrosHtml()}</div></div>
-   <div id="lista"></div></div></div>`}
+   <div id="lista" onscroll="maisCards()"></div></div></div>`}
 function montarMapa(){
   const el=document.getElementById('mapa');if(!el)return;
   mapa=L.map(el,{zoomControl:false}).setView([estado.vista.lat,estado.vista.lon],estado.vista.zoom);
@@ -508,7 +508,7 @@ function selecionar(x,pos){estado.sel=x.a.id;marcarSelecao();
   if(ehDesktop()){rolarAteSel=true;rolarParaSel();setTimeout(()=>{rolarAteSel=false},800)}}
 function marcarSelecao(){document.querySelectorAll('.card').forEach(c=>c.classList.toggle('sel',c.id==='card-'+estado.sel));
   marcadores.forEach(m=>{const s=m._acao===estado.sel;m.setZIndexOffset(s?1000:0);const el=m.getElement();const e=el&&el.querySelector('.etiqueta');if(e)e.classList.toggle('sel',s)})}
-function rolarParaSel(){const c=document.getElementById('card-'+estado.sel);if(c)c.scrollIntoView({block:'center',behavior:'smooth'})}
+function rolarParaSel(){const i=listaAqui.findIndex(x=>x.a.id===estado.sel);if(i>=listaFeita)maisCards(i+1);const c=document.getElementById('card-'+estado.sel);if(c)c.scrollIntoView({block:'center',behavior:'smooth'})}
 function abrirGaveta(nivel){estado.gaveta=nivel;const g=document.getElementById('gaveta');if(g)g.className=nivel==='baixa'?'':nivel}
 // os pinos só dependem dos filtros, que remontam o mapa: desenhados uma vez, não a cada movimento (recriar centenas pesava no fim do arrasto)
 function desenharPinos(){
@@ -517,16 +517,25 @@ function desenharPinos(){
   todas.forEach((x,i)=>{const m=L.marker(pos[i],{icon:etiquetaPino(x),riseOnHover:true,zIndexOffset:estado.sel===x.a.id?1000:0});m._acao=x.a.id;m.addTo(mapa);
     m.on('click',()=>selecionar(x,pos[i]));marcadores.push(m)});
 }
-// a cada movimento do mapa só a contagem e a lista mudam
+// a cada movimento do mapa só a contagem e a lista mudam. Com zoom afastado são centenas de cards: a lista sai em
+// lotes (os seguintes entram ao rolar) e nem é refeita se as ações na tela não mudaram; refazer tudo travava o fim do arrasto e do zoom
+const LOTE_CARDS=30;let listaAqui=[],listaFeita=0,listaChave=null;
 function atualizarLista(){
   if(!mapa)return;
-  const vistas=acoesVisiveis(),aqui=acoesNaArea(vistas),online=vistas.filter(x=>ehOnline(x.a));
+  const vistas=acoesVisiveis(),aqui=acoesNaArea(vistas),online=vistas.filter(x=>ehOnline(x.a)),el=document.getElementById('lista');
   document.getElementById('contagem').textContent=aqui.length?`${aqui.length===1?'1 ação':aqui.length+' ações'} nesta área`:'Nenhuma ação nesta área';
-  document.getElementById('lista').innerHTML=(aqui.length?aqui.map(cardAcao).join(''):
-    `<div class="vazio"><p>Ainda não tem ação por aqui.</p><p class="sec" style="font-weight:400">Afaste o mapa para ver outras, ou crie a primeira ação do seu bairro.</p><a class="btn" href="#/criar" onclick="novaCriacao()">Cadastrar ação</a></div>`)
-    +(online.length?`<h2 style="margin-top:18px">Online, de qualquer lugar</h2>${online.map(cardAcao).join('')}`:'');
+  const chave=(estado.onde?estado.onde.rotulo:'')+'|'+aqui.map(x=>x.a.id).join(',');
+  if(chave!==listaChave||!el.childElementCount){listaChave=chave;listaAqui=aqui;listaFeita=0;el.scrollTop=0;
+    el.innerHTML=(aqui.length?'<div id="cards-aqui"></div>':
+      `<div class="vazio"><p>Ainda não tem ação por aqui.</p><p class="sec" style="font-weight:400">Afaste o mapa para ver outras, ou crie a primeira ação do seu bairro.</p><a class="btn" href="#/criar" onclick="novaCriacao()">Cadastrar ação</a></div>`)
+      +(online.length?`<h2 style="margin-top:18px">Online, de qualquer lugar</h2>${online.map(cardAcao).join('')}`:'');
+    maisCards(LOTE_CARDS)}
   if(rolarAteSel)rolarParaSel();
 }
+// põe mais um lote de cards quando a rolagem chega perto do fim (ou até o card pedido, ao selecionar um pino)
+function maisCards(ate){const el=document.getElementById('lista'),box=document.getElementById('cards-aqui');if(!el||!box||listaFeita>=listaAqui.length)return;
+  if(!ate){if(el.scrollTop+el.clientHeight<el.scrollHeight-600)return;ate=listaFeita+LOTE_CARDS}
+  box.insertAdjacentHTML('beforeend',listaAqui.slice(listaFeita,ate).map(cardAcao).join(''));listaFeita=Math.min(ate,listaAqui.length)}
 function focar(id){estado.foco=id;document.querySelectorAll('.card').forEach(c=>c.classList.toggle('foco',c.id==='card-'+id));
   marcadores.forEach(m=>{const el=m.getElement();const e=el&&el.querySelector('.etiqueta');if(e)e.classList.toggle('foco',m._acao===id)})}
 function alternarGaveta(){abrirGaveta(estado.gaveta==='baixa'?'meio':estado.gaveta==='meio'?'cheia':'baixa')}
