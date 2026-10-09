@@ -33,6 +33,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bora_lula as bl  # noqa: E402
+import fotos_divulgacao as fd  # noqa: E402
 
 RAIZ = bl.RAIZ
 ATE = "2026-10-25"
@@ -292,6 +293,13 @@ def publicar(fonte, itens, encerrar=True, ref=None):
 
 # ---- linha de comando ----
 
+def com_foto(itens, mapa):
+    """Põe em cada item a imagem da divulgação original já coletada (scripts/fotos_divulgacao.py)."""
+    for it in itens:
+        it["foto"] = fd.foto_do_item(it, mapa)
+    return itens
+
+
 def resumo(itens, revisao):
     por_uf = {}
     for i in itens:
@@ -300,7 +308,8 @@ def resumo(itens, revisao):
     top = ", ".join(f"{k} {v}" for k, v in sorted(por_uf.items(), key=lambda kv: -kv[1])[:8])
     exatas = sum(1 for i in itens if not i["online"] and not i["lugar_aproximado"])
     com_logo = sum(1 for i in itens if i.get("organizacao_foto"))
-    top += f"; {exatas} com ponto exato, {com_logo} com logo da organização"
+    com_img = sum(1 for i in itens if i.get("foto"))
+    top += f"; {exatas} com ponto exato, {com_logo} com logo da organização, {com_img} com imagem da divulgação"
     motivos = {}
     for _, _, m in revisao:
         m = re.sub(r"\s*\(.*|\s*\d+$", "", m)
@@ -358,6 +367,7 @@ def main(argv=None):
         if geo:
             geo.salvar()
             print(f"geocodificação: {geo.consultas} consultas novas ao Nominatim, cache em {bl.GEOCACHE}")
+        com_foto(itens, fd.carregar_mapa())
         print(resumo(itens, revisao))
         arq_itens, arq_rev = gravar_ensaio(args.fonte, itens, revisao)
         print(f"itens: {arq_itens}\nrevisão: {arq_rev}")

@@ -98,6 +98,13 @@ consultam endereço novo. `--sem-geocodificar` pula tudo. Organização reconhec
 MTST, Levante) ganha o logo do Wikimedia Commons, com crédito, pelo mapa `LOGOS` em `scripts/bora_lula.py`; a
 tela mostra o logo como avatar de quem divulga e como capa quando a ação não tem foto própria. Ação do feed sem
 organização mostra a marca da Agenda Bora Lula (Comitê Popular) como avatar.
+Imagem da divulgação (2026-10-09): `scripts/fotos_divulgacao.py` põe a imagem do post do Instagram como foto da
+ação. O Instagram só mostra o post logado, então a coleta (og:image e og:url de cada post) é feita no Chrome
+logado do Gui pelo Claude in Chrome, uma página a cada ~8 s; mais rápido que isso o Instagram devolve 429 e
+bloqueia a conta por um tempo. `pendentes` lista os códigos sem foto; `coleta ARQ.json` baixa, reduz para 720 px
+e sobe no bucket público `divulgacao` (migração `20261009000003_foto_divulgacao.sql`), anotando em
+`levantamento/fotos-divulgacao.json`; o `publicar_acoes.py` lê esse mapa e manda a foto com a ação. O crédito
+leva o @ do perfil só quando a ação tem organização pública; senão fica "Divulgação original no Instagram".
 Aplicado em produção em 2026-10-09 (migração + reimportação do feed e das redes); capturas em
 `docs/capturas/2026-10-09-acao-logo-ponto-exato.png` e `2026-10-09-vitrine-avatares.png`.
 

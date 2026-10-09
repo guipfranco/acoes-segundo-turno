@@ -217,3 +217,16 @@ def test_importar_acoes_grava_logo_da_organizacao_sem_apagar_o_que_ja_tem(cenari
     sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", organizacao=nome, organizacao_foto=dict(logo, url="https://outro"))]}, jwt=sb.SERVICE)
     org = sb.chamar("GET", f"/rest/v1/organizacao_publica?nome=eq.{urllib.parse.quote(nome)}").corpo[0]
     assert org["foto_url"] == logo["url"]
+
+
+def test_importar_acoes_grava_foto_da_divulgacao_e_nao_apaga_sem_foto(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    foto = {"url": "http://127.0.0.1:54321/storage/v1/object/public/divulgacao/X.jpg", "credito": "Divulgação original no Instagram",
+            "pagina": "https://www.instagram.com/p/x/"}
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", foto=foto)]}, jwt=sb.SERVICE).status == 200
+    a = sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo[0]
+    assert (a["foto_url"], a["foto_credito"], a["foto_pagina"]) == (foto["url"], foto["credito"], foto["pagina"])
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", foto=None)]}, jwt=sb.SERVICE)
+    assert sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo[0]["foto_url"] == foto["url"]
+    bucket = sb.admin("GET", "/storage/v1/bucket/divulgacao").corpo
+    assert bucket["public"] is True
