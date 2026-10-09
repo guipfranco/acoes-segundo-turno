@@ -297,7 +297,8 @@ def test_mapa_ignora_acao_presencial_sem_coordenada():
 
 def test_telas_de_participante_leem_pela_api():
     for s in ['src="api.js"', 'src="api-exemplo.js"', 'src="config.js"', "async function render", "await API.acao(",
-              "API.publico()", "const vaoNo=", "estado.acaoAberta", "data-so-exemplo"]:
+              "API.publico()", "const vaoNo=", "estado.acaoAberta", "data-so-exemplo",
+              'src="api-supabase.js"', "supabase-js@2.45.4", "replaceState"]:
         assert s in HTML, s
     inicio = HTML[HTML.index("function acoesVisiveis"):HTML.index("function telaCriar")]
     assert "DADOS.acoes" not in inicio and "DADOS.inscricoes" not in inicio and "DADOS.config" not in inicio

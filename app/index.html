@@ -167,6 +167,8 @@ nav a.doar{background:var(--vermelho);color:#fff;flex:0 0 84px;font-size:14px}
 <script src="fundo.js"></script>
 <script src="config.js"></script>
 <script src="api-exemplo.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="api-supabase.js"></script>
 <script src="api.js"></script>
 <script>
 // ---------- dados e helpers ----------
@@ -352,7 +354,7 @@ function usarLocalizacao(){if(!navigator.geolocation)return;navigator.geolocatio
 // ---------- acao ----------
 async function entrar(){await API.entrar();await sincronizar()}
 async function sair(){await API.sair();localStorage.removeItem('vouPendente');estado.inscrevendo=null;await sincronizar()}
-function contaClique(){if(estado.sessao)sair();else entrar();return false}
+function contaClique(){(estado.sessao?sair():entrar()).catch(e=>console.error(e));return false}
 function telaInscricoes(){
   if(!estado.sessao)return `<div class="pagina estreita"><h1>Minhas inscrições</h1><p>Entre para ver em que ações você disse que vai.</p><button class="btn" onclick="entrar()">Entrar com Google</button></div>`;
   const lista=estado.minhasInscricoes||[];
@@ -502,8 +504,11 @@ async function render(){
   const n=++renderN;
   const h=location.hash||'#/inicio';const [,rota,arg]=h.split('/');
   if(rota!=='acao')estado.inscrevendo=null;if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}
-  if(rota==='acao'){estado.acaoAberta=await API.acao(Number(arg));if(n!==renderN)return}
-  if(rota==='inscricoes'){estado.minhasInscricoes=await API.minhasInscricoes();if(n!==renderN)return}
+  try{
+    if(rota==='acao'){const r=await API.acao(Number(arg));if(n!==renderN)return;estado.acaoAberta=r}
+    if(rota==='inscricoes'){const r=await API.minhasInscricoes();if(n!==renderN)return;estado.minhasInscricoes=r}
+  }catch(e){if(n!==renderN)return;console.error(e);if(mapa){mapa.remove();mapa=null;marcadores=[]}
+    document.getElementById('app').innerHTML='<div class="pagina"><p class="erro">Não foi possível carregar. Tente de novo.</p></div>';return}
   if(mapa){mapa.remove();mapa=null;marcadores=[]}
   const app=document.getElementById('app');
   const soExemplo=['criar','minhas','fila'].includes(rota)&&API.modo!=='exemplo';
@@ -520,7 +525,10 @@ async function render(){
   if(rota==='criar'&&estado.criar.passo===2&&!estado.criar.online&&estado.criar.lugar.lat!=null){const r=montarMiniMapa(estado.criar.lugar,true);if(r)r.mk.on('dragend',()=>{const p=r.mk.getLatLng();estado.criar.lugar.lat=p.lat;estado.criar.lugar.lon=p.lng})}
   if(rota!=='mapa')window.scrollTo(0,0);
 }
-async function sincronizar(){await recarregar();await render()}
+async function sincronizar(){await recarregar();
+  if(location.search.includes('code=')){history.replaceState(null,'',location.pathname+location.hash)}
+  if(estado.sessao&&localStorage.getItem('vouPendente')){await continuarVouPendente();return}
+  await render()}
 document.addEventListener('click',e=>{if(!e.target.closest('#topo,.caixa')){const s=document.getElementById('sugestoes');if(s)s.style.display='none'}});
 window.addEventListener('hashchange',render);
 window.addEventListener('DOMContentLoaded',sincronizar);
