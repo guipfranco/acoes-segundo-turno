@@ -223,7 +223,7 @@ WORKFLOW = (RAIZ / ".github" / "workflows" / "pages.yml").read_text(encoding="ut
 def test_inicial_sem_mapa_com_busca_e_vitrine():
     i = HTML.index("function telaInicio"); corpo = HTML[i:HTML.index("function irParaCidade")]
     assert 'id="mapa"' not in corpo
-    for s in ["Em que cidade você está?", "Perto de você", "Online, de qualquer lugar", "Ver no mapa",
+    for s in ["Em que cidade você está?", "Perto de você", "blocoOnline(acoesOnline())", "Ver no mapa",
               "blocoVitrine", "Cadastrar a primeira ação"]:
         assert s in corpo, s
     assert "function chutarCidade" in HTML and "getCurrentPosition" in HTML
@@ -276,9 +276,9 @@ def test_mapa_virou_rota_propria():
     assert "location.hash='#/mapa'" in HTML  # escolher cidade na inicial leva ao mapa
 
 
-def test_workflow_do_pages_publica_so_a_pasta_app():
+def test_workflow_do_pages_monta_o_site_com_as_previas():
     assert "actions/upload-pages-artifact" in WORKFLOW and "actions/deploy-pages" in WORKFLOW
-    assert "path: app" in WORKFLOW
+    assert "path: _site" in WORKFLOW and "montar_pages.sh" in WORKFLOW  # raiz = master, /previa/<branch>/ = outras branches
 
 
 # Fotos de verdade nos cards (Wikimedia Commons, licença livre), com o ícone de reserva

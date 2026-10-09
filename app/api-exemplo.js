@@ -30,7 +30,7 @@
       fonte: a.fonte || null, linkDivulgacao: a.contatoTipo === 'divulgacao' ? a.contatoLink || null : null,
     });
     const ultimoInicio = aid => dados.turnos.filter(t => t.acao === aid).map(t => t.inicio).sort().pop() || null;
-    const turno = t => ({ id: t.id, acao: t.acao, inicio: t.inicio, fim: t.fim, lotacao: t.lotacao || null, vao: ativas(t.id).length });
+    const turno = t => ({ id: t.id, acao: t.acao, inicio: t.inicio, fim: t.fim, lotacao: t.lotacao || null, vao: ativas(t.id).length, horaAproximada: !!t.horaAproximada });
     const turnosDa = aid => dados.turnos.filter(t => t.acao === aid).sort((a, b) => a.inicio.localeCompare(b.inicio)).map(turno);
     const combinadoDe = a => ({ detalhe: a.detalhe || null, contato: { tipo: a.contatoTipo || 'organizador_chama', whatsapp: a.contatoWhatsapp || null, link: a.contatoLink || null } });
     const inscritaEm = aid => dados.turnos.filter(t => t.acao === aid && sessao != null && ativas(t.id).some(i => i.pessoa === sessao)).map(t => t.id);
@@ -45,6 +45,12 @@
     const comInscritos = aid => turnosDa(aid).map(t => Object.assign(t, { inscritos: ativas(t.id).map(i => { const q = pessoa(i.pessoa) || {}; return { nome: q.nome, telefone: q.telefone || null }; }),
       desistiram: canceladas(t.id).map(i => ({ nome: (pessoa(i.pessoa) || {}).nome })) }));
     const sessaoObj = () => { if (sessao == null) return null; const p = pessoa(sessao); return { id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, papel: p.papel, bloqueada: !!p.bloqueada, organizacao: p.organizacao || null }; };
+    const agoraEx = () => dados.config.agora || dados.config.hoje + 'T00:00';  // hora fixa do exemplo (o site usa o relógio)
+    const turnoVale = t => t.horaAproximada ? t.fim.slice(0, 10) >= agoraEx().slice(0, 10) : t.fim > agoraEx();
+    const feedbacks = () => dados.feedbacks || (dados.feedbacks = []);
+    const feedbackObj = f => { const q = f.pessoa != null ? pessoa(f.pessoa) : null, a = f.acao != null ? dados.acoes.find(x => x.id === f.acao) : null;
+      return { id: f.id, texto: f.texto, contato: f.contato || null, tela: f.tela || null, acao: a ? a.id : null, acaoTitulo: a ? a.titulo : null, navegador: f.navegador || null,
+        criadoEm: f.criadoEm, tratadoEm: f.tratadoEm || null, pessoa: q ? { nome: q.nome, email: q.email || null, telefone: q.telefone || null } : null }; };
     return {
       modo: 'exemplo',
       async sessao() { return sessaoObj(); },
@@ -52,7 +58,7 @@
       async sair() { sessao = null; },
       async publico() {
         return {
-          config: { vaquinha: dados.config.vaquinha, frase: dados.config.frase, hoje: dados.config.hoje },
+          config: { vaquinha: dados.config.vaquinha, frase: dados.config.frase, hoje: dados.config.hoje, agora: agoraEx() },
           organizacoes: dados.organizacoes.map(o => ({ id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada, foto: o.foto && o.foto.url ? Object.assign({}, o.foto) : null })),
           acoes: dados.acoes.filter(a => a.status === 'publicada').map(publica),
           turnos: dados.turnos.filter(t => (dados.acoes.find(a => a.id === t.acao) || {}).status === 'publicada').map(turno),
@@ -76,7 +82,7 @@
         if (!a || a.status !== 'publicada') throw erro('nao_publicada');
         // ação de divulgação: "Eu vou!" só marca presença, sem telefone
         if (a.contatoTipo !== 'divulgacao' && !p.telefone) throw erro('sem_telefone');
-        if (t.inicio.slice(0, 10) < dados.config.hoje) throw erro('turno_passado');
+        if (!turnoVale(t)) throw erro('turno_passado');
         const ja = dados.inscricoes.find(i => i.turno === tid && i.pessoa === sessao);
         if (!(ja && !ja.canceladaEm)) {
           if (t.lotacao && ativas(tid).length >= t.lotacao) throw erro('lotado');
@@ -234,6 +240,26 @@
         if (!ehModerador()) throw erro('so_moderador');
         const a = dados.acoes.find(x => x.id === id); if (!a || a.status === 'excluída') throw erro('nao_pode');
         a.status = 'excluída';
+      },
+      // feedback: qualquer pessoa manda (logada ou não); só moderador lê e marca como tratado
+      async enviarFeedback(d) {
+        const texto = String((d || {}).texto || '').trim().slice(0, 2000);
+        if (texto.length < 3) throw erro('sem_texto');
+        const acao = d.acaoId != null && dados.acoes.some(a => a.id === d.acaoId) ? d.acaoId : null;
+        const f = { id: Math.max(0, ...feedbacks().map(x => x.id)) + 1, pessoa: sessao, texto, contato: String(d.contato || '').trim().slice(0, 120) || null,
+          tela: String(d.tela || '').trim().slice(0, 200) || null, acao, navegador: String(d.navegador || '').trim().slice(0, 200) || null,
+          criadoEm: agoraEx(), tratadoEm: null };
+        feedbacks().push(f);
+        return { id: f.id };
+      },
+      async feedbacks(pendentes = true) {
+        if (!ehModerador()) throw erro('so_moderador');
+        return feedbacks().filter(f => !f.tratadoEm === !!pendentes).sort((p, q) => String(q.criadoEm).localeCompare(String(p.criadoEm)) || q.id - p.id).slice(0, 200).map(feedbackObj);
+      },
+      async tratarFeedback(id, tratado = true) {
+        if (!ehModerador()) throw erro('so_moderador');
+        const f = feedbacks().find(x => x.id === id); if (!f) throw erro('nao_pode');
+        f.tratadoEm = tratado ? agoraEx() : null;
       },
     };
   }

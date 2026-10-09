@@ -101,6 +101,31 @@ def faixa(hora, hora_ord):
     return inicio, ("23:59" if h_fim >= 24 else f"{h_fim:02d}:{m:02d}")
 
 
+# Divulgação sem hora, só o período ("Noite - Giro nos Bares", "à tarde"): faixa aproximada, marcada como tal
+# (turno.hora_aproximada); o app mostra "sex 09/10, à noite" em vez de inventar 9h às 11h.
+PERIODOS = {"manha": ("09:00", "12:00"), "tarde": ("14:00", "18:00"), "noite": ("19:00", "23:00")}
+SEM_HORA = ("09:00", "18:00")  # nem período: o app mostra "horário a confirmar"
+
+
+def periodo_do_texto(texto):
+    """(início, fim) do período citado no texto (noite, tarde, manhã), ou None."""
+    t = sem_acento(texto)
+    for p in ("noite", "tarde", "manha"):
+        if re.search(rf"\b{p}\b", t):
+            return PERIODOS[p]
+    return None
+
+
+def faixa_aproximada(hora, texto="", hora_ord=None):
+    """(início, fim, aproximada). Hora com dígitos, "dia todo" ou hora_ord (feed): faixa exata.
+    Senão, o período citado na hora ou no texto; sem nada, o dia (o app mostra "horário a confirmar")."""
+    if re.search(r"\d", str(hora or "")) or sem_acento(hora) == "dia todo" or hora_ord is not None:
+        ini, fim = faixa(hora, hora_ord)
+        return ini, fim, False
+    per = periodo_do_texto(hora or "") or periodo_do_texto(texto or "") or SEM_HORA
+    return per[0], per[1], True
+
+
 def bairro_do_endereco(endereco, cidade=""):
     """Bairro no fim do endereço ("Av. X, 704 - Centro"). Nada se tiver número, UF/CEP ou for a própria cidade."""
     m = re.search(r"[-–,]\s*([^-–,\d]{3,40})\s*$", str(endereco or ""))
@@ -362,7 +387,7 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25", geo=None):
             lat, lon, precisao = localizar(geo, endereco, local, cidade, uf, c) if c else (None, None, "nenhuma")
             lugar = {"nome": local or endereco or cidade or "A confirmar", "bairro": bairro_do_endereco(endereco, cidade), "cidade": cidade or "A confirmar",
                      "uf": uf, "endereco": endereco, "lat": lat, "lon": lon, "precisao": precisao}
-        h_ini, h_fim = faixa(item.get("hora"), item.get("hora_ord"))
+        h_ini, h_fim, aprox = faixa_aproximada(item.get("hora"), item.get("atividade"), item.get("hora_ord"))
         inicio, fim = f"{data}T{h_ini}", f"{data}T{h_fim}"
         link = (item.get("link") or "").strip()
         descricao = (item.get("atividade") or "").strip()
@@ -377,7 +402,7 @@ def converter(feed, lugares, hoje=None, ate="2026-10-25", geo=None):
             "organizacao": org_id, "lugar": lugar, "detalhe": "", "contatoTipo": "divulgacao" if link else "organizador_chama", "contatoWhatsapp": None, "contatoLink": link or None, "status": "publicada",
             "motivoRecusa": None, "prioritaria": False, "criadaEm": hoje, "foto": None, "fonte": "bora-lula", "link": link,
         })
-        turnos.append({"id": len(turnos) + 1, "acao": item["id"], "inicio": inicio, "fim": fim, "lotacao": None})
+        turnos.append({"id": len(turnos) + 1, "acao": item["id"], "inicio": inicio, "fim": fim, "lotacao": None, "horaAproximada": aprox})
     return {"config": config, "organizacoes": organizacoes, "pessoas": [pessoa_feed], "acoes": acoes,
             "turnos": turnos, "inscricoes": [], "areasPrioritarias": []}
 
