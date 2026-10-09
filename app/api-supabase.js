@@ -25,7 +25,8 @@
   const deTurno = r => ({ id: r.id, acao: r.acao, inicio: semSeg(r.inicio), fim: semSeg(r.fim), lotacao: r.lotacao == null ? null : r.lotacao, vao: r.vao || 0 });
   const dePessoa = p => ({ id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, papel: p.papel, bloqueada: !!p.bloqueada, organizacao: p.organizacao == null ? null : p.organizacao });
   // ação de quem organiza (ou da fila): turnos com a lista de quem vai
-  const comInscritos = m => ({ acao: Object.assign(deAcao(m.acao), { detalhe: m.acao.detalhe || null, contatoLink: m.acao.contato_link || null }),
+  const comInscritos = m => ({ acao: Object.assign(deAcao(m.acao), { detalhe: m.acao.detalhe || null, contatoLink: m.acao.contato_link || null,
+      organizacaoLink: m.acao.organizacao_link || null, organizacaoDados: m.acao.organizacao_dados || null }),
     turnos: (m.turnos || []).map(t => Object.assign(deTurno(t), { inscritos: t.inscritos || [] })) });
   function erroDe(e) { const x = new Error(e.message || 'erro'); x.codigo = (e.message || '').trim(); x.original = e; return x; }
 
@@ -89,6 +90,21 @@
         if (error) { let c = 'falha_envio'; try { c = (await error.context.json()).erro || c; } catch (e) { /* sem corpo */ } throw erroDe({ message: c }); }
         return data.url;
       },
+      // organização de quem usa o app (Perfil) e a moderação delas
+      async minhaOrganizacao() {
+        const r = await rpc('minha_organizacao'); if (!r) return { organizacao: null, pedido: null };
+        const o = r.organizacao;
+        return { organizacao: o ? { id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada, foto: o.foto_url ? { url: o.foto_url } : null, link: o.link_oficial || null, minha: !!o.minha } : null,
+          pedido: r.pedido || null };
+      },
+      async salvarOrganizacao(nome, tipo, logo, link) { return rpc('salvar_organizacao', { nome, tipo, logo: logo || null, link: link || null }); },
+      async sairDaOrganizacao() { await rpc('sair_da_organizacao'); },
+      async filaOrganizacoes() {
+        const r = await rpc('fila_organizacoes');
+        return { pedidos: r.pedidos || [], semSelo: (r.sem_selo || []).map(o => Object.assign({}, o, { foto: o.foto_url ? { url: o.foto_url } : null })) };
+      },
+      async decidirPedido(id, aprovar, motivo) { await rpc('decidir_pedido_organizacao', { pedido_id: id, aprovar, motivo: motivo || null }); },
+      async darSelo(id) { await rpc('dar_selo_organizacao', { organizacao_id: id }); },
       async criarAcao(dados) { return rpc('criar_acao', { dados }); },
       async minhasAcoes() { return (await rpc('minhas_acoes')).map(comInscritos); },
       async encerrarAcao(id) { await rpc('encerrar_acao', { acao_id: id }); },

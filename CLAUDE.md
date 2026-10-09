@@ -40,7 +40,13 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   20261009000020). Qualquer pessoa logada cadastra ação ("Cadastrar ação", botão vermelho da barra e da inicial): nasce "em análise", exceto verificado (papel organizador ou
   moderador, ou membro de organização verificada), que publica direto; limite de 10 por dia e 10 em análise
   (migração 20261009000021: `criar_acao`, `minhas_acoes`, `encerrar_acao`, `fila_moderacao`, `aprovar_acao`,
-  `recusar_acao`). Fila (`#/fila`) só para moderador. Imagem obrigatória no cadastro (passo 3 de 4): enviada do celular,
+  `recusar_acao`). Fila (`#/fila`) só para moderador (abas Em análise, Publicadas e Organizações).
+  Organização (migração 20261009000023, branch `organizacao`): no Perfil a pessoa cadastra a sua (nome, tipo, logo);
+  nome novo cria sem selo e liga na hora, nome que já existe vira pedido para a moderação; selo dado na Fila. No
+  cadastro, "Quem organiza?": eu mesmo(a), minha organização ou outra escrita à mão (criada sem selo).
+  Verificação: no Perfil, link do perfil oficial da organização (`link_oficial`); em toda ação em nome de organização
+  (a minha, com ou sem selo, ou outra), link do POST oficial da organização anunciando aquela ação
+  (`acao.organizacao_link`, erro `link_post`). A moderação confere pelos dois na Fila. Imagem obrigatória no cadastro (passo 3 de 4): enviada do celular,
   reduzida no navegador e guardada no bucket `fotos-acoes` (migração 20261009000022), ou puxada do link do post pela
   função `supabase/functions/previa-instagram` (precisa de `supabase functions deploy previa-instagram` em produção). Editar ação, selo, bloquear seguem só no modo exemplo.
 - Spec em `docs/superpowers/specs/`, desenho visual em `docs/2026-10-08-design-mockup.md`, capturas em

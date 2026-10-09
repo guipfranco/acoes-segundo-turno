@@ -349,3 +349,48 @@ def test_so_se_suspende_acao_publicada(cenario):
     sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
     assert r.corpo["status"] == "em análise"
     assert sb.rpc("suspender_acao", {"acao_id": r.corpo["id"]}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
+
+
+def test_organizacao_nova_liga_existente_vira_pedido_e_selo_publica_direto(cenario):
+    tag = uuid.uuid4().hex[:6]
+    sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
+    assert sb.rpc("salvar_organizacao", {"nome": f"Comitê {tag}", "tipo": "coletivo"}, jwt=cenario["jwt_b"]).corpo["message"] == "link_oficial"
+    r = sb.rpc("salvar_organizacao", {"nome": f"Comitê {tag}", "tipo": "coletivo", "link": "https://instagram.com/comite"}, jwt=cenario["jwt_b"])
+    assert r.status == 200 and r.corpo["situacao"] == "ligada", r.corpo
+    org = r.corpo["id"]
+    mo = sb.rpc("minha_organizacao", {}, jwt=cenario["jwt_b"]).corpo
+    assert mo["organizacao"]["id"] == org and mo["organizacao"]["minha"] is True and mo["organizacao"]["verificada"] is False
+    assert mo["organizacao"]["link_oficial"] == "https://instagram.com/comite"
+    # outra pessoa com o mesmo nome (outra caixa) não entra direto: vira pedido
+    sb.rpc("salvar_telefone", {"telefone": "11988887777"}, jwt=cenario["jwt_a"])
+    r = sb.rpc("salvar_organizacao", {"nome": f"  COMITÊ {tag} ", "tipo": "coletivo", "link": "https://instagram.com/comite"}, jwt=cenario["jwt_a"])
+    assert r.corpo["situacao"] == "pedido", r.corpo
+    assert sb.rpc("minha_organizacao", {}, jwt=cenario["jwt_a"]).corpo["organizacao"] is None
+    # ação em análise usando o id da organização de outra pessoa: o id é ignorado
+    a = sb.rpc("criar_acao", {"dados": _nova(organizacao=org)}, jwt=cenario["jwt_a"]).corpo
+    assert sb.admin("GET", f"/rest/v1/acao?id=eq.{a['id']}&select=organizacao").corpo == [{"organizacao": None}]
+    # nome escrito à mão: liga a ação à organização (cria sem selo se não existe)
+    assert sb.rpc("criar_acao", {"dados": _nova(organizacao_nome=f"Coletivo {tag}")}, jwt=cenario["jwt_a"]).corpo["message"] == "link_post"
+    a = sb.rpc("criar_acao", {"dados": _nova(organizacao_nome=f"Coletivo {tag}", organizacao_link="https://www.instagram.com/p/abc123/")}, jwt=cenario["jwt_a"]).corpo
+    o = sb.admin("GET", f"/rest/v1/acao?id=eq.{a['id']}&select=organizacao(nome,verificada)").corpo[0]["organizacao"]
+    assert o == {"nome": f"Coletivo {tag}", "verificada": False}
+    # moderação: só moderador vê a fila; aprova o pedido e dá o selo
+    assert sb.rpc("fila_organizacoes", {}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['org']}", {"papel": "moderador"})
+    fila = sb.rpc("fila_organizacoes", {}, jwt=cenario["jwt_org"]).corpo
+    pedido = next(p for p in fila["pedidos"] if p["organizacao"] == f"Comitê {tag}")
+    assert pedido["link"] == "https://instagram.com/comite"
+    fa = sb.rpc("fila_moderacao", {}, jwt=cenario["jwt_org"]).corpo
+    item = next(m for m in fa if m["acao"]["id"] == a["id"])
+    assert item["acao"]["organizacao_link"] == "https://www.instagram.com/p/abc123/" and item["acao"]["organizacao_dados"]["nome"] == f"Coletivo {tag}"
+    assert any(x["id"] == org for x in fila["sem_selo"])
+    assert sb.rpc("decidir_pedido_organizacao", {"pedido_id": pedido["id"], "aprovar": True}, jwt=cenario["jwt_org"]).status in (200, 204)
+    assert sb.rpc("minha_organizacao", {}, jwt=cenario["jwt_a"]).corpo["organizacao"]["id"] == org
+    # em nome da minha organização: sem o post da organização anunciando, não vai
+    assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org)}, jwt=cenario["jwt_a"]).corpo["message"] == "link_post"
+    assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org, organizacao_link="https://www.instagram.com/p/xyz/")},
+                  jwt=cenario["jwt_a"]).corpo["status"] == "em análise"
+    assert sb.rpc("dar_selo_organizacao", {"organizacao_id": org}, jwt=cenario["jwt_org"]).status in (200, 204)
+    assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org)}, jwt=cenario["jwt_a"]).corpo["message"] == "link_post"  # com selo também
+    assert sb.rpc("criar_acao", {"dados": _nova(organizacao=org, organizacao_link="https://www.instagram.com/p/xyz/")},
+                  jwt=cenario["jwt_a"]).corpo["status"] == "publicada"

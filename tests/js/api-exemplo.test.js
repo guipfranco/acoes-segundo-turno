@@ -201,3 +201,35 @@ test('eu vou em ação de divulgação não pede telefone', async () => {
   await api.inscrever(t.id);
   assert.ok((await api.minhasInscricoes()).some(m => m.turno.id === t.id));
 });
+
+test('organização: nome novo liga na hora, nome existente vira pedido; ação só usa a própria organização', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const eu = d.pessoas.find(p => p.id === d.config.eu);
+  eu.papel = 'participante'; eu.organizacao = null; eu.telefone = '(11) 98888-7777';
+  await assert.rejects(api.salvarOrganizacao('Comitê Teste da Vila', 'coletivo'), { codigo: 'link_oficial' });
+  const nova = await api.salvarOrganizacao('Comitê Teste da Vila', 'coletivo', 'https://exemplo.org/logo.png', 'https://instagram.com/comite');
+  assert.equal(nova.situacao, 'ligada');
+  const mo = await api.minhaOrganizacao();
+  assert.equal(mo.organizacao.nome, 'Comitê Teste da Vila'); assert.equal(mo.organizacao.verificada, false); assert.equal(mo.organizacao.minha, true);
+  const verificada = d.organizacoes.find(o => o.verificada);
+  const ped = await api.salvarOrganizacao(verificada.nome.toUpperCase(), 'mandato', null, 'https://instagram.com/x');
+  assert.equal(ped.situacao, 'pedido');
+  assert.equal(eu.organizacao, nova.id); // não entrou na verificada sem aprovação
+  // ação: organização de outra pessoa pelo id é ignorada; nome escrito à mão liga (ou cria sem selo)
+  const r1 = await api.criarAcao(novaAcao(d, { organizacao: verificada.id }));
+  assert.equal(d.acoes.find(a => a.id === r1.id).organizacao, null);
+  await assert.rejects(api.criarAcao(novaAcao(d, { organizacao_nome: 'Coletivo Escrito à Mão' })), { codigo: 'link_post' });
+  const r2 = await api.criarAcao(novaAcao(d, { organizacao_nome: 'Coletivo Escrito à Mão', organizacao_link: 'https://www.instagram.com/p/abc/' }));
+  const o2 = d.organizacoes.find(o => o.id === d.acoes.find(a => a.id === r2.id).organizacao);
+  assert.equal(o2.nome, 'Coletivo Escrito à Mão'); assert.equal(o2.verificada, false);
+  assert.equal(r2.status, 'em análise');
+  // moderação aprova o pedido: passa a ser da verificada e publica direto
+  const mod = d.pessoas.find(p => p.papel === 'moderador'); d.config.eu = mod.id; const apiMod = ApiExemplo.criar(d);
+  const fila = await apiMod.filaOrganizacoes();
+  const p = fila.pedidos.find(x => x.organizacao === verificada.nome);
+  await apiMod.decidirPedido(p.id, true);
+  assert.equal(eu.organizacao, verificada.id);
+  d.config.eu = eu.id; const api2 = ApiExemplo.criar(d);
+  await assert.rejects(api2.criarAcao(novaAcao(d, { organizacao: verificada.id })), { codigo: 'link_post' }); // com selo também
+  assert.equal((await api2.criarAcao(novaAcao(d, { organizacao: verificada.id, organizacao_link: 'https://www.instagram.com/p/x/' }))).status, 'publicada');
+});

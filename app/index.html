@@ -53,6 +53,9 @@ nav a.entrar{background:var(--tinta);color:#fff;flex:0 0 86px;font-size:15px;fon
 .perfil-topo{display:flex;align-items:center;gap:14px;margin-bottom:6px}.perfil-topo .letra{width:56px;height:56px;border-radius:50%;background:var(--vermelho);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:800;flex:none}
 .perfil-topo h1{margin:0}.status{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;background:var(--nevoa);color:var(--tinta)}
 .status.publicada{background:#e8f4ec;color:var(--selo)}.status.analise{background:#fff1d6;color:#8a5a00}.status.recusada{background:#fde7e9;color:var(--vinho)}
+.aviso-org{background:#fff7e0;border-left:4px solid #e0a100;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:14px}.link-ext{color:var(--vinho);font-weight:600;font-size:13px;word-break:break-all}
+.logo-org{width:44px;height:44px;border-radius:10px;object-fit:contain;background:#fff;border:1px solid var(--nevoa);flex:none}
+.opcoes-quem{display:flex;flex-direction:column;gap:2px}.opcao{display:flex;align-items:center;gap:8px;margin:0;padding:8px 0;font-weight:500;font-size:15px;cursor:pointer}.opcao input{width:auto}.opcao .avatar{width:24px;height:24px}
 .cartao{background:#f3f4f6;border-radius:18px;padding:16px;margin:12px 0}.cartao-topo{display:flex;align-items:center;gap:8px}
 .turno-meu{background:#fff;border-radius:14px;padding:12px 14px;margin-top:12px}
 .turno-meu .pessoa{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px 12px;font-size:15px;padding:8px 0 0;border-top:1px solid var(--nevoa);margin-top:8px}
@@ -544,6 +547,7 @@ const MENSAGEM={precisa_entrar:'Entre para se inscrever.',sem_inscricao:'Esta a�
   sem_titulo:'Dê um título.',sem_lugar:'Marque o lugar da ação.',turno_invalido:'Confira os horários: início antes do fim e nada no passado.',
   grupo_invalido:'O link do grupo precisa começar com https://chat.whatsapp.com/',
   organizador_bloqueado:'Quem criou esta ação está bloqueado: ela não volta ao ar.',
+  nome_organizacao:'O nome da organização precisa ter de 3 a 80 letras.',link_oficial:'Cole o link de um perfil oficial da organização (Instagram, Facebook ou site).',link_post:'Cole o link do post da organização anunciando esta ação.',
   sem_foto:'A ação precisa de uma imagem: a arte da divulgação ou uma foto.',imagem_invalida:'Escolha um arquivo de imagem (foto ou arte).',
   imagem_grande:'Essa imagem é grande demais. Tente outra.',falha_envio:'Não deu para enviar a imagem. Tente de novo.',
   link_instagram_invalido:'Esse link não parece de um post do Instagram.',instagram_sem_imagem:'Não achamos a imagem desse post. Ele é público?',
@@ -640,7 +644,7 @@ const MODELOS={
  'bandeiraço':{titulo:'Bandeiraço na avenida',descricao:'Bandeiras e faixas do Lula na hora do rush. Traga bandeira se tiver.',dica:'Hora do rush, calçada larga, longe da faixa de pedestres.'},
  'outro':{titulo:'',descricao:'',dica:'Descreva o que vai acontecer e o que a pessoa precisa levar.'}};
 const LUGAR_ONLINE=()=>({nome:'Online',bairro:'Online',cidade:'Online',lat:null,lon:null,online:true});
-function novoCriar(){return {passo:1,editando:null,tipo:null,online:false,titulo:'',descricao:'',foto:'',linkIg:'',enviandoFoto:false,lugar:{nome:'',bairro:'',cidade:'',lat:null,lon:null},buscaLugar:'',quando:quandoDe(null),detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
+function novoCriar(){return {passo:1,editando:null,tipo:null,online:false,titulo:'',descricao:'',foto:'',linkIg:'',enviandoFoto:false,quem:null,orgNome:'',orgLink:'',lugar:{nome:'',bairro:'',cidade:'',lat:null,lon:null},buscaLugar:'',quando:quandoDe(null),detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
 estado.criar=novoCriar();
 function cv(campo,valor){estado.criar[campo]=valor}
 function escolherTipo(t){const c=estado.criar;c.tipo=t;if(!c.editando){c.titulo=MODELOS[t].titulo;c.descricao=MODELOS[t].descricao}c.erros={};c.passo=2;render()}
@@ -696,12 +700,12 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
    ${c.enviandoFoto?'<p class="sec" style="margin-top:8px">Enviando a imagem…</p>':''}${E('foto')}
    <p class="sec" style="margin-top:12px">Use uma imagem que você pode divulgar.</p>
    <p style="margin-top:18px"><button class="btn sec" onclick="estado.criar.passo=2;render()">Voltar</button> <button class="btn" onclick="validarFoto()" ${c.enviandoFoto?'disabled':''}>Continuar</button></p></div>`;
-  const verif=souVerificado();
+  const verif=souVerificado();if(!c.quem)c.quem=minhaOrg()?'minha':'eu';if(!c.orgLink&&c.linkIg)c.orgLink=c.linkIg;
   return `<div class="pagina estreita"><h1>${titulo}</h1><p class="sec" style="font-size:15px">Passo 4 de 4. Quem organiza.</p>
    <label>Seu nome</label><div>${esc(estado.sessao.nome)}</div>
    <label>Seu WhatsApp</label><input placeholder="(11) 9xxxx-xxxx" inputmode="tel" value="${esc(c.telefone)}" oninput="cv('telefone',this.value)">${E('telefone')}
    <p class="sec" style="margin-top:4px">A moderação usa para falar com você. Quem disser "Eu vou!" aparece no seu Perfil, com nome e telefone.</p>
-   <label>Em nome de uma organização? (opcional)</label><select onchange="estado.criar.organizacao=this.value?Number(this.value):null"><option value="">Sou eu mesmo(a)</option>${PUB.organizacoes.slice().sort((x,y)=>x.nome.localeCompare(y.nome)).map(x=>`<option value="${x.id}" ${c.organizacao===x.id?'selected':''}>${esc(x.nome)}</option>`).join('')}</select>
+   ${quemOrganizaHtml(c)}${E('organizacao')}
    <div class="aviso" style="margin-top:16px">${verif?'✓ Você é verificado: sua ação aparece na hora.':'Sua ação passa por uma revisão rápida da moderação antes de aparecer. Você acompanha a situação no seu Perfil.'}</div>${E('geral')}
    <p style="margin-top:18px"><button class="btn sec" onclick="estado.criar.passo=3;render()">Voltar</button> <button class="btn" onclick="publicarAcao()">${c.editando?'Salvar':verif?'Publicar':'Enviar para análise'}</button></p></div>`}
 // ---------- imagem da ação: enviada do celular (reduzida antes) ou puxada do post do Instagram ----------
@@ -725,16 +729,60 @@ async function puxarInstagram(){const c=estado.criar;if(!c.linkIg.trim()){c.erro
   c.enviandoFoto=false;render()}
 function validarFoto(){const c=estado.criar;if(!c.foto){c.erros={foto:MENSAGEM.sem_foto};render();return}
   c.erros={};c.passo=4;if(!c.telefone&&estado.sessao)c.telefone=estado.sessao.telefone||'';render()}
+// ---------- organização: a minha (Perfil) e "Quem organiza?" no cadastro ----------
+const TIPOS_ORG=[['coletivo','Coletivo ou comitê'],['movimento','Movimento'],['mandato','Mandato'],['partido','Partido']];
+const minhaOrg=()=>estado.minhaOrg&&estado.minhaOrg.organizacao||null;
+// toda ação em nome de organização (a minha ou outra) pede o post oficial dela anunciando a ação
+const precisaPost=c=>c.quem==='outra'||(c.quem==='minha'&&!!minhaOrg());
+// link de perfil oficial: aceita sem o https:// e completa
+const normLink=l=>{l=String(l||'').trim();return l&&!/^https?:\/\//i.test(l)?'https://'+l:l};
+const linkOk=l=>/^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/i.test(normLink(l));
+const linkExterno=(l,rot='perfil oficial ↗')=>l?`<a href="${esc(l)}" target="_blank" rel="noopener nofollow" class="link-ext">${rot}</a>`:'';
+function quemOrganizaHtml(c){const m=minhaOrg(),op=(v,rot,extra='')=>`<label class="opcao"><input type="radio" name="quem" value="${v}" ${c.quem===v?'checked':''} onchange="estado.criar.quem='${v}';render()"> <span>${rot}</span>${extra}</label>`;
+  return `<label>Quem organiza?</label><div class="opcoes-quem">${op('eu','Eu mesmo(a)')}${m?op('minha',`${m.foto?imgAvatar(m.foto):avatarLetra(m.nome)} ${esc(m.nome)}`,' <span class="sec">minha organização</span>'):''}${op('outra','Outra organização')}</div>
+   ${c.quem==='outra'?`<input placeholder="Nome do coletivo, comitê, mandato…" value="${esc(c.orgNome)}" oninput="cv('orgNome',this.value)" style="margin-top:8px">`:''}
+   ${precisaPost(c)?`<label>Link do post da organização anunciando esta ação</label><input placeholder="https://www.instagram.com/p/..." inputmode="url" value="${esc(c.orgLink)}" oninput="cv('orgLink',this.value)">
+     <div class="aviso-org">Ação em nome de uma organização só é aprovada se a própria organização anunciou. Cole o link do post (Instagram, Facebook ou site) publicado no perfil <b>oficial da organização</b> divulgando <b>esta ação</b>. A moderação confere por ele.</div>`:''}
+   ${!m?'<p class="sec" style="margin-top:6px">É de um coletivo, comitê ou mandato? Cadastre sua organização no Perfil para as ações saírem com o nome e o logo dela.</p>':''}`}
+// edição (só modo exemplo): mesma regra do banco
+function orgDaEdicao(c,a){if(c.quem==='minha'&&minhaOrg())return minhaOrg().id;if(c.quem!=='outra'||!c.orgNome.trim())return null;
+  const n=c.orgNome.trim().toLowerCase(),o=DADOS.organizacoes.find(x=>x.nome.trim().toLowerCase()===n);if(o)return o.id;
+  const id=Math.max(0,...DADOS.organizacoes.map(x=>x.id))+1;DADOS.organizacoes.push({id,nome:c.orgNome.trim(),tipo:'coletivo',verificada:false,foto:null,criadaPor:eu()});return id}
+async function salvarMinhaOrg(){const f=estado.orgForm,nome=(document.getElementById('org-nome')||{}).value||'',tipo=(document.getElementById('org-tipo')||{}).value||'coletivo',link=(document.getElementById('org-link')||{}).value||'';
+  if(!linkOk(link)){f.erro=MENSAGEM.link_oficial;f.nome=nome;f.tipo=tipo;f.link=link;render();return}
+  try{const r=await API.salvarOrganizacao(nome,tipo,f.logo,normLink(link));estado.orgForm=null;
+    estado.aviso=r.situacao==='pedido'?'Essa organização já existe: pedimos à moderação para confirmar que você faz parte dela.':'Organização cadastrada. A moderação confere e dá o selo de verificada.'}
+  catch(e){f.erro=MENSAGEM[e.codigo]||'Não deu para salvar. Tente de novo.';f.nome=nome;f.tipo=tipo;f.link=link;render();return}
+  await recarregar();render()}
+async function logoOrg(arq){const f=estado.orgForm;if(!arq)return;f.nome=(document.getElementById('org-nome')||{}).value||f.nome;f.tipo=(document.getElementById('org-tipo')||{}).value||f.tipo;f.link=(document.getElementById('org-link')||{}).value||f.link;f.enviando=true;f.erro=null;render();
+  try{f.logo=await API.enviarFoto(await reduzirImagem(arq,600))}catch(e){f.erro=MENSAGEM[e.codigo]||'Não deu para enviar o logo.'}f.enviando=false;render()}
+async function sairDaOrg(){await API.sairDaOrganizacao();await recarregar();render()}
+function secaoOrganizacao(){const mo=estado.minhaOrg||{},o=mo.organizacao,ped=mo.pedido,f=estado.orgForm;
+  if(f)return `<h2 style="margin-top:28px">Minha organização</h2><div class="cartao">
+    <label style="margin-top:0">Nome</label><input id="org-nome" value="${esc(f.nome||'')}" placeholder="ex.: Comitê Lula Vila Mariana">
+    <label>Link do perfil oficial</label><input id="org-link" inputmode="url" value="${esc(f.link||'')}" placeholder="https://instagram.com/...">
+    <p class="sec" style="margin-top:4px">Instagram, Facebook ou site da organização. A moderação confere por ele antes de dar o selo.</p>
+    <label>Tipo</label><select id="org-tipo">${TIPOS_ORG.map(([v,r])=>`<option value="${v}" ${f.tipo===v?'selected':''}>${r}</option>`).join('')}</select>
+    <label>Logo (opcional)</label><div style="display:flex;align-items:center;gap:12px">${f.logo?`<img src="${esc(f.logo)}" alt="" class="logo-org">`:''}<label class="btn sec mini" style="margin:0;cursor:pointer">${f.logo?'Trocar logo':'Escolher logo'}<input type="file" accept="image/*" hidden onchange="logoOrg(this.files[0])"></label></div>
+    ${f.enviando?'<p class="sec">Enviando o logo…</p>':''}${f.erro?`<div class="erro">${esc(f.erro)}</div>`:''}
+    <p style="margin-top:14px;display:flex;gap:8px"><button class="btn sec" onclick="estado.orgForm=null;render()">Cancelar</button><button class="btn" onclick="salvarMinhaOrg()" ${f.enviando?'disabled':''}>Salvar</button></p></div>`;
+  if(o)return `<h2 style="margin-top:28px">Minha organização</h2><div class="cartao"><div class="cartao-topo"><div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">${o.foto?`<img src="${esc(o.foto.url)}" alt="" class="logo-org">`:`<span class="avatar letra" style="width:44px;height:44px;font-size:18px">${esc(o.nome.charAt(0).toUpperCase())}</span>`}
+    <div style="min-width:0"><div style="font-weight:700">${esc(o.nome)}</div><div class="sec">${o.verificada?'<span class="selo">✓ verificada: suas ações aparecem na hora</span>':'sem selo ainda: a moderação confere'}</div>${o.link?`<div style="margin-top:2px">${linkExterno(o.link)}</div>`:''}</div></div>
+    ${menuMais((o.minha&&!o.verificada?`<button onclick="estado.orgForm={nome:${esc(JSON.stringify(o.nome))},tipo:'${o.tipo}',logo:${o.foto?esc(JSON.stringify(o.foto.url)):'null'},link:${esc(JSON.stringify(o.link||''))}};render()">Editar logo e link</button>`:'')+`<button class="perigo" onclick="sairDaOrg()">Sair da organização</button>`)}</div></div>`;
+  const pedido=ped&&ped.status==='em análise'?`<div class="cartao"><div class="cartao-topo"><div style="flex:1">Você pediu para entrar em <strong>${esc(ped.nome)}</strong>. A moderação vai confirmar.</div>${menuMais('<button class="perigo" onclick="sairDaOrg()">Cancelar pedido</button>')}</div></div>`:
+    ped&&ped.status==='recusado'?`<p class="erro">Seu pedido para entrar em ${esc(ped.nome)} foi recusado${ped.motivo?`: ${esc(ped.motivo)}`:''}.</p>`:'';
+  return `<h2 style="margin-top:28px">Minha organização</h2>${pedido}${ped&&ped.status==='em análise'?'':`<p class="sec" style="font-size:14px;margin-top:-4px">É de um coletivo, comitê, mandato, partido ou movimento? Cadastre e suas ações saem com o nome e o logo dele. Com o selo da moderação, elas aparecem na hora.</p>
+   <button class="btn sec" onclick="estado.orgForm={nome:'',tipo:'coletivo',logo:null,link:''};render()">Cadastrar minha organização</button>`}`}
 // verificado publica direto: papel organizador ou moderador, ou membro de organização verificada (a regra vale no banco)
 function souVerificado(){const s=estado.sessao;if(!s)return false;if(s.papel==='organizador'||s.papel==='moderador')return true;const o=s.organizacao?org(s.organizacao):null;return !!(o&&o.verificada)}
-async function publicarAcao(){const c=estado.criar,e={};if(!telValido(c.telefone))e.telefone='Telefone no formato (11) 9xxxx-xxxx.';c.erros=e;if(Object.keys(e).length){render();return}
+async function publicarAcao(){const c=estado.criar,e={};if(!telValido(c.telefone))e.telefone='Telefone no formato (11) 9xxxx-xxxx.';if(c.quem==='outra'&&c.orgNome.trim().length<3)e.organizacao='Escreva o nome da organização.';else if(precisaPost(c)&&!linkOk(c.orgLink))e.organizacao=MENSAGEM.link_post;c.erros=e;if(Object.keys(e).length){render();return}
   const lugar=c.online?LUGAR_ONLINE():Object.assign({},c.lugar);
-  if(c.editando){const a=acaoExemplo(c.editando);Object.assign(a,{titulo:c.titulo,descricao:c.descricao,foto:c.foto.trim()?{url:c.foto.trim(),credito:''}:null,lugar,detalhe:c.detalhe,grupo:c.grupo,organizacao:c.organizacao,prioritaria:!c.online&&DADOS.areasPrioritarias.includes(lugar.bairro)});
+  if(c.editando){const a=acaoExemplo(c.editando);Object.assign(a,{titulo:c.titulo,descricao:c.descricao,foto:c.foto.trim()?{url:c.foto.trim(),credito:''}:null,lugar,detalhe:c.detalhe,grupo:c.grupo,organizacao:orgDaEdicao(c,a),prioritaria:!c.online&&DADOS.areasPrioritarias.includes(lugar.bairro)});
     atualizarTurnos(c,a.id);estado.aviso='Ação atualizada.';estado.criar=novoCriar();await recarregar();location.hash='#/perfil';return}
   let r;
   try{if(c.telefone!==(estado.sessao.telefone||''))estado.sessao=await API.salvarTelefone(c.telefone);
     r=await API.criarAcao({titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,foto:c.foto,online:c.online,lugar_nome:lugar.nome,bairro:lugar.bairro,cidade:lugar.cidade,lat:lugar.lat,lon:lugar.lon,
-      detalhe:c.detalhe,grupo:c.grupo,organizacao:c.organizacao,turnos:turnosForm(c)})}
+      detalhe:c.detalhe,grupo:c.grupo,organizacao:c.quem==='minha'&&minhaOrg()?minhaOrg().id:null,organizacao_nome:c.quem==='outra'?c.orgNome.trim():'',organizacao_link:precisaPost(c)?normLink(c.orgLink):'',turnos:turnosForm(c)})}
   catch(err){c.erros={geral:MENSAGEM[err.codigo]||'Não deu para enviar. Tente de novo.'};render();return}
   estado.aviso=r.status==='publicada'?'Publicada! Sua ação já aparece no mapa.':'Recebemos! Sua ação está em análise. Você acompanha a situação aqui no Perfil.';
   estado.criar=novoCriar();await recarregar();location.hash='#/perfil'}
@@ -744,7 +792,7 @@ function recado(msg){let el=document.getElementById('recado');if(!el){el=documen
   el.textContent=msg;el.classList.add('visivel');clearTimeout(recado.t);recado.t=setTimeout(()=>el.classList.remove('visivel'),2200)}
 const linkWhats=tel=>'https://wa.me/55'+String(tel||'').replace(/\D/g,'');
 async function encerrar(id){try{await API.encerrarAcao(id)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}await sincronizar()}
-function editar(id){const a=acaoExemplo(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,online:ehOnline(a),titulo:a.titulo,foto:a.foto&&a.foto.url||'',descricao:a.descricao,lugar:Object.assign({},a.lugar),buscaLugar:lugarCurto(a.lugar),detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,telefone:pessoa(a.organizador).telefone,quando:quandoDe(turnosDaExemplo(id)[0])});estado.criar=c;location.hash='#/criar'}
+function editar(id){const a=acaoExemplo(id);const c=novoCriar();Object.assign(c,{passo:2,editando:id,tipo:a.tipo,online:ehOnline(a),titulo:a.titulo,foto:a.foto&&a.foto.url||'',descricao:a.descricao,lugar:Object.assign({},a.lugar),buscaLugar:lugarCurto(a.lugar),detalhe:a.detalhe,grupo:a.grupo,organizacao:a.organizacao,quem:!a.organizacao?'eu':minhaOrg()&&minhaOrg().id===a.organizacao?'minha':'outra',orgNome:a.organizacao&&org(a.organizacao)?org(a.organizacao).nome:'',telefone:pessoa(a.organizador).telefone,quando:quandoDe(turnosDaExemplo(id)[0])});estado.criar=c;location.hash='#/criar'}
 // ---------- perfil: a conta, o WhatsApp, onde vou, as ações que criei (com a situação) e o Sair ----------
 const ROTULO_STATUS={'em análise':['Em análise','analise'],'publicada':['Publicada','publicada'],'recusada':['Recusada','recusada'],'encerrada':['Encerrada',''],'rascunho':['Suspensa','recusada'],'excluída':['Excluída','recusada']};
 async function salvarTelPerfil(){const v=(document.getElementById('ptel')||{}).value||'';
@@ -773,6 +821,7 @@ function telaPerfil(){const s=estado.sessao;
   ${secaoInscricoes()}
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:28px"><h2 style="margin:0">Ações que cadastrei</h2><a class="btn mini" href="#/criar" onclick="novaCriacao()">＋ Cadastrar ação</a></div>
   ${minhas.length?minhas.map(itemMinha).join(''):'<p class="sec" style="font-size:15px;margin-top:10px">Você ainda não cadastrou nenhuma ação. Toda ação nova passa por uma revisão rápida antes de aparecer, e a situação fica aqui.</p>'}
+  ${secaoOrganizacao()}
   ${s.papel==='moderador'?'<h2>Moderação</h2><a class="btn sec" href="#/fila">Abrir a fila de moderação</a>':''}
   <h2 style="margin-top:28px">Seu WhatsApp</h2><p class="sec" style="font-size:14px;margin-top:-4px">Vai para quem organiza as ações em que você diz "Eu vou!" (nas ações importadas, para ninguém) e para a moderação das ações que você cria.</p>
   <div style="display:flex;gap:8px"><input id="ptel" value="${esc(s.telefone||'')}" placeholder="(11) 9xxxx-xxxx" inputmode="tel"><button class="btn sec" onclick="salvarTelPerfil()">Salvar</button></div>
@@ -791,22 +840,39 @@ function suspender(id){const m=prompt('Suspender esta ação? Ela sai do ar até
   if(m!==null)moderar('suspender',id,null,'Ação suspensa',m)}
 const reativar=id=>moderar('reativar',id,null,'Ação de volta ao ar');
 const excluir=id=>moderar('excluir',id,'Excluir esta ação? Ela sai do site e da fila de moderação.','Ação excluída');
-// só no modo exemplo (ainda sem função no banco): selo e bloquear
-function darSelo(oid){DADOS.organizacoes.find(o=>o.id===oid).verificada=true;sincronizar()}
+async function darSelo(oid){try{await API.darSelo(oid)}catch(e){recado(MENSAGEM[e.codigo]||'Não deu.');return}await sincronizar()}
+async function decidirPedido(id,aprovar){const m=aprovar?'':((document.getElementById('motivo-p'+id)||{}).value||'');
+  if(!aprovar&&!m.trim()){estado.recusandoPedido=id;render();return}
+  try{await API.decidirPedido(id,aprovar,m)}catch(e){recado(MENSAGEM[e.codigo]||'Não deu.');return}estado.recusandoPedido=null;await sincronizar()}
+function filaOrganizacoesHtml(){const f=estado.filaOrg||{pedidos:[],semSelo:[]};
+  return `<p class="sec">Dê o selo só depois de confirmar com quem cadastrou que a organização existe e que a pessoa faz parte dela. Com o selo, as ações dos membros aparecem sem análise.</p>
+  <h2>Pedidos para entrar (${f.pedidos.length})</h2>${f.pedidos.length?'':'<p class="sec">Nenhum pedido.</p>'}
+  ${f.pedidos.map(d=>`<div class="linha"><strong>${esc(d.pessoa)}</strong> quer entrar em <strong>${esc(d.organizacao)}</strong>${d.verificada?' <span class="selo">✓ verificada</span>':''}
+    <div class="sec">${esc(d.telefone||'')}${d.email?`, ${esc(d.email)}`:''}</div>
+    <div class="sec">Link que a pessoa informou: ${linkExterno(d.link,esc(d.link||'nenhum'))}${d.link_oficial?` · perfil cadastrado da organização: ${linkExterno(d.link_oficial)}`:''}</div>
+    <div style="margin-top:8px;display:flex;gap:6px"><button class="btn mini" onclick="decidirPedido(${d.id},true)">Aprovar</button><button class="btn sec mini" onclick="estado.recusandoPedido=${d.id};render()">Recusar</button></div>
+    ${estado.recusandoPedido===d.id?`<label>Motivo da recusa</label><input id="motivo-p${d.id}"><div style="margin-top:8px"><button class="btn mini" onclick="decidirPedido(${d.id},false)">Confirmar recusa</button></div>`:''}</div>`).join('')}
+  <h2>Organizações sem selo (${f.semSelo.length})</h2>${f.semSelo.length?'':'<p class="sec">Nenhuma.</p>'}
+  ${f.semSelo.map(o=>`<div class="linha" style="display:flex;gap:12px;align-items:center">${o.foto?`<img src="${esc(o.foto.url)}" alt="" class="logo-org">`:`<span class="avatar letra" style="width:44px;height:44px;font-size:18px">${esc(o.nome.charAt(0).toUpperCase())}</span>`}
+    <div style="flex:1;min-width:0"><strong>${esc(o.nome)}</strong> <span class="sec">${esc(o.tipo)}</span><div class="sec">Cadastrada por ${esc(o.criada_por||'?')}${o.telefone?`, ${esc(o.telefone)}`:''}. ${o.membros} membro(s), ${o.acoes} ação(ões).</div><div class="sec">${o.link_oficial?linkExterno(o.link_oficial,esc(o.link_oficial)):'sem link oficial'}</div></div>
+    <button class="btn mini" onclick="darSelo(${o.id})">Dar selo</button></div>`).join('')}`}
+// só no modo exemplo (ainda sem função no banco): bloquear
 function bloquear(pid){pessoa(pid).bloqueada=true;DADOS.acoes.filter(a=>a.organizador===pid&&a.status==='publicada').forEach(a=>a.status='rascunho');sincronizar()}
 function telaFila(){const s=estado.sessao;if(!s||s.papel!=='moderador')return '<div class="pagina"><h1>Fila de moderação</h1><p>Só moderadores veem a fila.</p></div>';
   const aba=estado.filaAba,lista=estado.fila||[],ex=API.modo==='exemplo';
   return `<div class="pagina"><h1>Fila de moderação</h1>
-  <div class="quando" style="display:inline-flex;margin-bottom:12px"><button class="pill ${aba==='analise'?'ativo':''}" onclick="estado.filaAba='analise';render()">Em análise${aba==='analise'?` (${lista.length})`:''}</button><button class="pill ${aba==='publicadas'?'ativo':''}" onclick="estado.filaAba='publicadas';render()">Publicadas</button><button class="pill ${aba==='suspensas'?'ativo':''}" onclick="estado.filaAba='suspensas';render()">Suspensas</button></div>
-  <p class="sec">Recuse se: não é ação de campanha; o lugar não é público; convoca para confronto; pede dinheiro; tem dado pessoal no texto.</p>
+  <div class="quando" style="display:inline-flex;margin-bottom:12px"><button class="pill ${aba==='analise'?'ativo':''}" onclick="estado.filaAba='analise';render()">Em análise${aba==='analise'?` (${lista.length})`:''}</button><button class="pill ${aba==='publicadas'?'ativo':''}" onclick="estado.filaAba='publicadas';render()">Publicadas</button><button class="pill ${aba==='suspensas'?'ativo':''}" onclick="estado.filaAba='suspensas';render()">Suspensas</button><button class="pill ${aba==='org'?'ativo':''}" onclick="estado.filaAba='org';render()">Organizações</button></div>
+  ${aba==='org'?filaOrganizacoesHtml()+'</div>':`<p class="sec">Recuse se: não é ação de campanha; o lugar não é público; convoca para confronto; pede dinheiro; tem dado pessoal no texto.</p>
   ${lista.length?'':'<div class="vazio"><p>Nada por aqui.</p></div>'}
   ${lista.map(m=>{const a=m.acao,t=m.turnos[0]||{inicio:(a.criadaEm||PUB.config.hoje)+'T00:00'},p=m.organizador||{},o=a.organizacao?org(a.organizacao):null;return `<div class="linha">${cardAcao({a,t,km:null})}
    <p style="white-space:pre-line;font-size:15px;margin:4px 0 8px">${esc(a.descricao)}</p>
    <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome)}, ${esc(lugarCurto(a.lugar))}`}. Turnos: ${m.turnos.map(x=>fmtData(x.inicio)).join('; ')||'nenhum'}.${a.detalhe?` Detalhe: ${esc(a.detalhe)}.`:''}${a.contatoLink?` Grupo: ${esc(a.contatoLink)}.`:''}</div>
+   ${a.organizacaoDados?`<div class="sec">Em nome de: <strong>${esc(a.organizacaoDados.nome)}</strong> ${a.organizacaoDados.verificada?'<span class="selo">✓ verificada</span>':'(sem selo)'} · ${a.organizacaoLink?linkExterno(a.organizacaoLink,'post da organização anunciando ↗'):'sem post da organização'}${a.organizacaoDados.link_oficial?` · ${linkExterno(a.organizacaoDados.link_oficial)}`:''}</div>
+   <div class="sec">Confira se o post é do perfil oficial da organização e anuncia esta ação (data e lugar).</div>`:''}
    <div class="sec">Quem criou: ${esc(p.nome)}, ${esc(p.telefone||'sem telefone')}${p.email?`, ${esc(p.email)}`:''}. Já criou ${p.criadas} ações (${p.aprovadas} aprovadas, ${p.recusadas} recusadas).</div>
    ${aba==='suspensas'&&a.motivoRecusa?`<div class="sec">Motivo da suspensão: ${esc(a.motivoRecusa)}</div>`:''}
-   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${botoesModerar(a,true)}${aba==='analise'&&ex&&o&&!o.verificada?` <button class="btn sec mini" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}${aba==='publicadas'&&ex?` <button class="btn sec mini" onclick="bloquear(${p.id})">Bloquear organizador</button>`:''}</div>
-   ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: pede dinheiro para o material">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="recusar(${a.id})">Confirmar recusa</button></div>`:''}</div>`}).join('')}</div>`}
+   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${botoesModerar(a,true)}${aba==='analise'&&o&&!o.verificada?` <button class="btn sec mini" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}${aba==='publicadas'&&ex?` <button class="btn sec mini" onclick="bloquear(${p.id})">Bloquear organizador</button>`:''}</div>
+   ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: pede dinheiro para o material">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="recusar(${a.id})">Confirmar recusa</button></div>`:''}</div>`}).join('')}`}</div>`}
 // ---------- roteamento ----------
 async function recarregar(){PUB=await API.publico();normalizarTipos(PUB.acoes);estado.sessao=await API.sessao()}
 let renderN=0;
@@ -816,9 +882,13 @@ async function render(){
   if(rota!=='acao'){estado.inscrevendo=null;estado.vouOk=null}if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null}if(rota!=='perfil')estado.perfil=null
   try{
     if(rota==='acao'){const r=await API.acao(Number(arg));if(n!==renderN)return;if(r)normalizarTipos([r.acao]);estado.acaoAberta=r}
+    if((rota==='perfil'||rota==='minhas'||rota==='inscricoes'||rota==='criar')&&estado.sessao){const mo=await API.minhaOrganizacao();if(n!==renderN)return;estado.minhaOrg=mo}
+    if(rota!=='perfil')estado.orgForm=null;
     if((rota==='perfil'||rota==='minhas'||rota==='inscricoes')&&estado.sessao){const [ma,mi]=await Promise.all([API.minhasAcoes(),API.minhasInscricoes()]);if(n!==renderN)return;
       normalizarTipos(ma.map(m=>m.acao));normalizarTipos(mi.map(m=>m.acao));estado.minhasAcoes=ma;estado.minhasInscricoes=mi}
-    if(rota==='fila'&&estado.sessao&&estado.sessao.papel==='moderador'){const r=await API.fila({analise:'em análise',publicadas:'publicada',suspensas:'rascunho'}[estado.filaAba]);if(n!==renderN)return;normalizarTipos(r.map(m=>m.acao));estado.fila=r}
+    if(rota==='fila'&&estado.sessao&&estado.sessao.papel==='moderador'){
+      if(estado.filaAba==='org'){const r=await API.filaOrganizacoes();if(n!==renderN)return;estado.filaOrg=r}
+      else{const r=await API.fila({analise:'em análise',publicadas:'publicada',suspensas:'rascunho'}[estado.filaAba]);if(n!==renderN)return;normalizarTipos(r.map(m=>m.acao));estado.fila=r}}
   }catch(e){if(n!==renderN)return;console.error(e);if(mapa){mapa.remove();mapa=null;marcadores=[]}
     document.getElementById('app').innerHTML='<div class="pagina"><p class="erro">Não foi possível carregar. Tente de novo.</p></div>';return}
   if(mapa){mapa.remove();mapa=null;marcadores=[]}

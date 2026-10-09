@@ -439,3 +439,15 @@ def test_desistir_e_encerrar_so_no_menu_de_tres_pontinhos():
 def test_inicial_tem_botao_cadastrar_acao_e_filtro_online():
     assert 'class="hero-cta"' in HTML and "＋ Cadastrar ação" in HTML
     assert "Prefiro ajudar online" not in HTML and "Criar ação" not in HTML
+
+
+def test_minha_organizacao_no_perfil_e_quem_organiza_no_cadastro():
+    for s in ["function secaoOrganizacao", "Cadastrar minha organização", "API.salvarOrganizacao(", "API.minhaOrganizacao()",
+              "function quemOrganizaHtml", "Quem organiza?", "Outra organização", "organizacao_nome:c.quem==='outra'",
+              "Em nome de uma organização?"]:
+        if s == "Em nome de uma organização?":
+            assert s not in HTML  # a lista com todas as organizações saiu
+        else:
+            assert s in HTML, s
+    assert "estado.filaAba='org'" in HTML and "API.filaOrganizacoes()" in HTML and "API.darSelo(oid)" in HTML
+    assert "Link do perfil oficial" in HTML and "organizacao_link:precisaPost(c)" in HTML and "Link do post da organização anunciando esta ação" in HTML and "const precisaPost=" in HTML
