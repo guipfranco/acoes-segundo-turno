@@ -33,6 +33,16 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   caminhada, cultural, bandeiraço, adesivaço, porta a porta, ligatona, outro. Ação online: `lugar.online: true`, sem
   pino nem minimapa. Desktop (≥ 900 px) com cabeçalho no topo e página da ação em duas colunas. Fotos das ações
   vêm do Wikimedia Commons (campo `foto` com crédito).
+- Conta e cadastro de ação (na master desde 2026-10-09; migrações 20261009000020 a 22 e a função previa-instagram
+  ainda precisam ir para produção): logado, o botão da conta vira "Perfil" (`#/perfil`: WhatsApp,
+  resumo do "Eu vou", ações que criei com situação e motivo da recusa, Sair no fim); deslogado, "Entrar" escuro e
+  convite na inicial. "Eu vou!" em toda ação; na de divulgação (importada) só marca presença, sem telefone (migração
+  20261009000020). Qualquer pessoa logada cadastra ação ("Cadastrar ação", botão vermelho da barra e da inicial): nasce "em análise", exceto verificado (papel organizador ou
+  moderador, ou membro de organização verificada), que publica direto; limite de 10 por dia e 10 em análise
+  (migração 20261009000021: `criar_acao`, `minhas_acoes`, `encerrar_acao`, `fila_moderacao`, `aprovar_acao`,
+  `recusar_acao`). Fila (`#/fila`) só para moderador. Imagem obrigatória no cadastro (passo 3 de 4): enviada do celular,
+  reduzida no navegador e guardada no bucket `fotos-acoes` (migração 20261009000022), ou puxada do link do post pela
+  função `supabase/functions/previa-instagram` (precisa de `supabase functions deploy previa-instagram` em produção). Editar ação, selo, bloquear seguem só no modo exemplo.
 - Spec em `docs/superpowers/specs/`, desenho visual em `docs/2026-10-08-design-mockup.md`, capturas em
   `docs/capturas/`.
 - Decisões do Gui: inscrição com nome e telefone desde a v1; moderação humana por voluntários no

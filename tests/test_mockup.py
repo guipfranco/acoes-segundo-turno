@@ -6,7 +6,7 @@ HTML = (RAIZ / "app" / "index.html").read_text(encoding="utf-8")
 
 
 def test_tem_as_seis_telas():
-    for nome in ["telaInicio", "telaMapa", "telaAcao", "telaCriar", "telaMinhas", "telaFila"]:
+    for nome in ["telaInicio", "telaMapa", "telaAcao", "telaCriar", "telaPerfil", "telaFila"]:
         assert f"function {nome}" in HTML, nome
 
 
@@ -79,7 +79,7 @@ def test_tela_acao_regras_de_inscricao():
 def test_detalhe_e_grupo_so_para_inscritos():
     # o bloco "Combinado" só é montado quando a API devolve o combinado, e a API só devolve a quem se inscreveu
     i = HTML.index("Combinado")
-    assert "ab.combinado?" in HTML[i-400:i]
+    assert "ab.combinado&&!semInscricao(a)?" in HTML[i-400:i]
     assert "combinado: podeVer(a) ?" in (RAIZ / "app" / "api-exemplo.js").read_text(encoding="utf-8")
 
 
@@ -95,13 +95,17 @@ def test_turno_lotado_e_inscricao_duplicada_nos_dados_e_no_codigo():
 
 def test_criar_tem_tres_passos_modelos_e_validacao():
     for s in ["function telaCriar", "function publicarAcao", "const MODELOS", "function buscarLugares",
-              "Continuar", "Publicar", "sua ação está em análise", "publica na hora", "passa pela fila",
+              "Continuar", "Publicar", "Sua ação está em análise", "Enviar para análise", "revisão rápida da moderação",
               "Detalhe do encontro, só para inscritos", "Link do grupo de WhatsApp"]:
         assert s in HTML, s
 
 
-def test_status_nasce_publicada_so_com_organizacao_verificada():
-    assert "o&&o.verificada?'publicada':'em análise'" in HTML
+def test_criar_pela_api_e_so_verificado_publica_direto():
+    assert "API.criarAcao(" in HTML and "function souVerificado" in HTML
+    assert "s.papel==='organizador'||s.papel==='moderador'" in HTML
+    assert "if(!estado.sessao)return `<div class=\"pagina estreita\"><h1>Cadastrar ação</h1>" in HTML
+    for codigo in ["limite_diario:", "limite_em_analise:", "turno_invalido:", "grupo_invalido:"]:
+        assert codigo in HTML, codigo
 
 
 def test_validacao_dos_campos_obrigatorios():
@@ -110,10 +114,10 @@ def test_validacao_dos_campos_obrigatorios():
         assert s in HTML, s
 
 
-def test_minhas_e_fila():
-    for s in ["function telaMinhas", "function telaFila", "Copiar números", "Mandar aviso", "Marcar presença",
-              "Encerrar", "Editar", "Aprovar", "Recusar", "Dar selo à organização", "Despublicar",
-              "Bloquear organizador", "Recuse se:", "já criou"]:
+def test_perfil_e_fila():
+    for s in ["function telaPerfil", "function telaFila", "Copiar telefones", "Escrever aviso para quem vai", "Abrir no WhatsApp", "Ações que cadastrei",
+              "Encerrar ação", "Editar", "Aprovar", "Recusar", "Dar selo à organização", "Sair da conta",
+              "Bloquear organizador", "Recuse se:", "Já criou", "API.minhasAcoes()", "API.fila(", "Motivo da recusa"]:
         assert s in HTML, s
 
 
@@ -126,8 +130,9 @@ def test_fluxo_de_status_nos_dados_e_no_codigo():
     d = carregar_dados()
     a12 = next(a for a in d["acoes"] if a["id"] == 12)
     assert a12["status"] == "em análise" and a12["organizacao"] in (None, 4)
-    assert ".status='publicada'" in HTML  # aprovar
-    assert "a.status='recusada'" in HTML  # recusar
+    assert "await API.aprovar(id)" in HTML and "await API.recusar(id,m)" in HTML
+    api = (RAIZ / "app" / "api-exemplo.js").read_text(encoding="utf-8")
+    assert "a.status = 'publicada'" in api and "a.status = 'recusada'" in api
 
 
 def test_turno_passado_do_organizador_tem_inscritos_para_marcar_presenca():
@@ -219,7 +224,7 @@ def test_inicial_sem_mapa_com_busca_e_vitrine():
     i = HTML.index("function telaInicio"); corpo = HTML[i:HTML.index("function irParaCidade")]
     assert 'id="mapa"' not in corpo
     for s in ["Em que cidade você está?", "Perto de você", "Online, de qualquer lugar", "Ver no mapa",
-              "blocoVitrine", "Criar a primeira ação"]:
+              "blocoVitrine", "Cadastrar a primeira ação"]:
         assert s in corpo, s
     assert "function chutarCidade" in HTML and "getCurrentPosition" in HTML
     assert "Chutamos a cidade" not in HTML  # a cidade virou botão que abre a busca
@@ -259,7 +264,7 @@ def test_filtro_de_data_claro_com_proximos_primeiro_e_intervalo():
 
 def test_formato_presencial_ou_online_em_toda_a_cadeia():
     assert "const FORMATOS" not in HTML and "data-formato" not in HTML  # sem filtro de formato na inicial e no mapa
-    for s in ["Prefiro ajudar online", "Ver também as ações presenciais", "'online'", "const ehOnline", "acoesOnline", "LUGAR_ONLINE",
+    for s in ["tiposHtml(true)", "<b>💻</b>online", "'online'", "const ehOnline", "acoesOnline", "LUGAR_ONLINE",
               "Ação online (ligatona", "O link da chamada vai para quem se inscreve", "if(!c.online){"]:
         assert s in HTML, s
     assert "!ehOnline(ab.acao)" in HTML  # ação online não monta minimapa
@@ -286,9 +291,10 @@ def test_acoes_de_exemplo_tem_foto_livre_com_credito():
         assert "via Wikimedia Commons" in a["foto"]["credito"]
 
 
-def test_foto_tem_reserva_e_credito_e_campo_no_criar():
+def test_foto_tem_reserva_e_credito_e_imagem_obrigatoria_no_cadastro():
     for s in ["const imgFoto", 'onerror="this.remove()"', "function creditoFoto", "const cuboAcao",
-              "Foto da ação (link, opcional)", "foto:c.foto.trim()", 'class="foto capa']:
+              "Passo 3 de 4. Imagem da ação.", "function reduzirImagem", "API.enviarFoto(", "API.fotoDoInstagram(",
+              'accept="image/*"', "function validarFoto", "sem_foto:", 'class="foto capa']:
         assert s in HTML, s
 
 
@@ -307,11 +313,11 @@ def test_telas_de_participante_leem_pela_api():
     assert "DADOS.acoes" not in inicio and "DADOS.inscricoes" not in inicio and "DADOS.config" not in inicio
 
 
-def test_publicar_recarrega_antes_de_ir_para_minhas_sem_render_duplo():
-    # um render a mais apagaria o aviso de Minhas (telaMinhas zera estado.aviso)
-    corpo = HTML[HTML.index("function publicarAcao"):HTML.index("// ---------- minhas")]
+def test_publicar_recarrega_antes_de_ir_para_o_perfil_sem_render_duplo():
+    # um render a mais apagaria o aviso do Perfil (telaPerfil zera estado.aviso)
+    corpo = HTML[HTML.index("async function publicarAcao"):HTML.index("// ---------- minhas")]
     assert "sincronizar();location.hash" not in corpo
-    assert corpo.count("recarregar().then(()=>{location.hash='#/minhas'})") == 2
+    assert corpo.count("await recarregar();location.hash='#/perfil'") == 2
 
 
 def test_vou_pede_telefone_uma_vez_e_mostra_a_forma_de_contato():
@@ -321,18 +327,18 @@ def test_vou_pede_telefone_uma_vez_e_mostra_a_forma_de_contato():
               "Entrar no grupo do WhatsApp", "wa.me/55", "organizador_chama", "'whatsapp'", "link_grupo"]:
         assert s in acao, s
     assert "function continuarVouPendente" in HTML and "vouPendente" in HTML
-    assert ">Inscreva-se<" in HTML and "Inscrito ✓" in HTML and ">Vou<" not in HTML
+    assert ">Eu vou!<" in HTML and "✓ Você vai" in HTML and "Inscreva-se" not in HTML
 
 
-def test_entrar_sair_e_minhas_inscricoes():
-    for s in ["function telaInscricoes", "rota==='inscricoes'", 'data-rota="inscricoes"', "API.minhasInscricoes()",
-              "Entrar com Google", "function entrar", "function sair", "Você ainda não se inscreveu"]:
+def test_entrar_sair_e_inscricoes_no_perfil():
+    for s in ["function secaoInscricoes", "rota==='inscricoes'", "API.minhasInscricoes()", "${secaoInscricoes()}",
+              "Entrar com Google", "function entrar", "function sair", 'Você ainda não disse "Eu vou!"']:
         assert s in HTML, s
 
 
-def test_inscricoes_separa_passadas_e_permite_desistir():
-    corpo = HTML.split("function telaInscricoes", 1)[1].split("async function desistir", 1)[0]
-    for s in ["Próximas", "Passadas ou encerradas", "já aconteceu", "ação encerrada", "desistir(", "Você ainda não se inscreveu"]:
+def test_inscricoes_separa_passadas_e_desistir_fica_no_menu():
+    corpo = HTML.split("const inscProxima", 1)[1].split("async function desistir", 1)[0]
+    for s in ["Onde eu vou", "Passadas ou encerradas", "já aconteceu", "ação encerrada", "menuMais(", "desistir("]:
         assert s in corpo, s
 
 
@@ -362,7 +368,7 @@ def test_tipos_revistos_e_nome_antigo_aceito():
     for t in ["'encontro'", "'ato'", "'caminhada'", "'cultural'", "'panfletagem'", "'outro'"]:
         assert t in bloco, t
     assert "'roda de conversa':'encontro'" in HTML and "normalizarTipos(PUB.acoes)" in HTML
-    assert "function tiposHtml(){const f=F(),n={}" in HTML  # chips só dos tipos com ação
+    assert "function tiposHtml(comOnline){const f=F(),n={}" in HTML  # chips só dos tipos com ação
 
 
 def test_adicionar_a_agenda():
@@ -385,8 +391,51 @@ def test_quem_divulga_tem_avatar_e_logo_da_organizacao_vira_capa():
                    "const FONTES=", "'bora-lula':{nome:'Agenda Bora Lula'", "function creditoLogo", "Logo: ", "const avatarLetra=", ".avatar.letra{"]:
         assert trecho in HTML, trecho
     # card e página usam quem divulga (avatar + nome); capa cai no logo quando não há foto própria
-    assert "${quemDivulga(a)}, ${quantosVao(vaoNa(a.id))}" in HTML
+    assert '<div class="meta quem-linha">${quemDivulga(a)}</div>${linhaVao(a)}' in HTML
     assert "logoCapa(a)?`<div class=\"foto capa" in HTML
     assert ".foto .logo{" in HTML and ".avatar{" in HTML
     api_sb = (RAIZ / "app" / "api-supabase.js").read_text(encoding="utf-8")
     assert "foto_url,foto_credito,foto_pagina" in api_sb and "orgR.data.map(deOrg)" in api_sb
+
+
+def test_cards_com_colunas_iguais_e_sem_zero_vao():
+    # minmax(0,1fr): uma imagem ou nome comprido não alarga a coluna (os cards ficavam de tamanhos diferentes)
+    assert "grid-template-columns:repeat(4,minmax(0,1fr))" in HTML
+    assert "function linhaVao(a){const n=vaoNa(a.id);return n?" in HTML
+    assert ".meta.quem-linha{display:flex;align-items:center" in HTML
+
+
+def test_conta_logada_vai_ao_perfil_e_entrar_tem_destaque():
+    assert 'href="#/perfil" id="conta" data-rota="perfil"' in HTML
+    assert "function contaClique(){if(estado.sessao)return true;" in HTML
+    assert "estado.sessao?'Perfil':'Entrar'" in HTML and "class=\"convite\"" in HTML
+    assert "data-so-moderador" in HTML
+
+
+def test_eu_vou_na_divulgacao_marca_presenca_sem_formulario():
+    corpo = HTML[HTML.index("async function abrirVou"):HTML.index("const MENSAGEM")]
+    assert "semInscricao(ab.acao)" in corpo and "await API.inscrever(tid)" in corpo
+    assert "Ver a divulgação original" in HTML
+
+
+def test_criar_acao_e_o_cta_principal_e_doar_fica_na_barra():
+    nav = HTML[HTML.index("<nav>"):HTML.index("</nav>")]
+    assert 'class="cta" href="#/criar"' in nav and 'id="doar"' in nav and "Inscrições" not in nav
+    assert "Doe para a campanha do Lula" in HTML and "Uma vaquinha só" not in HTML
+
+
+def test_inscricoes_em_lista_sem_nome_e_telefone():
+    corpo = HTML.split("const inscProxima", 1)[1].split("async function desistir", 1)[0]
+    assert 'class="insc"' in corpo and "cardEvento" not in corpo
+    assert "estado.sessao.telefone" not in corpo
+
+
+def test_desistir_e_encerrar_so_no_menu_de_tres_pontinhos():
+    assert "const menuMais=" in HTML and 'class="perigo" onclick="desistir(' in HTML
+    assert 'class="btn sec mini" onclick="desistir(' not in HTML
+    assert "details.mais[open]" in HTML
+
+
+def test_inicial_tem_botao_cadastrar_acao_e_filtro_online():
+    assert 'class="hero-cta"' in HTML and "＋ Cadastrar ação" in HTML
+    assert "Prefiro ajudar online" not in HTML and "Criar ação" not in HTML
