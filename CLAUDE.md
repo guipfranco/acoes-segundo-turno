@@ -4,10 +4,9 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
 
 - Tudo em pt-BR, datas AAAA-MM-DD. Push logo depois de cada commit.
 - `app/` (antes `mockup/`) é o app: estático, sem build. Publicado em https://guipfranco.github.io/acoes-segundo-turno/
-  (GitHub Pages via `.github/workflows/pages.yml`, só a pasta `app/`; repo público desde 2026-10-08) e também
-  como artifact do claude.ai https://claude.ai/artifact/5FLiCyZHCJD6ADZbofmrjL ; o mapa base no artifact é o
-  Protomaps da RMSP copiado dos assets do artifact do mapa principal (ids em app/fundo.js); fora dele o
-  app usa tiles do OpenStreetMap.
+  (GitHub Pages via `.github/workflows/pages.yml`, só a pasta `app/`; repo público desde 2026-10-08). O artifact
+  do claude.ai foi aposentado e apagado em 2026-10-09: o único endereço é o Pages, com tiles do OpenStreetMap
+  (o ramo Protomaps de `app/fundo.js` só valia dentro do artifact).
 - Camada de dados em `app/api.js` (escolhe `api-exemplo.js`, dados fictícios em memória, ou `api-supabase.js`,
   Supabase com login Google, conforme `app/config.js`; `?modo=exemplo` força o exemplo). Regras sensíveis são
   funções SQL em `supabase/migrations/`. Nunca commitar service_role, senha do banco nem segredo do Google
@@ -39,9 +38,6 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
 - Decisões do Gui: inscrição com nome e telefone desde a v1; moderação humana por voluntários no
   início, automação depois; uma vaquinha só, geral, apontando para arrecadação oficial; busca por
   lugar livre (Brasil inteiro), referência visual Airbnb/Meetup.
-- Para republicar o artifact: publicar `app/index.html` com os arquivos `dados.js`, `lugares.js`,
-  `fundo.js`, `config.js`, `api.js`, `api-exemplo.js`, `api-supabase.js` e `leaflet.css` ao lado (o artifact só carrega stylesheet próprio). Fora do artifact o
-  mapa usa tiles do OpenStreetMap.
 - Pages publica a cada push em `master` que toque `app/`.
 - Fluxo de branches (desde 2026-10-09): ajuste pequeno e seguro vai direto na `master` com push; mudança maior ou
   arriscada vai numa branch, e o merge na `master` só acontece com OK do Gui. Sessões paralelas trabalham cada uma
