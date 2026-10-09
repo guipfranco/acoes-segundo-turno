@@ -39,9 +39,10 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   início, automação depois; uma vaquinha só, geral, apontando para arrecadação oficial; busca por
   lugar livre (Brasil inteiro), referência visual Airbnb/Meetup.
 - Pages publica a cada push em `master` que toque `app/`.
-- Fluxo de branches (desde 2026-10-09): ajuste pequeno e seguro vai direto na `master` com push; mudança maior ou
-  arriscada vai numa branch, e o merge na `master` só acontece com OK do Gui. Sessões paralelas trabalham cada uma
-  no seu worktree e na sua branch; a pasta principal fica na `master`, estável, para levantamento, publicação
+- Fluxo de branches (desde 2026-10-09, endurecido no mesmo dia): TODA mudança de código (app, scripts, testes,
+  migrações), por menor que seja, é feita num worktree com branch própria, nunca direto na `master`. O merge na
+  `master` só acontece com OK do Gui. Direto na `master` só o que não é código: documentação, CLAUDE.md e o merge
+  em si. Sessões paralelas trabalham cada uma no seu worktree e na sua branch; a pasta principal fica na `master`, estável, para levantamento, publicação
   (`publicar_acoes.py --aplicar` grava em produção) e merges, um de cada vez (cada push na `master` republica o
   Pages). `levantamento/` só existe na pasta principal (não vai para worktree; noutra máquina, clonar o repo privado). A pilha local do Supabase é
   compartilhada: não rodar `test_supabase.py` nem migrações em duas sessões ao mesmo tempo. Remover o worktree
