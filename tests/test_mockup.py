@@ -286,3 +286,9 @@ def test_foto_tem_reserva_e_credito_e_campo_no_criar():
     for s in ["const imgFoto", 'onerror="this.remove()"', "function creditoFoto", "const cuboAcao",
               "Foto da ação (link, opcional)", "foto:c.foto.trim()", 'class="foto capa']:
         assert s in HTML, s
+
+
+def test_mapa_ignora_acao_presencial_sem_coordenada():
+    # ação importada sem cidade reconhecida tem lat/lon null e não pode quebrar o mapa
+    assert "const temPino=" in HTML
+    assert "function acoesNaArea(){const todas=acoesVisiveis().filter(x=>temPino(x.a))" in HTML

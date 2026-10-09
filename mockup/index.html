@@ -189,6 +189,7 @@ function intervaloQuando(){const h=DADOS.config.hoje,w=new Date(h+'T00:00').getD
     default:return[h,fim]}}
 function turnosNoFiltro(id){const[de,ate]=intervaloQuando();return turnosFuturos(id).filter(t=>{const d=t.inicio.slice(0,10);return d>=de&&d<=ate})}
 const ehOnline=a=>!!(a.lugar&&a.lugar.online);
+const temPino=a=>!ehOnline(a)&&a.lugar&&typeof a.lugar.lat==='number'&&typeof a.lugar.lon==='number';
 const inscritosNo=tid=>DADOS.inscricoes.filter(i=>i.turno===tid&&!i.canceladaEm);
 const estouInscrito=tid=>inscritosNo(tid).some(i=>i.pessoa===eu());
 function vaoNa(id){return turnosDa(id).reduce((n,t)=>n+inscritosNo(t.id).length,0)}
@@ -240,7 +241,7 @@ function acoesVisiveis(){
   lista.forEach(x=>x.km=estado.onde&&!ehOnline(x.a)?distanciaKm(estado.onde,x.a.lugar):null);
   return lista.sort((p,q)=>p.t.inicio.localeCompare(q.t.inicio)||((p.km??0)-(q.km??0)))}
 const acoesOnline=()=>acoesVisiveis().filter(x=>ehOnline(x.a));
-function acoesNaArea(){const todas=acoesVisiveis().filter(x=>!ehOnline(x.a));if(!mapa)return todas;const b=mapa.getBounds();return todas.filter(x=>b.contains([x.a.lugar.lat,x.a.lugar.lon]))}
+function acoesNaArea(){const todas=acoesVisiveis().filter(x=>temPino(x.a));if(!mapa)return todas;const b=mapa.getBounds();return todas.filter(x=>b.contains([x.a.lugar.lat,x.a.lugar.lon]))}
 function fmtKm(km){return km<10?km.toFixed(1).replace('.',','):String(Math.round(km))}
 function pillFiltro(campo,k,v){return `<button class="pill ${estado[campo]===k?'ativo':''}" data-${campo}="${k}" onclick="estado.${campo}='${k}';render()">${v}</button>`}
 function filtrosHtml(){const h=DADOS.config.hoje;
@@ -312,7 +313,7 @@ function etiquetaPino(x){return L.divIcon({html:`<span class="etiqueta ${estado.
 function abrirGaveta(nivel){estado.gaveta=nivel;const g=document.getElementById('gaveta');if(g)g.className=nivel==='baixa'?'':nivel}
 function atualizarLista(){
   if(!mapa)return;
-  const todas=acoesVisiveis().filter(x=>!ehOnline(x.a)),aqui=acoesNaArea();
+  const todas=acoesVisiveis().filter(x=>temPino(x.a)),aqui=acoesNaArea();
   marcadores.forEach(m=>m.remove());marcadores=[];
   todas.forEach(x=>{const m=L.marker([x.a.lugar.lat,x.a.lugar.lon],{icon:etiquetaPino(x),riseOnHover:true});m._acao=x.a.id;m.addTo(mapa);
     m.on('click',()=>{focar(x.a.id);if(estado.gaveta==='baixa')abrirGaveta('meio');const c=document.getElementById('card-'+x.a.id);if(c)c.scrollIntoView({block:'nearest'})});marcadores.push(m)});

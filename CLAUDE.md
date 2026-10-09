@@ -24,3 +24,9 @@ Repo da plataforma de ações do 2º turno (voto do Lula). Nasceu do `mapa-segun
   `fundo.js` e `leaflet.css` ao lado (o artifact só carrega stylesheet próprio). Fora do artifact o
   mapa usa tiles do OpenStreetMap.
 - Pages publica a cada push em `master` que toque `mockup/`.
+- Levantamento de ações reais (2026-10-08): pasta `levantamento/` (no .gitignore, nunca versionar: tem nomes e links)
+  guarda a varredura de fontes e o balanço em `levantamento/RODADA-1.md`. Fonte principal: agenda "Bora Lula" do
+  Comitê Popular (JSON público). `python scripts/bora_lula.py` baixa o feed, guarda cópia datada em
+  `levantamento/bora-lula/` e gera `levantamento/dados-bora-lula.js` no formato do mockup (copiar sobre
+  `mockup/dados.js` só localmente para ver; dados reais no site publicado é decisão do Gui). Testes em
+  `tests/test_bora_lula.py`.
