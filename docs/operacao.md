@@ -199,6 +199,41 @@ e troca `foto_url` e grava `foto_mini_url` só nas ações cujos dois arquivos j
 
 - Em 2026-10-09 (noite, tarde da noite): merges de `seguranca-1009` e `fotos-e-lista-pages`; migrações 20261009000051 e 20261009000060 aplicadas com `ir_ao_ar.py migrar`; acervo de fotos migrado para `fotos/divulgacao/` com `fotos_divulgacao.py migrar-pages --aplicar` (431 ações apontadas para o Pages, bucket `divulgacao` pode ser esvaziado); `publico.json` servido pelo Pages. `previa-instagram` republicada com o limite por hora.
 
+## Cópia do banco
+
+O plano Free não faz backup. O workflow "Cópia diária do banco" (`.github/workflows/backup.yml`) roda
+`scripts/backup_banco.sh producao` todo dia às 00:17 de Brasília e guarda `banco-<data>.tar.gz.enc` como artefato
+por 90 dias (Actions > a execução > Artifacts). Dentro: `esquema.sql` (dump do esquema `public`) e `dados.sql`
+(dados de `public`, `auth` e `storage`, em `COPY`). O repo é público e qualquer pessoa logada no GitHub baixa
+artefato, por isso o arquivo vai cifrado (AES-256, senha `BACKUP_SENHA`): sem a senha ele é lixo, guarde-a no
+gerenciador de senhas.
+
+Para ligar (uma vez), três segredos em Settings > Secrets and variables > Actions, ou pelo `gh`:
+
+```bash
+gh secret set SUPABASE_ACCESS_TOKEN   # token pessoal (o mesmo do .env)
+gh secret set SUPABASE_DB_PASSWORD    # senha do banco (o mesmo do .env)
+gh secret set BACKUP_SENHA            # senha nova e forte, só para a cifra
+```
+
+Depois, Actions > "Cópia diária do banco" > Run workflow e conferir que saiu um artefato. Rodar na mão também vale
+(`BACKUP_SENHA=... bash scripts/backup_banco.sh producao` com o `.env` carregado; `local` copia a pilha local).
+
+Para abrir e restaurar:
+
+```bash
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in banco-<data>.tar.gz.enc -out banco.tar.gz -pass env:BACKUP_SENHA
+tar --force-local -xzf banco.tar.gz          # esquema.sql e dados.sql
+# num banco vazio (projeto novo ou pilha local depois de `db reset` sem seed): primeiro o esquema, depois os dados
+psql "$URL" -v ON_ERROR_STOP=1 -f esquema.sql
+psql "$URL" -v ON_ERROR_STOP=1 -c "set session_replication_role = replica" -f dados.sql
+```
+
+`session_replication_role = replica` desliga gatilhos e a conferência de chave estrangeira durante a carga:
+`organizacao` e `pessoa` apontam uma para a outra e o `pg_dump --data-only` avisa que a ordem não resolve sozinha.
+Para só recuperar algumas linhas (uma ação apagada por engano), abra `dados.sql` e copie o trecho do `COPY` da
+tabela para um `insert`.
+
 ## Incidentes e abuso
 
 Curto e prático. Tudo pela Fila (`#/fila`, só moderador) quando dá; SQL Editor e painel do Supabase como reserva.
