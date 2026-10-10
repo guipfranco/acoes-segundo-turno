@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Eleja o Lula</title>
 <meta name="description" content="Encontre panfletagens, atos e encontros perto de você e ajude a eleger o Lula no 2º turno.">
-<meta name="theme-color" content="#e60000">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#C3090A">
+<link rel="icon" href="favicon-48.png" type="image/png" sizes="48x48">
 <link rel="icon" href="favicon.png" type="image/png" sizes="192x192">
-<link rel="apple-touch-icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Eleja o Lula">
 <meta property="og:title" content="Eleja o Lula">
@@ -23,7 +23,9 @@
 <meta name="twitter:description" content="Encontre panfletagens, atos e encontros perto de você e ajude a eleger o Lula no 2º turno.">
 <meta name="twitter:image" content="https://guipfranco.github.io/acoes-segundo-turno/capa.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Montserrat:wght@400;500;600;700;800&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap">
+<link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="leaflet.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/pmtiles@4.5.0/dist/pmtiles.js" integrity="sha384-pbKNZbDshUsLnZMIVsn/t+j3xEY9PGfuX5Z22l5rcy/obXz3EwaMx1F5d9sRsJMn" crossorigin="anonymous"></script>
@@ -271,7 +273,7 @@ nav a.cta{background:var(--vermelho);color:#fff;flex:0 0 96px;font-size:14px;fon
 <body>
 <main id="app"><p class="sec" style="padding:24px">Carregando…</p></main>
 <nav><div class="barra">
-  <a class="marca" href="#/inicio">Eleja o <em>Lula</em></a>
+  <a class="marca" href="#/inicio"><img src="logo-comite.webp" alt="Comitê Popular do Lula" width="120" height="83"><span>Eleja o Lula</span></a>
   <a href="#/inicio" data-rota="inicio"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></span><span>Ações</span></a>
   <a href="#/mapa" data-rota="mapa"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14l-6 2.5z"/><path d="M9 4v14M15 6.5v14"/></svg></span><span>Mapa</span></a>
   <a href="#/fila" data-rota="fila" data-so-moderador style="display:none"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.8-5"/></svg></span><span>Fila</span></a>
@@ -468,7 +470,7 @@ function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='o
   const tituloPerto=`Perto de você: <button class="cidade" id="cidade-btn" aria-haspopup="true" aria-expanded="false" title="Trocar a cidade" onclick="abrirCidade(event)">${esc(perto.rotulo)}<span aria-hidden="true">▾</span></button>`;
   const popCidade=`<div class="pop-cidade" id="pop-cidade" hidden><div class="busca"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></span><input id="busca-cidade" placeholder="Digite sua cidade" autocomplete="off" oninput="sugerir(this.value,'cidade')" onkeydown="teclaBusca(event)">
     <button class="ico" title="Usar minha localização" onclick="localizarCidade()">📍</button></div><div id="sug-cidade"></div></div>`;
-  return `<div class="inicio-pg"><header class="hero"><h1>${esc(PUB.config.frase)}</h1><p>Panfletagem, encontro, ato, caminhada, bandeiraço. Encontre uma ação perto de você e diga que vai.</p>
+  return `<div class="inicio-pg"><header class="hero"><img class="logo-hero" src="logo-comite.webp" alt="Comitê Popular do Lula" width="150" height="104"><h1>${esc(PUB.config.frase)}</h1><p>Panfletagem, encontro, ato, caminhada, bandeiraço. Encontre uma ação perto de você e diga que vai.</p>
    <div class="caixa"><div class="busca"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></span><input id="busca-lugar" placeholder="Em que cidade você está?" autocomplete="off" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
     <button class="ico" title="Usar minha localização" onclick="usarLocalizacao()">📍</button></div><div id="sugestoes"></div></div>
    <div class="hero-cta"><span>Vai organizar uma ação?</span><a class="btn" href="#/criar" onclick="novaCriacao()">＋ Cadastrar ação</a></div>
@@ -483,7 +485,7 @@ function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='o
   <p class="credito" style="text-align:center;margin-top:24px">Fotos de exemplo do Wikimedia Commons, com licenças livres. O crédito de cada uma está na página da ação.</p>
   ${rodapeHtml()}</div>`}
 // responsabilidade (a lei eleitoral veda anonimato): quem faz o site e que não é propaganda paga
-function rodapeHtml(){return `<footer class="rodape sec">Site voluntário feito por Guilherme Pereira Franco, sem vínculo com a campanha nem com partido. Nenhuma divulgação paga.<br><a href="privacidade.html">Privacidade</a> · <a href="https://github.com/guipfranco/acoes-segundo-turno" target="_blank" rel="noopener">Código no GitHub</a></footer>`}
+function rodapeHtml(){return `<footer class="rodape sec">Uma iniciativa do Comitê Popular do Lula. Site voluntário feito por Guilherme Pereira Franco, sem vínculo com a campanha nem com partido. Nenhuma divulgação paga.<br><a href="privacidade.html">Privacidade</a> · <a href="https://github.com/guipfranco/acoes-segundo-turno" target="_blank" rel="noopener">Código no GitHub</a></footer>`}
 function irParaCidade(lat,lon,rotulo){estado.onde={rotulo,lat,lon};estado.vista={lat,lon,zoom:11};location.hash='#/mapa'}
 // chute da cidade: pede a localização uma vez e escolhe o município mais próximo (capital se estiver a até 40 km)
 function cidadeMaisProxima(p){const eu={lat:p.coords.latitude,lon:p.coords.longitude};let melhor=null,cap=null;

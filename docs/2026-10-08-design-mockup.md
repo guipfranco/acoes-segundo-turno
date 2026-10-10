@@ -3,6 +3,25 @@
 Referências pedidas pelo Gui: Airbnb (busca por lugar, lista que acompanha o mapa, etiquetas nos pinos) e
 Meetup (cards com cara de evento).
 
+## Identidade do Comitê Popular do Lula (2026-10-10)
+
+O Eleja o Lula passou a ser uma iniciativa do Comitê Popular do Lula. Vale o "Guia de interface web e apps" do
+Comitê (v1, 2026-10) e o `tokens.css` que o acompanha, copiado sem mudança para `app/tokens.css`. `app/marca.css`
+foi reescrito sobre esses tokens e substitui a seção "Identidade da campanha" abaixo, que fica só como histórico.
+
+- Decisões do Gui: logo do Comitê + "Eleja o Lula" no cabeçalho; só visual e acessibilidade (telas e fluxos
+  iguais); rodapé e privacidade ganham "Uma iniciativa do Comitê Popular do Lula" sem tirar o responsável.
+- Cores `--cp-*`: vermelho 500 para botões e links, 600 no hover, 700 pressionado e erro; verde e azul de texto
+  só na versão 700; amarelo só em sublinhado do item ativo, bordas de aviso e anel de foco sobre vermelho.
+- Montserrat 500/700/800/900, escala fluida do guia; caixa-alta só na frase da inicial e nos rótulos (etiquetas).
+- Botões em pílula de 44 px (52 px no "Eu vou!", 36 px só a partir de 1024 px); contorno vermelho no secundário.
+- Campos com borda `--cp-border-strong`, foco com anel grafite; erro com ícone ⚠ e texto.
+- Cards brancos com borda, raio 8 e padding 16; sem foto, faixas amarela, azul e verde do logo sobre a cor do tipo.
+- Celular: barra de abas branca, aba ativa vermelha e sublinhada, respeita a área segura; logo no topo da inicial.
+  Desktop: cabeçalho vermelho de 88 px, logo de 120 px, item ativo com sublinhado amarelo, "Cadastrar ação" branco.
+- Favicon e ícone: a mão do "L" sobre o vermelho, tirada do PDF do guia. Sombra só em camadas (menus, gaveta).
+- Fica para depois: `capa.png` (imagem de compartilhamento) ainda é a antiga.
+
 ## Identidade da campanha (2026-10-09)
 
 Pedido do Gui: mais cor e mais perto da identidade da campanha do Lula. Fonte: manual "Guia simplificado
