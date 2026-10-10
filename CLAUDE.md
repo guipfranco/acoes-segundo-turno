@@ -78,6 +78,9 @@ Nasceu do `mapa-segundo-turno` em 2026-10-08. URL, repo e projeto Supabase segue
   até um moderador verificar na aba Divulgação da Fila (`verificar_acao`/`desverificar_acao`, `acao.verificada_em`); reimportar
   com qualquer mudança vinda da fonte (só foto e logo não contam) tira a verificação. Mudança desse tipo: migração em produção ANTES
   do merge. Como operar em `docs/operacao.md`.
+- Dúvida vai para aprovação (migração 20261010000020, 2026-10-10): a importação não descarta mais ação por dúvida;
+  confiança baixa ou cidade não reconhecida entra "em análise" (fora do ar, `acao.motivo_duvida`, aba Em análise da Fila),
+  o resto vai ao ar com a etiqueta. Sem Lula explícito deixou de ser corte. Fora só repetição e datas fora da janela.
 - Spec em `docs/superpowers/specs/`, desenho visual em `docs/2026-10-08-design-mockup.md`, capturas em
   `docs/capturas/`.
 - Decisões do Gui: inscrição com nome e telefone desde a v1; moderação humana por voluntários no

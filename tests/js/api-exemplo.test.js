@@ -94,7 +94,7 @@ test('cancelada ainda em análise não abre pelo link nem conta como aprovada', 
   await api.sair();
   assert.equal(await api.acao(a.id), null); // os outros não
   const mod = d.pessoas.find(p => p.papel === 'moderador'); d.config.eu = mod.id; await api.entrar();
-  const fila = await api.fila('em análise'); const dele = fila.find(m => m.organizador.id === dono);
+  const fila = await api.fila('em análise'); const dele = fila.find(m => m.organizador && m.organizador.id === dono);
   if (dele) assert.equal(dele.organizador.aprovadas, d.acoes.filter(x => x.organizador === dono && x.publicadaEm && ['publicada', 'encerrada'].includes(x.status)).length);
 });
 
@@ -315,4 +315,20 @@ test('fila divulgação: turno de hora aproximada fica até o fim do dia; o exat
   d.config.eu = d.pessoas.find(p => p.papel === 'moderador').id; await api.entrar();
   const ids = (await api.fila('divulgacao')).map(m => m.acao.id);
   assert.ok(ids.includes(aprox.acao)); assert.ok(!ids.includes(exato.acao));
+});
+
+test('importada em dúvida: fora do ar, na fila Em análise com o motivo; aprovar verifica; sem lugar não aprova', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const duvidas = d.acoes.filter(x => x.fonte && x.status === 'em análise');
+  assert.equal(duvidas.length, 2);
+  const pub = await api.publico();
+  assert.ok(!pub.acoes.some(a => duvidas.some(x => x.id === a.id))); // fora do ar
+  const mod = d.pessoas.find(p => p.papel === 'moderador'); d.config.eu = mod.id; await api.entrar();
+  const fila = (await api.fila('em análise')).filter(m => m.acao.fonte);
+  assert.deepEqual(fila.map(m => [m.duvida, m.organizador]).sort(), [['confiança baixa', null], ['sem cidade reconhecida', null]]);
+  const comLugar = duvidas.find(x => x.lugar.lat != null), semLugar = duvidas.find(x => x.lugar.lat == null);
+  await assert.rejects(api.aprovar(semLugar.id), e => e.codigo === 'sem_lugar');
+  await api.aprovar(comLugar.id);
+  const a = (await api.publico()).acoes.find(x => x.id === comLugar.id);
+  assert.ok(a && a.divulgacaoPublica === false); // aprovada já sai conferida, sem a etiqueta
 });

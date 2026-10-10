@@ -238,7 +238,7 @@
       async criarAcao(dados) { escreveu = true; return rpc('criar_acao', { dados }); },
       async minhasAcoes() { return (await rpc('minhas_acoes')).map(comInscritos); },
       async encerrarAcao(id) { escreveu = true; await rpc('encerrar_acao', { acao_id: id }); },
-      async fila(situacao) { return (await rpc('fila_moderacao', { situacao: situacao || 'em análise' })).map(m => Object.assign(comInscritos(m), { organizador: m.organizador })); },
+      async fila(situacao) { return (await rpc('fila_moderacao', { situacao: situacao || 'em análise' })).map(m => Object.assign(comInscritos(m), { organizador: m.organizador, duvida: m.duvida || null })); },
       async aprovar(id) { escreveu = true; await rpc('aprovar_acao', { acao_id: id }); },
       async recusar(id, motivo) { escreveu = true; await rpc('recusar_acao', { acao_id: id, motivo }); },
       async verificar(id) { escreveu = true; await rpc('verificar_acao', { acao_id: id }); },
