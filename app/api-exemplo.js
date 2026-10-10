@@ -215,8 +215,10 @@
             .map(({ a }) => ({ acao: completa(a), turnos: comInscritos(a.id), organizador: null }));
         }
         // suspensas inclui as importadas: suspender é o jeito de tirar uma importada do ar
-        return dados.acoes.filter(a => a.status === situacao && (!a.fonte || situacao === 'rascunho')).sort((p, q) => String(q.criadaEm).localeCompare(String(p.criadaEm)))
+        // em análise inclui as importadas em dúvida (migração 20261010000020), sem pessoa organizadora e com o motivo
+        return dados.acoes.filter(a => a.status === situacao && (!a.fonte || situacao === 'rascunho' || situacao === 'em análise')).sort((p, q) => String(q.criadaEm).localeCompare(String(p.criadaEm)))
           .map(a => {
+            if (a.fonte && situacao === 'em análise') return { acao: completa(a), turnos: comInscritos(a.id), duvida: a.motivoDuvida || null, organizador: null };
             const p = pessoa(a.organizador) || {}; const delas = dados.acoes.filter(x => x.organizador === p.id);
             return { acao: completa(a), turnos: comInscritos(a.id), organizador: { id: p.id, nome: p.nome, email: p.email || null, telefone: p.telefone || null, bloqueada: !!p.bloqueada,
               criadas: delas.length, aprovadas: delas.filter(x => (x.status === 'publicada' || x.status === 'encerrada') && x.publicadaEm).length, recusadas: delas.filter(x => x.status === 'recusada').length } };
@@ -225,7 +227,9 @@
       async aprovar(id) {
         if (!ehModerador()) throw erro('so_moderador');
         const a = dados.acoes.find(x => x.id === id); if (!a || a.status !== 'em análise') throw erro('nao_pode');
+        if (!(a.lugar && a.lugar.online) && (a.lugar.lat == null || a.lugar.lon == null)) throw erro('sem_lugar');
         publicar(a);
+        if (a.fonte) { a.verificadaEm = agoraEx(); a.verificadaPor = sessao; }  // importada aprovada: a moderação conferiu
       },
       async recusar(id, motivo) {
         if (!ehModerador()) throw erro('so_moderador');

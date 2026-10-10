@@ -697,3 +697,69 @@ def test_fila_divulgacao_mantem_hora_aproximada_ate_o_fim_do_dia(cenario):
     sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
     fila = sb.rpc("fila_moderacao", {"situacao": "divulgacao"}, jwt=cenario["jwt_a"]).corpo
     assert [m["acao"]["titulo"] for m in fila if m["acao"]["fonte"] == fonte] == ["Importada aprox"]
+
+
+def _acao_da_fonte(fonte, fonte_id):
+    return sb.admin("GET", f"/rest/v1/acao?fonte=eq.{fonte}&fonte_id=eq.{fonte_id}&select=*").corpo[0]
+
+
+def test_duvida_entra_em_analise_fora_do_ar_e_aparece_na_fila_com_o_motivo(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    itens = [_item("ok"), _item("fraca", status="em análise", motivo_duvida="confiança baixa"),
+             _item("sem", status="em análise", motivo_duvida="sem cidade reconhecida", cidade="Xyz - SP", lat=None, lon=None, lugar_nome=None)]
+    r = sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE)
+    assert r.status == 200, r.corpo
+    assert [a["titulo"] for a in sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo] == ["Importada ok"]
+    assert _acao_da_fonte(fonte, "fraca")["status"] == "em análise"
+    # publicada sem ponto no mapa continua proibida
+    r = sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("x", lat=None, lon=None)]}, jwt=sb.SERVICE)
+    assert r.status >= 400 and "sem_lugar" in str(r.corpo)
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    fila = [m for m in sb.rpc("fila_moderacao", {"situacao": "em análise"}, jwt=cenario["jwt_a"]).corpo if m["acao"]["fonte"] == fonte]
+    assert sorted((m["acao"]["titulo"], m["duvida"], m["organizador"]) for m in fila) == [
+        ("Importada fraca", "confiança baixa", None), ("Importada sem", "sem cidade reconhecida", None)]
+    # aprovar: a com lugar vai ao ar já verificada; a sem lugar não dá para aprovar
+    fraca, sem = _acao_da_fonte(fonte, "fraca")["id"], _acao_da_fonte(fonte, "sem")["id"]
+    assert sb.rpc("aprovar_acao", {"acao_id": sem}, jwt=cenario["jwt_a"]).corpo["message"] == "sem_lugar"
+    assert sb.rpc("aprovar_acao", {"acao_id": fraca}, jwt=cenario["jwt_a"]).status in (200, 204)
+    pub = {a["titulo"]: a["verificada"] for a in sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo}
+    assert pub == {"Importada ok": False, "Importada fraca": True}
+    # recusar a sem lugar funciona
+    assert sb.rpc("recusar_acao", {"acao_id": sem, "motivo": "sem lugar"}, jwt=cenario["jwt_a"]).status in (200, 204)
+
+
+def test_reimportar_nao_mexe_na_decisao_da_moderacao_e_a_nunca_aprovada_nao_vai_ao_ar(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    duv = _item("d", status="em análise", motivo_duvida="confiança baixa")
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [duv]}, jwt=sb.SERVICE).status == 200
+    # reimportar sem status (como se a dúvida tivesse sumido) não publica: só a moderação decide
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("d")]}, jwt=sb.SERVICE).status == 200
+    assert _acao_da_fonte(fonte, "d")["status"] == "em análise"
+    # sumiu da fonte: encerra; volta: vai para a análise, não para o ar (nunca esteve publicada)
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": []}, jwt=sb.SERVICE).status == 200
+    assert _acao_da_fonte(fonte, "d")["status"] == "encerrada"
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [duv]}, jwt=sb.SERVICE).status == 200
+    assert _acao_da_fonte(fonte, "d")["status"] == "em análise"
+    # já publicada que volta: volta ao ar; recusada continua recusada
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [duv, _item("p")]}, jwt=sb.SERVICE).status == 200
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [duv]}, jwt=sb.SERVICE).status == 200
+    assert _acao_da_fonte(fonte, "p")["status"] == "encerrada"
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [duv, _item("p")]}, jwt=sb.SERVICE).status == 200
+    assert _acao_da_fonte(fonte, "p")["status"] == "publicada"
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    d = _acao_da_fonte(fonte, "d")["id"]
+    assert sb.rpc("recusar_acao", {"acao_id": d, "motivo": "não é ação"}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [duv, _item("p")]}, jwt=sb.SERVICE).status == 200
+    assert _acao_da_fonte(fonte, "d")["status"] == "recusada"
+
+
+def test_publicada_que_perde_o_ponto_na_fonte_guarda_o_lugar_e_perde_a_verificacao(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a")]}, jwt=sb.SERVICE).status == 200
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    _verificar_todas(cenario, [_acao_da_fonte(fonte, "a")["id"]])
+    sem = _item("a", status="em análise", motivo_duvida="sem cidade reconhecida", cidade="Xyz", lat=None, lon=None, lugar_nome=None)
+    r = sb.rpc("importar_acoes", {"fonte": fonte, "itens": [sem]}, jwt=sb.SERVICE)
+    assert r.status == 200, r.corpo
+    a = _acao_da_fonte(fonte, "a")
+    assert (a["status"], a["cidade"], a["lat"], a["verificada_em"]) == ("publicada", "Diadema", -23.68, None)

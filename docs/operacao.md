@@ -129,6 +129,23 @@ desfocada; a capa da página da ação mostra a imagem na proporção dela.
 Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capturas em
 `docs/capturas/2026-10-09-acao-importada.png` e `2026-10-09-mapa-importadas.png`.
 
+### Dúvida da importação vai para aprovação (desde 2026-10-10, migração 20261010000020)
+
+A importação (`publicar_acoes.py`, feed e redes) não descarta mais ação por dúvida. Regra:
+- Dúvida = confiança baixa na varredura das redes, ou cidade que a gente não reconhece (feed e redes). Entra com
+  status `em análise`, fora do ar, com o motivo em `acao.motivo_duvida`, e aparece na aba **Em análise** da Fila
+  (bloco amarelo com o motivo e o link do post). Aprovar põe no ar já verificada (sem a etiqueta); recusar tira de vez.
+  Sem cidade reconhecida a ação não tem ponto no mapa: a Fila não mostra Aprovar e o banco recusa (`sem_lugar`).
+- Sem o Lula escrito no post e confiança média não são mais motivo de corte: vão ao ar com a etiqueta
+  "Divulgação pública", como as outras importadas.
+- Continua de fora só a repetição (já vem do feed, já está no feed, repetido no consolidado, duplicata do feed) e o que
+  está fora da janela de datas. O `revisao-*.csv` lista também o que foi para aprovação, com o prefixo `aprovação:`.
+- Reimportar não mexe na decisão da moderação: em análise continua em análise, recusada continua recusada. A que
+  sumiu da fonte encerra; se voltar e nunca esteve no ar, volta para a análise, não para o ar. Publicada cuja fonte
+  perdeu a cidade guarda o lugar que tinha e perde a verificação.
+- Ordem para ir ao ar: migração 20261010000020 em produção antes do merge e o `--aplicar` só depois do merge (a fila
+  da `master` antiga não sabe mostrar importada em análise).
+
 ### Verificar ações de divulgação pública (desde 2026-10-10, migração 20261010000010)
 
 Decisão do Gui: não confiamos na revisão de quem publica a agenda de origem (o feed Bora Lula tem formulário aberto).

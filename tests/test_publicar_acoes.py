@@ -47,8 +47,13 @@ def test_item_do_feed_presencial_online_e_sem_cidade():
     assert item["link"] == "https://www.instagram.com/p/x/" and "Fonte:" in item["descricao"]
     on, _ = pa.item_do_feed(feed_item(online=True, cidade="", uf="", plataforma="YouTube"), LUGARES)
     assert on["online"] is True and on["lat"] is None and on["lugar_aproximado"] is False and "(YouTube)" in on["descricao"]
-    assert pa.item_do_feed(feed_item(cidade="", uf=""), LUGARES) == (None, "sem cidade")
-    assert pa.item_do_feed(feed_item(cidade="Xyz", uf="SP"), LUGARES) == (None, "sem cidade reconhecida")
+    # cidade que não reconhecemos: não some, vai para aprovação, sem ponto no mapa e com o que a fonte disse
+    sc, motivo = pa.item_do_feed(feed_item(cidade="", uf=""), LUGARES)
+    assert motivo is None and sc["status"] == "em análise" and sc["motivo_duvida"] == "sem cidade" and sc["lat"] is None
+    xyz, _ = pa.item_do_feed(feed_item(cidade="Xyz", uf="SP"), LUGARES)
+    assert (xyz["status"], xyz["motivo_duvida"]) == ("em análise", "sem cidade reconhecida")
+    assert xyz["cidade"] == "Xyz - SP" and xyz["lugar_nome"] == "Praça da Moça" and xyz["lat"] is None and xyz["lon"] is None
+    assert "status" not in item  # a que tem lugar vai ao ar (status padrão da importação)
     df, _ = pa.item_do_feed(feed_item(cidade="Ceilândia", uf="DF", endereco=""), LUGARES)
     assert df["cidade"] == "Brasília" and df["bairro"] == "Ceilândia" and -16 < df["lat"] < -15
     sbo, _ = pa.item_do_feed(feed_item(cidade="Santa Bárbara do Oeste", uf="SP"), LUGARES)
@@ -67,9 +72,11 @@ def test_itens_do_feed_filtra_datas_e_duplicatas():
         feed_item(id=7, local="", endereco="", atividade="Só a cidade de novo"),
     ]}
     itens, revisao = pa.itens_do_feed(feed, LUGARES)
-    assert [i["fonte_id"] for i in itens] == ["1", "6", "7"]
-    assert itens[1]["lugar_nome"] == "Diadema"
-    assert revisao == [("2", "Ato pelo Lula na praça", "duplicata do id 1"), ("5", "Sem cidade", "sem cidade")]
+    assert [i["fonte_id"] for i in itens] == ["1", "5", "6", "7"]
+    assert itens[1]["status"] == "em análise" and itens[2]["lugar_nome"] == "Diadema"
+    assert revisao == [("2", "Ato pelo Lula na praça", "duplicata do id 1"), ("5", "Sem cidade", "aprovação: sem cidade")]
+    r = pa.resumo(itens, revisao)
+    assert "3 para o ar" in r and "1 para aprovação, fora do ar (sem cidade 1)" in r and "1 de fora" in r
 
 
 def linha(**k):
@@ -96,7 +103,12 @@ def test_itens_do_consolidado_filtra_e_deduplica_contra_o_feed():
         linha(titulo="Sem cidade", cidade="", uf=""),
     ]
     itens, revisao = pa.itens_do_consolidado(linhas, LUGARES, feed_itens, hoje="2026-10-09")
-    assert [i["titulo"] for i in itens] == ["Plenária das mulheres", "Live"]
+    # sem o Lula escrito vai ao ar; confiança baixa e sem cidade vão para aprovação; nada disso some
+    assert [i["titulo"] for i in itens] == ["Plenária das mulheres", "Sem Lula", "Fraca", "Live", "Sem cidade"]
+    assert "status" not in itens[1]
+    assert (itens[2]["status"], itens[2]["motivo_duvida"]) == ("em análise", "confiança baixa") and itens[2]["lat"] is not None
+    assert (itens[4]["status"], itens[4]["motivo_duvida"], itens[4]["lat"]) == ("em análise", "sem cidade", None)
+    itens = [i for i in itens if i["titulo"] in ("Plenária das mulheres", "Live")]
     pl = itens[0]
     assert pl["organizacao"] == "Juventude PT Recife" and pl["organizacao_tipo"] == "partido"
     assert pl["bairro"] == "Boa Vista" and pl["lugar_nome"] == "Boa Vista" and pl["inicio"] == "2026-10-11T15:00" and pl["tipo"] == "encontro"
@@ -107,8 +119,8 @@ def test_itens_do_consolidado_filtra_e_deduplica_contra_o_feed():
     assert motivos["Outra"] == "já está no feed Bora Lula (id 9)"
     assert motivos["Plenária das mulheres"] == "repetido no consolidado"
     assert motivos["Do feed"] == "já vem do feed Bora Lula"
-    assert motivos["Sem Lula"] == "sem Lula explícito" and motivos["Fraca"] == "confiança baixa"
-    assert motivos["Sem cidade"] == "sem cidade" and "Passou" not in motivos
+    assert "Sem Lula" not in motivos and motivos["Fraca"] == "aprovação: confiança baixa"
+    assert motivos["Sem cidade"] == "aprovação: sem cidade" and "Passou" not in motivos
 
 
 def test_sql_importar_cita_o_json_sem_escapar():
@@ -264,7 +276,7 @@ def test_link_invalido_e_descartado_com_aviso_na_revisao():
     assert revisao == [("1", "Panfletagem no centro", "aviso: link descartado (não é http/https): javascript:alert(1)"),
                        ("2", "Panfletagem no centro", "aviso: link descartado (não é http/https): www.sem-esquema.org")]
     r = pa.resumo(itens, revisao)
-    assert "2 para publicar" in r and "0 de fora" in r and "AVISO: 2 links descartados" in r
+    assert "2 para o ar" in r and "0 para aprovação" in r and "0 de fora" in r and "AVISO: 2 links descartados" in r
     # rota redes (CSV): a mesma regra
     itens, revisao = pa.itens_do_consolidado([linha(link="data:text/html,oi"), linha(titulo="Boa", link="https://x/ok")], LUGARES, hoje="2026-10-09")
     assert [i["link"] for i in itens] == ["", "https://x/ok"]
@@ -349,3 +361,10 @@ def test_sem_item_com_foto_do_pages_nao_ha_trava(tmp_path, monkeypatch):
     # nada aponta para o Pages (mapa vazio): nem git nem HEAD são consultados, mesmo com pendência
     codigo, erro, gravacoes, buscas, heads = _rodar_aplicar(tmp_path, monkeypatch, pendentes=True, no_pages=False)
     assert codigo == 0 and len(gravacoes) == 1 and heads == []
+
+
+def test_baixa_sem_cidade_junta_os_motivos_e_vai_ao_banco_com_status():
+    itens, _ = pa.itens_do_consolidado([linha(titulo="Fraca e perdida", confianca="baixa", cidade="Xyz", uf="SP")], LUGARES, hoje="2026-10-09")
+    assert itens[0]["motivo_duvida"] == "confiança baixa; sem cidade reconhecida" and itens[0]["status"] == "em análise"
+    sql = pa.sql_importar("redes", itens)
+    assert "em análise" in sql and "motivo_duvida" in sql

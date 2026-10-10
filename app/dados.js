@@ -925,6 +925,53 @@ window.DADOS = {
    "contatoLink": "https://exemplo.org/post/caminhada-boa-vista",
    "fonte": "bora-lula",
    "verificadaEm": "2026-10-09T12:00"
+  },
+  {
+   "id": 28,
+   "titulo": "Panfletaço na Rua Grande",
+   "tipo": "panfletagem",
+   "descricao": "Panfletaço no centro, interessados chamar no privado\n\nFonte: Varredura pública das redes (Instagram, Facebook, X, Telegram e sites de organizações).",
+   "organizador": 14,
+   "organizacao": null,
+   "lugar": {
+    "nome": "Rua Grande",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "lat": -23.5505,
+    "lon": -46.6333,
+    "precisao": "cidade"
+   },
+   "status": "em análise",
+   "motivoRecusa": null,
+   "prioritaria": false,
+   "criadaEm": "2026-10-09",
+   "contatoTipo": "divulgacao",
+   "contatoLink": "https://exemplo.org/post/panfletaco-rua-grande",
+   "fonte": "redes",
+   "motivoDuvida": "confiança baixa"
+  },
+  {
+   "id": 29,
+   "titulo": "Sextou com Lula em GV",
+   "tipo": "bandeiraço",
+   "descricao": "Bandeiraço com estudantes e atléticas\n\nFonte: agenda Bora Lula do Comitê Popular.",
+   "organizador": 14,
+   "organizacao": null,
+   "lugar": {
+    "nome": "Praça da prefeitura",
+    "bairro": null,
+    "cidade": "GV - MG",
+    "lat": null,
+    "lon": null
+   },
+   "status": "em análise",
+   "motivoRecusa": null,
+   "prioritaria": false,
+   "criadaEm": "2026-10-09",
+   "contatoTipo": "divulgacao",
+   "contatoLink": "https://exemplo.org/post/sextou-gv",
+   "fonte": "bora-lula",
+   "motivoDuvida": "sem cidade reconhecida"
   }
  ],
  "turnos": [
@@ -1152,6 +1199,20 @@ window.DADOS = {
    "acao": 27,
    "inicio": "2026-10-11T09:00",
    "fim": "2026-10-11T11:00",
+   "lotacao": null
+  },
+  {
+   "id": 33,
+   "acao": 28,
+   "inicio": "2026-10-11T09:00",
+   "fim": "2026-10-11T11:00",
+   "lotacao": null
+  },
+  {
+   "id": 34,
+   "acao": 29,
+   "inicio": "2026-10-16T17:00",
+   "fim": "2026-10-16T19:00",
    "lotacao": null
   }
  ],

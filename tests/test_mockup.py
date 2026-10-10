@@ -606,3 +606,8 @@ def test_divulgacao_publica_etiqueta_aviso_e_fila():
     d = carregar_dados()
     importadas = [a for a in d["acoes"] if a.get("fonte")]
     assert {bool(a.get("verificadaEm")) for a in importadas} == {True, False}
+
+
+def test_duvida_da_importacao_aparece_na_aba_em_analise_sem_aprovar_quando_falta_lugar():
+    assert "if(aba==='analise'&&m.acao.fonte)return filaDuvidaHtml(m)" in HTML
+    assert "function filaDuvidaHtml" in HTML and "Sem lugar no mapa" in HTML and "sem_lugar:" in HTML

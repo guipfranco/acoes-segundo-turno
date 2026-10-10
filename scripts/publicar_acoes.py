@@ -52,6 +52,25 @@ class Falha(Exception):
     pass
 
 
+# Dúvida vai para aprovação (decisão do Gui, 2026-10-10): nada é descartado por dúvida. A ação em dúvida (confiança
+# baixa nas redes, cidade que não reconhecemos) entra "em análise", fora do ar, com o motivo, para a moderação aprovar
+# ou recusar na Fila (migração 20261010000020). Só fica de fora o que é repetição ou está fora da janela de datas.
+PREFIXO_APROVACAO = "aprovação: "
+
+
+def para_aprovacao(item, motivo):
+    item.update(status="em análise", motivo_duvida=motivo)
+    return item
+
+
+def sem_ponto(item, cidade, uf, bairro, nome):
+    """Cidade não reconhecida: sem ponto no mapa, com o que a fonte disse, para a moderação ler."""
+    cidade = " - ".join(x for x in (cidade, uf) if x) or None
+    item.update(online=False, lugar_nome=(nome or cidade or "")[:120] or None, bairro=bairro or None, cidade=cidade,
+                lat=None, lon=None, lugar_aproximado=False)
+    return item
+
+
 # ---- conversão: feed Bora Lula ----
 
 def chave_ato(data, uf, cidade, inicio, local):
@@ -91,7 +110,10 @@ def item_do_feed(x, lugares, geo=None):
     else:
         r = bl.resolver_lugar(cidade, uf, lugares)
         if not r:
-            return None, "sem cidade reconhecida" if cidade else "sem cidade"
+            sem_ponto(item, cidade, uf, None, local or endereco)
+            para_aprovacao(item, "sem cidade reconhecida" if cidade else "sem cidade")
+            item["descricao"] = descricao_de(x.get("atividade"), x.get("plataforma"), bl.FONTE)
+            return item, None
         cidade, bairro, c = r
         lat, lon, precisao = bl.localizar(geo, endereco, local, cidade, uf, c)
         item.update(online=False, lugar_nome=(local or endereco or cidade)[:120],
@@ -120,8 +142,15 @@ def itens_do_feed(feed, lugares, hoje=None, ate=ATE, geo=None):
         if k:
             vistos[k] = x["id"]
         anotar_aviso(item, revisao, str(x["id"]), x.get("atividade") or "")
+        anotar_aprovacao(item, revisao, str(x["id"]), x.get("atividade") or "")
         itens.append(item)
     return itens, revisao
+
+
+def anotar_aprovacao(item, revisao, ident, titulo):
+    """O item entra fora do ar, para a moderação aprovar; a revisão lista com o prefixo "aprovação:"."""
+    if item.get("status") == "em análise":
+        revisao.append((ident, titulo, PREFIXO_APROVACAO + item["motivo_duvida"]))
 
 
 def anotar_aviso(item, revisao, ident, titulo):
@@ -181,10 +210,8 @@ def limpar_org(texto):
 def item_da_rede(r, lugares, geo=None):
     if "bora lula" in bl.sem_acento(r.get("texto_original")):
         return None, "já vem do feed Bora Lula"
-    if bl.sem_acento(r.get("lula_explicito")) != "sim":
-        return None, "sem Lula explícito"
-    if bl.sem_acento(r.get("confianca")) == "baixa":
-        return None, "confiança baixa"
+    # sem o Lula escrito no post não é mais motivo de corte: vai ao ar com a etiqueta "Divulgação pública"
+    duvida = "confiança baixa" if bl.sem_acento(r.get("confianca")) == "baixa" else None
     online = bl.sem_acento(r.get("online")) == "sim"
     cidade, uf = (r.get("cidade") or "").strip(), (r.get("uf") or "").strip()
     cidade = re.sub(r"\s*[-/,]\s*[A-Za-z]{2}$", "", cidade)  # "Recife - PE" -> "Recife"
@@ -207,14 +234,18 @@ def item_da_rede(r, lugares, geo=None):
     else:
         res = bl.resolver_lugar(cidade, uf, lugares)
         if not res:
-            return None, "sem cidade reconhecida" if cidade else "sem cidade"
-        cidade, bairro_df, c = res
-        lat, lon, precisao = bl.localizar(geo, endereco, "", cidade, uf, c)
-        item.update(online=False, lugar_nome=(endereco or bairro or bairro_df or cidade)[:120],
-                    bairro=(bairro or bairro_df or bl.bairro_do_endereco(endereco, cidade)) or None,
-                    cidade=cidade, lat=lat, lon=lon, lugar_aproximado=precisao == "cidade")
+            sem_ponto(item, cidade, uf, bairro, endereco or bairro)
+            duvida = "; ".join(x for x in (duvida, "sem cidade reconhecida" if cidade else "sem cidade") if x)
+        else:
+            cidade, bairro_df, c = res
+            lat, lon, precisao = bl.localizar(geo, endereco, "", cidade, uf, c)
+            item.update(online=False, lugar_nome=(endereco or bairro or bairro_df or cidade)[:120],
+                        bairro=(bairro or bairro_df or bl.bairro_do_endereco(endereco, cidade)) or None,
+                        cidade=cidade, lat=lat, lon=lon, lugar_aproximado=precisao == "cidade")
     item["fonte_id"] = id_redes(item["link"], item["inicio"], item["cidade"], item["titulo"])
     item["descricao"] = descricao_de(r.get("titulo"), "", FONTE_REDES)
+    if duvida:
+        para_aprovacao(item, duvida)
     return item, None
 
 
@@ -289,6 +320,7 @@ def itens_do_consolidado(linhas, lugares, itens_feed=(), hoje=None, ate=ATE, geo
             continue
         aceitas.append((frente, item))
         anotar_aviso(item, revisao, frente, r.get("titulo", ""))
+        anotar_aprovacao(item, revisao, frente, r.get("titulo", ""))
         itens.append(item)
     return itens, revisao
 
@@ -407,23 +439,32 @@ def conferir_pages(itens):
 
 def resumo(itens, revisao):
     por_uf = {}
+    analise = [i for i in itens if i.get("status") == "em análise"]
     for i in itens:
+        if i in analise:
+            continue
         k = "online" if i["online"] else i["cidade"]
         por_uf[k] = por_uf.get(k, 0) + 1
     top = ", ".join(f"{k} {v}" for k, v in sorted(por_uf.items(), key=lambda kv: -kv[1])[:8])
-    exatas = sum(1 for i in itens if not i["online"] and not i["lugar_aproximado"])
+    exatas = sum(1 for i in itens if not i["online"] and not i["lugar_aproximado"] and i["lat"] is not None)
     com_logo = sum(1 for i in itens if i.get("organizacao_foto"))
     com_img = sum(1 for i in itens if i.get("foto"))
     top += f"; {exatas} com ponto exato, {com_logo} com logo da organização, {com_img} com imagem da divulgação"
-    motivos, avisos = {}, 0
+    motivos, avisos, duvidas = {}, 0, {}
     for _, _, m in revisao:
         if m.startswith("aviso:"):
             avisos += 1
             continue
+        if m.startswith(PREFIXO_APROVACAO):
+            m = m[len(PREFIXO_APROVACAO):]
+            duvidas[m] = duvidas.get(m, 0) + 1
+            continue
         m = re.sub(r"\s*\(.*|\s*\d+$", "", m)
         motivos[m] = motivos.get(m, 0) + 1
     fora = ", ".join(f"{m} {n}" for m, n in sorted(motivos.items(), key=lambda kv: -kv[1]))
-    texto = f"{len(itens)} para publicar ({top}); {len(revisao) - avisos} de fora: {fora or 'nada'}"
+    em_duvida = ", ".join(f"{m} {n}" for m, n in sorted(duvidas.items(), key=lambda kv: -kv[1]))
+    texto = (f"{len(itens) - len(analise)} para o ar ({top}); {len(analise)} para aprovação, fora do ar"
+             f"{f' ({em_duvida})' if em_duvida else ''}; {len(revisao) - avisos - len(analise)} de fora (repetição ou dado sem uso): {fora or 'nada'}")
     if avisos:
         texto += f". AVISO: {avisos} links descartados por não serem http/https (veja revisao-*.csv)"
     return texto
