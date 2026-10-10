@@ -54,6 +54,18 @@
       return s;
     } catch (e) { return null; }
   }
+  // A API devolve no máximo max_rows linhas (1000, o padrão do Supabase) por resposta, sem avisar. Pede página a
+  // página pelo Range e para na primeira página curta. (Se max_rows baixar de 1000 em produção, PAGINA tem que baixar junto.)
+  const PAGINA = 1000;
+  async function tudo(consulta) {
+    const linhas = [];
+    for (let inicio = 0; ; inicio += PAGINA) {
+      const { data, error } = await consulta().range(inicio, inicio + PAGINA - 1);
+      if (error) throw erroDe(error);
+      linhas.push(...(data || []));
+      if (!data || data.length < PAGINA) return linhas;
+    }
+  }
   function montarPublico(cfgLinhas, orgs, acoes, turnos) {
     const hoje = hojeBrasilia();
     const config = { hoje, agora: agoraBrasilia(), frase: '', vaquinha: '#' };
@@ -68,6 +80,15 @@
     async function uid() { const { data } = await sb.auth.getSession(); return data.session ? data.session.user.id : null; }
     async function rpc(nome, args) { const { data, error } = await sb.rpc(nome, args || {}); if (error) throw erroDe(error); return data; }
     let escreveu = false; // esta página já gravou algo: a vitrine passa a vir do Supabase, não do snapshot
+    // a mesma página pede o arquivo uma vez por minuto (inicial + ação abertas em seguida), não a cada tela
+    const SNAPSHOT_MEMORIA_MS = 60 * 1000;
+    let snapshotEmMemoria = null; // { lidoEm, promessa }
+    function snapshot() {
+      if (!snapshotEmMemoria || Date.now() - snapshotEmMemoria.lidoEm > SNAPSHOT_MEMORIA_MS) {
+        snapshotEmMemoria = { lidoEm: Date.now(), promessa: lerSnapshot() };
+      }
+      return snapshotEmMemoria.promessa;
+    }
     const api = {
       modo: 'supabase',
       origemPublico: null, // 'snapshot' | 'supabase', para depuração
@@ -83,19 +104,28 @@
       },
       async sair() { await sb.auth.signOut(); },
       async publico() {
-        const snap = (escreveu || await uid()) ? null : await lerSnapshot();
+        const snap = (escreveu || await uid()) ? null : await snapshot();
         if (snap) { api.origemPublico = 'snapshot'; return montarPublico(snap.configuracao, snap.organizacoes, snap.acoes, snap.turnos); }
-        const [cfgR, orgR, acR, tR] = await Promise.all([
-          sb.from('configuracao_publica').select('chave,valor'),
-          sb.from('organizacao_publica').select('id,nome,tipo,verificada,foto_url,foto_credito,foto_pagina'),
-          sb.from('acao_publica').select('*'),
-          sb.from('turno_publico').select('*').gte('inicio', hojeBrasilia() + 'T00:00:00'),
+        const [cfg, orgs, acoes, turnos] = await Promise.all([
+          tudo(() => sb.from('configuracao_publica').select('chave,valor').order('chave')),
+          tudo(() => sb.from('organizacao_publica').select('id,nome,tipo,verificada,foto_url,foto_credito,foto_pagina').order('id')),
+          tudo(() => sb.from('acao_publica').select('*').order('id')),
+          tudo(() => sb.from('turno_publico').select('*').gte('inicio', hojeBrasilia() + 'T00:00:00').order('id')),
         ]);
-        for (const r of [cfgR, orgR, acR, tR]) if (r.error) throw erroDe(r.error);
         api.origemPublico = 'supabase';
-        return montarPublico(cfgR.data, orgR.data, acR.data, tR.data);
+        return montarPublico(cfg, orgs, acoes, turnos);
       },
       async acao(id) {
+        // Quem só olha (sem sessão, sem ter escrito nada) lê a ação do snapshot: é o link que circula no WhatsApp,
+        // não precisa bater no banco. Ação fora do arquivo (aprovada há menos de 1 h, cancelada) segue ao vivo.
+        const snap = (escreveu || await uid()) ? null : await snapshot();
+        if (snap) {
+          const linha = snap.acoes.find(a => a.id === id);
+          if (linha) {
+            const turnos = snap.turnos.filter(t => t.acao === id).sort((x, y) => String(x.inicio).localeCompare(String(y.inicio)));
+            return { acao: deAcao(linha), turnos: turnos.map(deTurno), inscrita: [], combinado: null };
+          }
+        }
         const [aR, tR, mim] = await Promise.all([
           sb.from('acao_publica').select('*').eq('id', id).maybeSingle(),
           sb.from('turno_publico').select('*').eq('acao', id).order('inicio'),
