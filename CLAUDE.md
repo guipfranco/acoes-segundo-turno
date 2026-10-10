@@ -68,5 +68,7 @@ varredura bruta (nomes e telefones). Nunca copiar nada de lá para cá nem torn�
 - Uma vaquinha só, geral, apontando para a arrecadação oficial (`https://doelula.com.br/`).
 - Busca por lugar livre (Brasil inteiro); referência visual Airbnb/Meetup.
 - Rodapé fixo: "Uma iniciativa do Comitê Popular do Lula. Não é site oficial da campanha. Nenhuma divulgação paga."
-- Domínio próprio + Cloudflare: o Gui faz depois. Mudança para o repo `comite-popular-tech/agregador-de-agendas`
-  planejada em `docs/2026-10-10-mudanca-para-agregador.md`.
+- Domínio próprio + Cloudflare: o Gui faz depois.
+- **Fusão com o boralula.org** (2026-10-10, combinada com a equipe de lá): a Agenda vai virar parte do boralula.org e
+  depois desligar. O projeto já está em `acoes-segundo-turno/` no repo `comite-popular-tech/agregador-de-agendas`.
+  O que portar e as decisões: `docs/2026-10-10-fusao-com-boralula.md`. Até a fusão, este repo segue no ar como está.

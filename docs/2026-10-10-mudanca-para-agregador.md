@@ -1,5 +1,9 @@
 # Mudança para o repo agregador-de-agendas (plano, 2026-10-10)
 
+**Substituído no mesmo dia:** o Carlos trouxe o repo inteiro para `acoes-segundo-turno/` no agregador (`git subtree`),
+e o Gui decidiu fundir a Agenda com o boralula.org. Plano em vigor: `docs/2026-10-10-fusao-com-boralula.md`. O resto
+deste arquivo fica como registro da análise.
+
 Decisão do Gui (2026-10-10): o projeto passa a morar numa pasta do repo PRIVADO
 `comite-popular-tech/agregador-de-agendas` (projeto boralula, branch `main`), e a equipe trabalha lá. Ainda não foi
 feito. Este arquivo lista o que quebra e a ordem para mudar sem derrubar o site.
