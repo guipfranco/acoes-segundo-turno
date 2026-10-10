@@ -21,7 +21,10 @@ foi reescrito sobre esses tokens e substitui a seção "Identidade da campanha" 
 - Campos com borda `--cp-border-strong`, foco com anel grafite; erro com ícone ⚠ e texto.
 - Cards brancos com borda, raio 8 e padding 16; sem foto, faixas amarela, azul e verde do logo sobre a cor do tipo.
 - Celular: barra de abas branca, aba ativa vermelha e sublinhada, respeita a área segura; logo no topo da inicial.
-  Desktop: cabeçalho vermelho de 88 px, logo de 120 px, item ativo com sublinhado amarelo, "Cadastrar ação" branco.
+  Desktop: cabeçalho vermelho de 64 px só com "Eleja o Lula" (o Gui achou a barra com o logo alta demais; o logo
+  fica no topo da inicial, 180 px), item ativo da altura da barra com sublinhado amarelo colado na borda de baixo,
+  "Cadastrar ação" branco. Ícone do Perfil só no contorno, logado ou não. Respiro de 24 a 32 px entre as partes
+  do topo da inicial.
 - Favicon e ícone: a mão do "L" sobre o vermelho, tirada do PDF do guia. Sombra só em camadas (menus, gaveta).
 - Fica para depois: `capa.png` (imagem de compartilhamento) ainda é a antiga.
 
