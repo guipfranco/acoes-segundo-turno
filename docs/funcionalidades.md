@@ -20,6 +20,9 @@ skills em `.claude/skills/`; para operar a produção, `docs/operacao.md`. Atual
   outro (migração 20261009000010).
 - **Fotos**: das ações importadas, a arte do post (em `fotos/divulgacao/`, arte + `-mini.jpg`); das de exemplo, Wikimedia
   Commons com crédito (campo `foto`).
+- **Sem foto** (desde 2026-10-10): o app desenha um cartaz na área da imagem (card, lista online e página da ação):
+  cor da marca alternada pelo id, tarja amarela "Bora Lula", o tipo em letra grande e a cidade. Com logo da
+  organização, o logo vai no alto do cartaz. Ele fica por baixo da foto e aparece também quando ela não carrega.
 - **Turno que já terminou** some das listas, do mapa e do "Eu vou!" (`config.agora`, em Brasília; no exemplo,
   `dados.config.agora`). `turno.hora_aproximada`: divulgação que só diz "à noite" aparece como "sex 09/10, à noite",
   com aviso (migração 20261009000050).

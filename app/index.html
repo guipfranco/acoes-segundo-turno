@@ -127,7 +127,6 @@ dialog.login-google{border:0;border-radius:20px;padding:28px 24px 18px;max-width
 /* card vertical (4:5), o formato do post do Instagram: a arte aparece inteira; o que sobra (foto 3:4, quadrada,
    horizontal) é preenchido com a própria imagem desfocada, sem cortar texto do cartaz */
 .foto{aspect-ratio:4/5;border-radius:16px;position:relative;display:grid;place-items:center;font-size:56px;overflow:hidden;background:var(--nevoa)}
-.foto::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 18% 12%,rgba(255,255,255,.6),transparent 55%)}
 .foto .img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;display:block}
 .foto .fundo{position:absolute;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);object-fit:cover;filter:blur(20px) brightness(.9);z-index:1;display:block}
 .foto .img~.data,.foto .img~.online{z-index:2}.foto .img~.data{box-shadow:0 1px 6px rgba(23,23,26,.35)}
@@ -382,6 +381,13 @@ const avatarLetra=nome=>`<span class="avatar letra" aria-hidden="true">${esc(Str
 function quemDivulga(a){const f=fotoQuem(a),o=a.organizacao?org(a.organizacao):null;return `<span class="quem">${f?imgAvatar(f):o?avatarLetra(o.nome):''}<span>${nomeOrganizador(a)}</span></span>`}
 // sem foto própria, o logo da organização vira a capa (sobre a cor do tipo)
 function logoCapa(a){const o=a.organizacao?org(a.organizacao):null;return !(a.foto&&a.foto.url)&&o&&o.foto&&o.foto.url?o.foto:null}
+// sem foto própria, o app desenha um cartaz na área da imagem: cor da marca, tarja "Bora Lula", o tipo em letra
+// grande e a cidade. Ele fica sempre por baixo da foto e serve de reserva quando ela não carrega. A cor alterna pelo
+// id para a fileira da vitrine não virar uma sequência de cartazes iguais. Letra medida pela palavra mais longa (cqw).
+const CORES_CARTAZ=['vermelho','verde','azul','vinho'];
+function cartaz(a,tam,comLogo){const r=a.tipo==='outro'?'ação':a.tipo,l=a.lugar||{},onde=ehOnline(a)?'Online':l.cidade||'';
+  const maior=Math.max(4,...r.split(' ').map(p=>p.length)),[teto,k]=tam==='mini'?[18,95]:tam==='capa'?(comLogo?[6,60]:[10,88]):comLogo?[11,88]:[24,88];
+  return `<div class="cartaz cartaz-${CORES_CARTAZ[Math.abs(Number(a.id)||0)%CORES_CARTAZ.length]}" aria-hidden="true"><span class="cartaz-tarja">Bora Lula</span><span class="cartaz-tipo" style="font-size:${Math.min(teto,k/maior).toFixed(1)}cqw">${esc(r)}</span>${onde&&tam!=='mini'?`<span class="cartaz-onde">${esc(onde)}</span>`:''}</div>`}
 const imgLogo=f=>`<img class="logo" src="${esc(f.url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`;
 function creditoLogo(f){return f.credito?`<p class="credito">Logo: ${f.pagina?`<a href="${esc(f.pagina)}" target="_blank" rel="noopener">${esc(f.credito)}</a>`:esc(f.credito)}</p>`:''}
 function nomeOrganizador(a){if(a.organizacao){const o=org(a.organizacao)||DADOS.organizacoes.find(x=>x.id===a.organizacao);return esc(o.nome)+(o.verificada?' <span class="selo">✓ verificada</span>':'')}return esc(a.organizadorNome!=null?a.organizadorNome:(pessoa(a.organizador)||{}).nome)}
@@ -446,7 +452,7 @@ const fotoCard=a=>a.foto.mini||a.foto.url;
 const imgFoto=(a,cheia)=>a.foto&&a.foto.url?imgArte(cheia?a.foto.url:fotoCard(a),'loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"'):'';
 // arte inteira por cima da mesma imagem desfocada, que preenche a sobra do card
 const imgArte=(url,extra='')=>`<img class="fundo" src="${esc(url)}" alt="" aria-hidden="true" ${extra}><img class="img" src="${esc(url)}" alt="" ${extra}>`;
-function fotoEvento(x){const a=x.a,lg=logoCapa(a);return `<div class="foto f-${CLASSE[a.tipo].slice(2)}" role="img" aria-label="${esc(a.tipo)}">${ICONES[a.tipo]}${lg?imgLogo(lg):''}${imgFoto(a)}<span class="data">${quandoCurto(x.t)}</span>${ehOnline(a)?'<span class="online">Online</span>':''}</div>`}
+function fotoEvento(x){const a=x.a,lg=logoCapa(a);return `<div class="foto f-${CLASSE[a.tipo].slice(2)}${lg?' com-logo':''}" role="img" aria-label="${esc(a.tipo)}">${cartaz(a,'card',lg)}${lg?imgLogo(lg):''}${imgFoto(a)}<span class="data">${quandoCurto(x.t)}</span>${ehOnline(a)?'<span class="online">Online</span>':''}</div>`}
 function creditoFoto(a){return a.foto&&a.foto.credito?`<p class="credito">Foto: ${a.foto.pagina?`<a href="${esc(a.foto.pagina)}" target="_blank" rel="noopener">${esc(a.foto.credito)}</a>`:esc(a.foto.credito)}</p>`:''}
 const cuboAcao=(a,extra='')=>a.foto&&a.foto.url?`<div class="cubo ${CLASSE[a.tipo]} com-foto" style="background-image:url('${esc(fotoCard(a))}');${extra}"></div>`:`<div class="cubo ${CLASSE[a.tipo]}" style="${extra}">${ICONES[a.tipo]}</div>`;
 function cardEvento(x){const a=x.a;return `<a class="evento" href="#/acao/${a.id}">${fotoEvento(x)}
@@ -464,7 +470,7 @@ function blocoVitrine(titulo,lista,link,sub,extra,chave){const aberto=!!(estado.
   ${chave&&lista.length>POR_LINHA?`<button class="ver-todas" data-rotulo="${esc(rot)}" onclick="verTodas(this,'${esc(chave)}')">${aberto?'Ver menos':rot}</button>`:''}</section>`}
 // ações online: lista compacta (miniatura, título, quando, quem), em ordem de horário; não é um trilho de cartazes
 // (a pessoa não precisa passar card a card para achar a live das 19h). Mais de 4: "Ver todas" abre o resto.
-function cardOnline(x){const a=x.a,lg=logoCapa(a);return `<a class="evento-online" href="#/acao/${a.id}"><div class="foto mini f-${CLASSE[a.tipo].slice(2)}" role="img" aria-label="${esc(a.tipo)}">${ICONES[a.tipo]}${lg?imgLogo(lg):''}${imgFoto(a)}</div>
+function cardOnline(x){const a=x.a,lg=logoCapa(a);return `<a class="evento-online" href="#/acao/${a.id}"><div class="foto mini f-${CLASSE[a.tipo].slice(2)}${lg?' com-logo':''}" role="img" aria-label="${esc(a.tipo)}">${cartaz(a,'mini',lg)}${lg?imgLogo(lg):''}${imgFoto(a)}</div>
   <div class="txt"><div class="tit">${esc(a.titulo)}</div><div class="meta"><b>${quandoTurno(x.t)}</b> · Online</div><div class="meta quem-linha">${quemDivulga(a)}</div>${linhaTagDivulga(a)}${linhaVao(a)}</div></a>`}
 function blocoOnline(lista){const chave='online',aberto=!!(estado.vitrineAberta&&estado.vitrineAberta[chave]),rot=`Ver todas as ações online (${lista.length})`;
   return `<section class="bloco"><div class="cab"><h2>Online, de qualquer lugar</h2></div><p class="sub">Lives, ligatona e mutirão de mensagens: você participa de casa, pelo celular.</p>
@@ -736,7 +742,7 @@ function barraModerar(a){if(!estado.sessao||estado.sessao.papel!=='moderador')re
 function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const a=ab.acao,fechada=a.status!=='publicada';
   const ts=ab.turnos,futuros=ts.filter(turnoVale);
   return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a>${barraModerar(a)}<div class="acao"><div class="acao-corpo">
-  ${a.foto&&a.foto.url?`<div class="foto capa natural f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a,true)}</div>${creditoFoto(a)}`:logoCapa(a)?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgLogo(logoCapa(a))}</div>${creditoLogo(logoCapa(a))}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
+  ${a.foto&&a.foto.url?`<div class="foto capa natural f-${CLASSE[a.tipo].slice(2)}">${cartaz(a,'capa')}${imgFoto(a,true)}</div>${creditoFoto(a)}`:logoCapa(a)?`<div class="foto capa com-logo f-${CLASSE[a.tipo].slice(2)}">${cartaz(a,'capa',true)}${imgLogo(logoCapa(a))}</div>${creditoLogo(logoCapa(a))}`:`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${cartaz(a,'capa')}</div>`}
   <h1>${esc(a.titulo)}</h1>
   <div class="sec" style="font-size:15px">${quemDivulga(a)}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div>
   ${fechada?'':a.divulgacaoPublica?`<div style="margin-top:8px">${tagDivulga(a)}</div>${avisoDivulga(a)}`:''}
