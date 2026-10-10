@@ -557,21 +557,25 @@ def test_scripts_de_cdn_tem_integridade():
         assert re.search(r"@\d+\.\d+\.\d+/|/\d+\.\d+\.\d+/|count\.v\d+\.js", tag), tag
 
 
-RESPONSAVEL = "Site voluntário feito por Guilherme Pereira Franco, sem vínculo com a campanha nem com partido."
-GITHUB = "https://github.com/guipfranco/acoes-segundo-turno"
+COMITE = "Uma iniciativa do Comitê Popular do Lula."
 
 
-def test_rodape_de_responsabilidade_na_inicial_e_na_privacidade():
-    # lei eleitoral veda anonimato: quem faz o site, sem vínculo e sem divulgação paga
+def test_rodape_do_comite_na_inicial_e_na_privacidade():
+    # desde 2026-10-10 o rodapé só diz de quem é a iniciativa (pedido do Gui: sem o nome dele e sem o link do código)
     i = HTML.index("function telaInicio"); inicio = HTML[i:HTML.index("function irParaCidade")]
     assert "rodapeHtml()" in inicio
     rodape = HTML[HTML.index("function rodapeHtml"):].split("\n", 1)[0]
-    assert RESPONSAVEL in rodape and "Nenhuma divulgação paga." in rodape
-    assert "Uma iniciativa do Comitê Popular do Lula." in rodape
-    assert 'class="rodape sec"' in rodape and 'href="privacidade.html"' in rodape and f'href="{GITHUB}"' in rodape
+    assert COMITE in rodape and 'class="rodape sec"' in rodape and 'href="privacidade.html"' in rodape
+    assert "github.com" not in rodape and "Guilherme" not in rodape
     assert ".rodape{text-align:center;font-size:13px" in HTML
     priv = re.sub(r"\s+", " ", (RAIZ / "app" / "privacidade.html").read_text(encoding="utf-8"))
-    assert RESPONSAVEL in priv and "Nenhuma divulgação paga." in priv and f'href="{GITHUB}"' in priv
+    assert COMITE in priv and "github.com" not in priv
+
+
+def test_cards_da_inicial_preenchem_a_area_da_imagem():
+    marca = (RAIZ / "app" / "marca.css").read_text(encoding="utf-8")
+    assert ".evento .foto .img,.evento-online .foto .img{object-fit:cover}" in marca
+    assert ".evento .foto .fundo,.evento-online .foto .fundo{display:none}" in marca
 
 
 def test_aviso_de_que_o_link_do_grupo_fica_visivel_a_quem_vai():

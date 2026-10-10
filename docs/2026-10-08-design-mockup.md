@@ -10,7 +10,10 @@ Comitê (v1, 2026-10) e o `tokens.css` que o acompanha, copiado sem mudança par
 foi reescrito sobre esses tokens e substitui a seção "Identidade da campanha" abaixo, que fica só como histórico.
 
 - Decisões do Gui: logo do Comitê + "Eleja o Lula" no cabeçalho; só visual e acessibilidade (telas e fluxos
-  iguais); rodapé e privacidade ganham "Uma iniciativa do Comitê Popular do Lula" sem tirar o responsável.
+  iguais); rodapé e privacidade dizem só "Uma iniciativa do Comitê Popular do Lula" (o Gui tirou o nome dele, o
+  "sem vínculo", o "Nenhuma divulgação paga" e o link do código no GitHub).
+- Cards da inicial: a imagem preenche a área 4:5 (`object-fit: cover`), sem o fundo desfocado; corta a sobra dos
+  stories 9:16 e das artes quadradas. A página da ação segue com a arte inteira.
 - Cores `--cp-*`: vermelho 500 para botões e links, 600 no hover, 700 pressionado e erro; verde e azul de texto
   só na versão 700; amarelo só em sublinhado do item ativo, bordas de aviso e anel de foco sobre vermelho.
 - Montserrat 500/700/800/900, escala fluida do guia; caixa-alta só na frase da inicial e nos rótulos (etiquetas).

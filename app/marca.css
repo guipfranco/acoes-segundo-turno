@@ -90,6 +90,10 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{border-radius:va
 .foto{isolation:isolate}
 .foto::after{display:block;z-index:-1;background:linear-gradient(-14deg,transparent 0 62%,var(--cp-yellow-400) 62% 68%,var(--cp-blue-500) 68% 74%,var(--cp-green-500) 74% 80%,transparent 80%)}
 .foto.capa.natural::after{display:none}
+/* cards da inicial (e a prévia do cadastro, que imita o card): a imagem preenche a área 4:5 e corta a sobra,
+   sem o fundo desfocado; a página da ação segue mostrando a arte inteira */
+.evento .foto .img,.evento-online .foto .img{object-fit:cover}
+.evento .foto .fundo,.evento-online .foto .fundo{display:none}
 .f-panfletagem,.f-bandeiraco,.f-outro{background:var(--cp-red-500)}.f-adesivaco,.f-ato{background:var(--cp-green-500)}
 .f-encontro,.f-porta,.f-cultural{background:var(--cp-blue-500)}.f-ligatona,.f-caminhada{background:var(--cp-red-700)}
 .t-panfletagem,.t-bandeiraco,.t-outro{background:var(--cp-danger-bg)}.t-adesivaco,.t-ato{background:var(--cp-success-bg)}
