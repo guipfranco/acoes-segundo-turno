@@ -154,7 +154,15 @@ nav a:focus-visible{border-radius:var(--cp-radius-md)}
   :root{--cab:64px}
   nav{background:var(--cp-red-500);border-top:0;border-bottom:0;padding-bottom:0}
   nav .barra{max-width:1200px;padding:0 32px}
-  nav .marca{align-items:center;color:#fff;font-size:var(--cp-text-h3);font-weight:800;letter-spacing:-.01em;height:auto}
+  nav .marca{align-items:center;color:#fff;height:var(--cab);padding:0 8px 0 0}
+  /* "Bora Lula" como na arte do Comitê: letra larga e preta (Archivo expandida 900, só as letras da marca), o bloco
+     girado para cima com as letras retas, o B é um I3 amarelo e uma estrela fecha a primeira linha */
+  nav .marca .bl{display:flex;flex-direction:column;font-family:'Archivo',var(--cp-font);font-stretch:125%;font-weight:900;
+    font-size:26px;line-height:.82;letter-spacing:-.01em;text-transform:uppercase;transform:translateY(2px) rotate(-5deg);transform-origin:left center}
+  nav .marca .bl>span{display:flex;align-items:flex-start;white-space:nowrap}
+  nav .marca .bl>span+span{letter-spacing:.06em}
+  nav .marca .bl b{color:var(--cp-yellow-400);font-weight:900;letter-spacing:-.07em;margin-right:.02em}
+  nav .marca .bl svg{width:.5em;height:.5em;fill:#fff;margin:.02em 0 0 .06em;flex:none}
   nav .marca:hover{background:none}
   nav a{color:#fff;font-size:var(--cp-text-sm);font-weight:700;height:var(--cab);border-radius:0}
   nav a:hover{background:rgb(255 255 255 / .14)}
