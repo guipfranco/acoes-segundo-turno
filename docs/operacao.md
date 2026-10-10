@@ -129,6 +129,26 @@ desfocada; a capa da página da ação mostra a imagem na proporção dela.
 Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capturas em
 `docs/capturas/2026-10-09-acao-importada.png` e `2026-10-09-mapa-importadas.png`.
 
+### Verificar ações de divulgação pública (desde 2026-10-10, migração 20261010000010)
+
+Decisão do Gui: não confiamos na revisão de quem publica a agenda de origem (o feed Bora Lula tem formulário aberto).
+Toda ação importada (`acao.fonte` preenchido: `bora-lula` e `redes`) entra no ar com a etiqueta **"Divulgação
+pública"** nos cards e um aviso amarelo na página ("ninguém da moderação conferiu ainda; confira no post original").
+A etiqueta some quando alguém da moderação verifica:
+
+1. Fila (`#/fila`), aba **Divulgação**: importadas no ar, sem verificação, com horário que ainda não passou, da mais
+   próxima para a mais distante.
+2. Abrir "Ver a divulgação original" e conferir: é ação pelo Lula, data, hora e lugar batem com o que está no site.
+3. Bateu: **Verificar**. Falsa ou errada: **Recusar** com motivo (sai do ar; a importação seguinte respeita a recusa).
+   Na página da ação, o moderador também tem "Marcar como verificada" e "Tirar verificação".
+
+Reimportar com data, hora (inclusive "hora aproximada"), lugar (nome, cidade, ponto, online) ou link diferentes tira a
+verificação sozinho: o que foi conferido já não é o que está no ar, e a ação volta para a aba. Mudança só de título,
+tipo, descrição ou foto mantém. Banco: `acao.verificada_em`/`verificada_por`, funções `verificar_acao` e
+`desverificar_acao` (só moderador, ficam em `registro_moderacao`), `fila_moderacao('divulgacao')`; as views expõem
+`verificada` (ação cadastrada no app conta como verificada). Antes de aplicar a migração em produção, o app já mostra a
+etiqueta em todas as importadas (a coluna não existe e conta como não verificada), mas os botões de verificar falham.
+
 ## Estado da produção (2026-10-09)
 
 - Supabase: projeto `acoes-segundo-turno`, ref `ommitzndniqnmsjsjghb`, São Paulo, plano Free. As três

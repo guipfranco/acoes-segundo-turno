@@ -28,6 +28,7 @@
       lugar: Object.assign({}, a.lugar, a.lugar.online ? {} : { aproximado: a.lugar.precisao === 'cidade' }), foto: a.foto ? Object.assign({}, a.foto) : null,
       prioritaria: !!a.prioritaria, status: a.status, contatoTipo: a.contatoTipo || 'organizador_chama', criadaEm: a.criadaEm,
       fonte: a.fonte || null, linkDivulgacao: a.contatoTipo === 'divulgacao' ? a.contatoLink || null : null,
+      divulgacaoPublica: !!a.fonte && !a.verificadaEm,
     });
     const ultimoInicio = aid => dados.turnos.filter(t => t.acao === aid).map(t => t.inicio).sort().pop() || null;
     const turno = t => ({ id: t.id, acao: t.acao, inicio: t.inicio, fim: t.fim, lotacao: t.lotacao || null, vao: ativas(t.id).length, horaAproximada: !!t.horaAproximada });
@@ -205,6 +206,12 @@
       },
       async fila(situacao = 'em análise') {
         if (!ehModerador()) throw erro('so_moderador');
+        // divulgação: importadas no ar sem verificação, com horário que não terminou, da mais próxima para a mais distante
+        if (situacao === 'divulgacao') {
+          const prox = a => dados.turnos.filter(t => t.acao === a.id && turnoVale(t)).map(t => t.inicio).sort()[0];
+          return dados.acoes.filter(a => a.fonte && a.status === 'publicada' && !a.verificadaEm && prox(a))
+            .sort((p, q) => prox(p).localeCompare(prox(q))).map(a => ({ acao: completa(a), turnos: comInscritos(a.id), organizador: null }));
+        }
         // suspensas inclui as importadas: suspender é o jeito de tirar uma importada do ar
         return dados.acoes.filter(a => a.status === situacao && (!a.fonte || situacao === 'rascunho')).sort((p, q) => String(q.criadaEm).localeCompare(String(p.criadaEm)))
           .map(a => {
@@ -223,6 +230,16 @@
         if (!String(motivo || '').trim()) throw erro('sem_motivo');
         const a = dados.acoes.find(x => x.id === id); if (!a || !['em análise', 'publicada'].includes(a.status)) throw erro('nao_pode');
         a.status = 'recusada'; a.motivoRecusa = String(motivo).trim();
+      },
+      async verificar(id) {
+        if (!ehModerador()) throw erro('so_moderador');
+        const a = dados.acoes.find(x => x.id === id); if (!a || !a.fonte || a.status !== 'publicada') throw erro('nao_pode');
+        a.verificadaEm = agoraEx(); a.verificadaPor = sessao;
+      },
+      async desverificar(id) {
+        if (!ehModerador()) throw erro('so_moderador');
+        const a = dados.acoes.find(x => x.id === id); if (!a || !a.fonte || !a.verificadaEm) throw erro('nao_pode');
+        a.verificadaEm = null; a.verificadaPor = null;
       },
       async suspender(id, motivo) {
         if (!ehModerador()) throw erro('so_moderador');

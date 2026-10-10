@@ -25,6 +25,9 @@
       criadaEm: r.criada_em ? String(r.criada_em).slice(0, 10) : null,
       fonte: r.fonte || null, linkDivulgacao: r.link_divulgacao || null, motivoRecusa: r.motivo_recusa || null,
       ultimoInicio: semSeg(r.ultimo_inicio) || null,
+      // importada que a moderação ainda não conferiu: o app mostra a etiqueta "Divulgação pública"
+      // (sem a coluna, como num snapshot de antes da migração 20261010000010, a importada conta como não conferida)
+      divulgacaoPublica: !!r.fonte && !r.verificada,
     };
   }
   const deOrg = o => ({ id: o.id, nome: o.nome, tipo: o.tipo, verificada: !!o.verificada,
@@ -238,6 +241,8 @@
       async fila(situacao) { return (await rpc('fila_moderacao', { situacao: situacao || 'em análise' })).map(m => Object.assign(comInscritos(m), { organizador: m.organizador })); },
       async aprovar(id) { escreveu = true; await rpc('aprovar_acao', { acao_id: id }); },
       async recusar(id, motivo) { escreveu = true; await rpc('recusar_acao', { acao_id: id, motivo }); },
+      async verificar(id) { escreveu = true; await rpc('verificar_acao', { acao_id: id }); },
+      async desverificar(id) { escreveu = true; await rpc('desverificar_acao', { acao_id: id }); },
       async suspender(id, motivo) { escreveu = true; await rpc('suspender_acao', { acao_id: id, motivo: motivo || null }); },
       async reativar(id) { escreveu = true; await rpc('reativar_acao', { acao_id: id }); },
       async excluir(id) { escreveu = true; await rpc('excluir_acao', { acao_id: id }); },

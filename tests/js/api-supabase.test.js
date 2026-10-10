@@ -108,6 +108,11 @@ test('deAcao converte linha da view no formato AcaoPublica', () => {
     fonte: 'bora-lula', contato_tipo: 'divulgacao', link_divulgacao: 'https://www.instagram.com/p/x/' });
   assert.equal(imp.lugar.aproximado, true); assert.equal(imp.fonte, 'bora-lula');
   assert.equal(imp.contatoTipo, 'divulgacao'); assert.equal(imp.linkDivulgacao, 'https://www.instagram.com/p/x/');
+  // divulgação pública: importada sem verificação (ou sem a coluna, snapshot antigo) tem a etiqueta; verificada e do app, não
+  assert.equal(imp.divulgacaoPublica, true);
+  assert.equal(deAcao({ fonte: 'redes', verificada: false }).divulgacaoPublica, true);
+  assert.equal(deAcao({ fonte: 'redes', verificada: true }).divulgacaoPublica, false);
+  assert.equal(a.divulgacaoPublica, false);
 });
 
 test('deTurno corta os segundos e dePessoa mantém o contrato', () => {

@@ -364,6 +364,10 @@ function quantosVao(n){return n===1?'1 vai':n+' vão'}
 function linhaVao(a){const n=vaoNa(a.id);return n?`<div class="meta vao">🙋 ${quantosVao(n)}</div>`:''}
 function lugarCurto(l){if(l.online)return 'Online';return !l.bairro||l.bairro===l.cidade?l.cidade:`${l.bairro}, ${l.cidade}`}
 const semInscricao=a=>a.contatoTipo==='divulgacao';
+// importada que a moderação ainda não conferiu (migração 20261010000010): etiqueta nos cards e aviso na página
+const tagDivulga=a=>a.divulgacaoPublica?'<span class="tag-divulga" title="Ninguém da moderação conferiu esta ação ainda">Divulgação pública</span>':'';
+const linhaTagDivulga=a=>a.divulgacaoPublica?`<div class="meta">${tagDivulga(a)}</div>`:'';
+const avisoDivulga=a=>a.divulgacaoPublica?'<div class="aviso-divulga">Achamos esta ação numa divulgação pública e ninguém da moderação conferiu ainda. Confira data, hora e local no post original antes de ir.</div>':'';
 // ação importada: o "Eu vou!" só marca presença; o link da divulgação original fica ao lado, como secundário
 function botaoDivulgacao(a){return a.linkDivulgacao?`<a class="btn sec mini" href="${esc(a.linkDivulgacao)}" target="_blank" rel="noopener">Ver a divulgação original ↗</a>`:''}
 function lugarAproximadoNota(l){return l.aproximado?`<div class="sec" style="font-size:14px;margin-top:4px">📍 Ponto aproximado: o mapa marca o centro de ${esc(l.cidade)}. O local exato está na divulgação.</div>`:''}
@@ -449,7 +453,7 @@ function cardEvento(x){const a=x.a;return `<a class="evento" href="#/acao/${a.id
   <div class="tit">${esc(a.titulo)}</div>
   <div class="meta"><b>${quandoTurno(x.t)}</b></div>
   <div class="meta">${esc(lugarCurto(a.lugar))}</div>
-  <div class="meta quem-linha">${quemDivulga(a)}</div>${linhaVao(a)}</a>`}
+  <div class="meta quem-linha">${quemDivulga(a)}</div>${linhaTagDivulga(a)}${linhaVao(a)}</a>`}
 // no desktop o trilho mostra só a primeira linha (4 cards); o botão abre o resto e o estado sobrevive ao render
 const POR_LINHA=4;
 function verTodas(b,chave){const ab=estado.vitrineAberta||(estado.vitrineAberta={}),tr=b.previousElementSibling;ab[chave]=!ab[chave];
@@ -461,7 +465,7 @@ function blocoVitrine(titulo,lista,link,sub,extra,chave){const aberto=!!(estado.
 // ações online: lista compacta (miniatura, título, quando, quem), em ordem de horário; não é um trilho de cartazes
 // (a pessoa não precisa passar card a card para achar a live das 19h). Mais de 4: "Ver todas" abre o resto.
 function cardOnline(x){const a=x.a,lg=logoCapa(a);return `<a class="evento-online" href="#/acao/${a.id}"><div class="foto mini f-${CLASSE[a.tipo].slice(2)}" role="img" aria-label="${esc(a.tipo)}">${ICONES[a.tipo]}${lg?imgLogo(lg):''}${imgFoto(a)}</div>
-  <div class="txt"><div class="tit">${esc(a.titulo)}</div><div class="meta"><b>${quandoTurno(x.t)}</b> · Online</div><div class="meta quem-linha">${quemDivulga(a)}</div>${linhaVao(a)}</div></a>`}
+  <div class="txt"><div class="tit">${esc(a.titulo)}</div><div class="meta"><b>${quandoTurno(x.t)}</b> · Online</div><div class="meta quem-linha">${quemDivulga(a)}</div>${linhaTagDivulga(a)}${linhaVao(a)}</div></a>`}
 function blocoOnline(lista){const chave='online',aberto=!!(estado.vitrineAberta&&estado.vitrineAberta[chave]),rot=`Ver todas as ações online (${lista.length})`;
   return `<section class="bloco"><div class="cab"><h2>Online, de qualquer lugar</h2></div><p class="sub">Lives, ligatona e mutirão de mensagens: você participa de casa, pelo celular.</p>
   ${lista.length?`<div class="lista-online${aberto?' aberto':''}">${lista.map(cardOnline).join('')}</div>`:'<p class="vitrine-vazia">Nenhuma ação online com esses filtros.</p>'}
@@ -509,7 +513,7 @@ function cardAcao(x){const a=x.a;return `<a class="card ${estado.foco===a.id?'fo
   <div class="meta quem-linha">${quemDivulga(a)}</div>
   <div class="meta"><b>${quandoTurno(x.t)}</b></div>
   <div class="meta">${esc(lugarCurto(a.lugar))}${x.km!=null?`, a ${fmtKm(x.km)} km`:''}${a.lugar.aproximado?' <span class="sec">(ponto aproximado)</span>':''}</div>
-  ${linhaVao(a)}${a.prioritaria?'<div class="meta"><span class="prior">Área prioritária</span></div>':''}</div></a>`}
+  ${linhaTagDivulga(a)}${linhaVao(a)}${a.prioritaria?'<div class="meta"><span class="prior">Área prioritária</span></div>':''}</div></a>`}
 function telaMapa(){
   return `<div id="tela-mapa"><div id="mapa" aria-label="Mapa das ações"></div>
   <div id="topo"><div class="busca"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></span><input id="busca-lugar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(estado.onde?estado.onde.rotulo:'')}" oninput="sugerir(this.value)" onkeydown="teclaBusca(event)" onfocus="sugerir(this.value)">
@@ -532,7 +536,7 @@ function etiquetaPino(x){return L.divIcon({html:`<span class="etiqueta ${estado.
 function previaHtml(x){const a=x.a;return `<a class="corpo" href="#/acao/${a.id}">${fotoEvento(x)}<div class="txt">
   <div class="tit">${esc(a.titulo)}</div><div class="meta"><b>${quandoTurno(x.t)}</b></div>
   <div class="meta">${esc(lugarCurto(a.lugar))}${x.km!=null?`, a ${fmtKm(x.km)} km`:''}</div>
-  <div class="meta">${quemDivulga(a)}</div><span class="ver">Ver ação →</span></div></a>`}
+  <div class="meta">${quemDivulga(a)}</div>${linhaTagDivulga(a)}<span class="ver">Ver ação →</span></div></a>`}
 let popupPrevia=null,rolarAteSel=false;
 const ehDesktop=()=>window.matchMedia('(min-width:900px)').matches;
 // selecionar (clique no pino) é diferente de focar (passar o mouse): fica marcado até fechar a prévia
@@ -724,14 +728,18 @@ function botoesModerar(a,naFila){const st=a.status;
     +(st==='publicada'?`<button class="btn sec mini" onclick="suspender(${a.id})">Suspender</button>`:'')
     +(st==='rascunho'?`<button class="btn mini" onclick="reativar(${a.id})">Reativar</button>`:'')
     +(st==='excluída'?'':` <button class="btn sec mini perigo" onclick="excluir(${a.id})">Excluir</button>`)}
+// importada no ar: a moderação confere pelo post original e marca como verificada (some a etiqueta "Divulgação pública")
+function botoesVerificar(a){if(!a.fonte||a.status!=='publicada')return '';
+  return a.divulgacaoPublica?`<button class="btn mini" onclick="verificar(${a.id})">Marcar como verificada</button> `:`<button class="btn sec mini" onclick="desverificar(${a.id})">Tirar verificação</button> `}
 function barraModerar(a){if(!estado.sessao||estado.sessao.papel!=='moderador')return '';
-  return `<div class="moderar"><strong>Moderação · ${esc(rotuloStatus(a,(estado.acaoAberta||{}).turnos)[0])}</strong>${botoesModerar(a,false)}</div>`}
+  return `<div class="moderar"><strong>Moderação · ${esc(rotuloStatus(a,(estado.acaoAberta||{}).turnos)[0])}${a.fonte&&a.status==='publicada'?(a.divulgacaoPublica?' · não verificada':' · verificada'):''}</strong>${botoesVerificar(a)}${botoesModerar(a,false)}</div>`}
 function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina"><p>Ação não encontrada.</p></div>';const a=ab.acao,fechada=a.status!=='publicada';
   const ts=ab.turnos,futuros=ts.filter(turnoVale);
   return `<div class="pagina"><a href="#/inicio" class="voltar">← Ações</a>${barraModerar(a)}<div class="acao"><div class="acao-corpo">
   ${a.foto&&a.foto.url?`<div class="foto capa natural f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgFoto(a,true)}</div>${creditoFoto(a)}`:logoCapa(a)?`<div class="foto capa f-${CLASSE[a.tipo].slice(2)}">${ICONES[a.tipo]}${imgLogo(logoCapa(a))}</div>${creditoLogo(logoCapa(a))}`:`<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">${ICONES[a.tipo]}</div>`}
   <h1>${esc(a.titulo)}</h1>
   <div class="sec" style="font-size:15px">${quemDivulga(a)}${a.prioritaria?' <span class="prior">Área prioritária</span>':''}</div>
+  ${fechada?'':a.divulgacaoPublica?`<div style="margin-top:8px">${tagDivulga(a)}</div>${avisoDivulga(a)}`:''}
   ${fechada?`<p class="erro">${avisoFora(a,ts)}</p>`:futuros.length?ctaTopo(a,futuros):'<p class="erro">Esta ação já aconteceu.</p>'}
   <p style="margin-top:12px;white-space:pre-line">${esc(a.descricao)}</p>
   <h2>Onde</h2>${ehOnline(a)?`<div><strong>Online</strong></div><div class="sec" style="font-size:15px">Você participa de casa. O link da chamada vai para quem se inscreve.</div>`:
@@ -980,6 +988,8 @@ function navegador(){const u=navigator.userAgent||'';const ipad=/Mac/.test(u)&&(
   const so=/iPhone|iPad/.test(u)||ipad?'iOS':/Android/.test(u)?'Android':/Windows/.test(u)?'Windows':/Mac/.test(u)?'Mac':/Linux/.test(u)?'Linux':'';
   const nav=/CriOS/.test(u)?'Chrome':/FxiOS/.test(u)?'Firefox':/EdgiOS|Edg\//.test(u)?'Edge':/SamsungBrowser/.test(u)?'Samsung':/Firefox/.test(u)?'Firefox':/Chrome\//.test(u)?'Chrome':/Safari/.test(u)?'Safari':'';return `${so} ${nav}`.trim()||null}
 // ---------- fila ----------
+const verificar=id=>moderar('verificar',id,null,'Ação verificada');
+const desverificar=id=>moderar('desverificar',id,null,'Verificação retirada');
 async function aprovar(id){try{await API.aprovar(id)}catch(e){alert(MENSAGEM[e.codigo]||'Não deu.');return}await sincronizar()}
 async function recusar(id){const m=(document.getElementById('motivo'+id)||{}).value||'';if(!m.trim()){estado.recusando=id;estado.erroRecusa='Escreva o motivo.';render();return}
   try{await API.recusar(id,m)}catch(e){estado.erroRecusa=MENSAGEM[e.codigo]||'Não deu.';render();return}
@@ -1026,11 +1036,21 @@ async function bloquear(pid,aid){const m=(document.getElementById('motivo-b'+aid
   estado.bloqueando=null;estado.erroBloqueio=null;recado('Pessoa bloqueada');await sincronizar()}
 async function desbloquear(pid){if(!confirm('Desbloquear esta pessoa? Ela volta a poder cadastrar ações e dizer que vai.'))return
   try{await API.desbloquear(pid)}catch(e){recado(MENSAGEM[e.codigo]||'Não deu.');return}recado('Pessoa desbloqueada');await sincronizar()}
+// importadas no ar que ninguém conferiu, da mais próxima para a mais distante. Verificar tira a etiqueta
+// "Divulgação pública"; recusar tira do ar (a importação seguinte respeita a recusa)
+function filaDivulgacaoHtml(lista){
+  return `<p class="sec">Ações que vieram da agenda Bora Lula e da varredura das redes. Estão no ar com a etiqueta "Divulgação pública". Abra o post original e confira: é ação pelo Lula, a data, a hora e o lugar batem. Se bater, marque como verificada. Se for falsa ou estiver errada, recuse.</p>
+  ${lista.length?'':'<div class="vazio"><p>Nada para conferir.</p></div>'}
+  ${lista.map(m=>{const a=m.acao;return `<div class="linha">${cardAcao({a,t:m.turnos.find(turnoVale)||m.turnos[0]||{inicio:PUB.config.hoje+'T00:00'},km:null})}
+   <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome)}, ${esc(lugarCurto(a.lugar))}${a.lugar.aproximado?' (ponto aproximado: só a cidade)':''}`}. Turnos: ${m.turnos.map(quandoTurno).join('; ')||'nenhum'}. Origem: ${a.fonte==='bora-lula'?'agenda Bora Lula':'varredura das redes'}.</div>
+   <div class="sec">${a.linkDivulgacao?linkExterno(a.linkDivulgacao,'Ver a divulgação original ↗'):'Sem link da divulgação: procure a ação pelo título antes de verificar.'}</div>
+   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn mini" onclick="verificar(${a.id})">Verificar</button><button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Recusar</button></div>
+   ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: o post é de outra data">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="recusar(${a.id})">Confirmar recusa</button></div>`:''}</div>`}).join('')}`}
 function telaFila(){const s=estado.sessao;if(!s||s.papel!=='moderador')return '<div class="pagina"><h1>Fila de moderação</h1><p>Só moderadores veem a fila.</p></div>';
   const aba=estado.filaAba,lista=estado.fila||[];
   return `<div class="pagina"><h1>Fila de moderação</h1>
-  <div class="quando" style="display:inline-flex;margin-bottom:12px"><button class="pill ${aba==='analise'?'ativo':''}" onclick="estado.filaAba='analise';render()">Em análise${aba==='analise'?` (${lista.length})`:''}</button><button class="pill ${aba==='publicadas'?'ativo':''}" onclick="estado.filaAba='publicadas';render()">Publicadas</button><button class="pill ${aba==='suspensas'?'ativo':''}" onclick="estado.filaAba='suspensas';render()">Suspensas</button><button class="pill ${aba==='org'?'ativo':''}" onclick="estado.filaAba='org';render()">Organizações</button><button class="pill ${aba==='msgs'?'ativo':''}" onclick="estado.filaAba='msgs';render()">Mensagens${aba==='msgs'&&!estado.msgsTratadas?` (${(estado.feedbacks||[]).length})`:''}</button></div>
-  ${aba==='org'?filaOrganizacoesHtml()+'</div>':aba==='msgs'?filaMensagensHtml()+'</div>':`<p class="sec">Recuse se: não é ação de campanha; o lugar não é público; convoca para confronto; pede dinheiro; tem dado pessoal no texto.</p>
+  <div class="quando" style="display:inline-flex;margin-bottom:12px"><button class="pill ${aba==='analise'?'ativo':''}" onclick="estado.filaAba='analise';render()">Em análise${aba==='analise'?` (${lista.length})`:''}</button><button class="pill ${aba==='divulgacao'?'ativo':''}" onclick="estado.filaAba='divulgacao';render()">Divulgação${aba==='divulgacao'?` (${lista.length})`:''}</button><button class="pill ${aba==='publicadas'?'ativo':''}" onclick="estado.filaAba='publicadas';render()">Publicadas</button><button class="pill ${aba==='suspensas'?'ativo':''}" onclick="estado.filaAba='suspensas';render()">Suspensas</button><button class="pill ${aba==='org'?'ativo':''}" onclick="estado.filaAba='org';render()">Organizações</button><button class="pill ${aba==='msgs'?'ativo':''}" onclick="estado.filaAba='msgs';render()">Mensagens${aba==='msgs'&&!estado.msgsTratadas?` (${(estado.feedbacks||[]).length})`:''}</button></div>
+  ${aba==='org'?filaOrganizacoesHtml()+'</div>':aba==='msgs'?filaMensagensHtml()+'</div>':aba==='divulgacao'?filaDivulgacaoHtml(lista)+'</div>':`<p class="sec">Recuse se: não é ação de campanha; o lugar não é público; convoca para confronto; pede dinheiro; tem dado pessoal no texto.</p>
   ${lista.length?'':'<div class="vazio"><p>Nada por aqui.</p></div>'}
   ${lista.map(m=>{const a=m.acao,t=m.turnos[0]||{inicio:(a.criadaEm||PUB.config.hoje)+'T00:00'},p=m.organizador||{},o=a.organizacao?org(a.organizacao):null;return `<div class="linha">${cardAcao({a,t,km:null})}
    <p style="white-space:pre-line;font-size:15px;margin:4px 0 8px">${esc(a.descricao)}</p>
@@ -1061,7 +1081,7 @@ async function render(){
     if(rota==='fila'&&estado.sessao&&estado.sessao.papel==='moderador'){
       if(estado.filaAba==='org'){const r=await API.filaOrganizacoes();if(n!==renderN)return;estado.filaOrg=r}
       else if(estado.filaAba==='msgs'){const r=await API.feedbacks(!estado.msgsTratadas);if(n!==renderN)return;estado.feedbacks=r}
-      else{const r=await API.fila({analise:'em análise',publicadas:'publicada',suspensas:'rascunho'}[estado.filaAba]);if(n!==renderN)return;normalizarTipos(r.map(m=>m.acao));estado.fila=r}}
+      else{const r=await API.fila({analise:'em análise',divulgacao:'divulgacao',publicadas:'publicada',suspensas:'rascunho'}[estado.filaAba]);if(n!==renderN)return;normalizarTipos(r.map(m=>m.acao));estado.fila=r}}
   }catch(e){if(n!==renderN)return;console.error(e);if(mapa){mapa.remove();mapa=null;marcadores=[]}
     document.getElementById('app').innerHTML='<div class="pagina"><p class="erro">Não foi possível carregar. Tente de novo.</p></div>';return}
   if(mapa){mapa.remove();mapa=null;marcadores=[]}

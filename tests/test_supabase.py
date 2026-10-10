@@ -608,3 +608,45 @@ def test_feedback_tem_freio_por_pessoa(cenario):
     for i in range(10):
         assert sb.rpc("enviar_feedback", {"texto": f"mensagem {i}"}, jwt=cenario["jwt_b"]).status == 200
     assert sb.rpc("enviar_feedback", {"texto": "a décima primeira"}, jwt=cenario["jwt_b"]).corpo["message"] == "muitas_mensagens"
+
+
+def test_divulgacao_publica_verificar_e_reimportar_com_mudanca_tira_a_verificacao(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    itens = [_item("a"), _item("b"), _item("c")]
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE).status == 200
+    ids = {a["titulo"][-1]: a["id"] for a in sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo}
+    pub = lambda: {a["titulo"][-1]: a["verificada"] for a in sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo}
+    assert pub() == {"a": False, "b": False, "c": False}
+    # ação cadastrada no app conta como verificada
+    assert all(a["verificada"] for a in sb.chamar("GET", "/rest/v1/acao_publica?fonte=is.null&limit=5").corpo)
+
+    # só moderador verifica e vê a aba Divulgação
+    assert sb.rpc("verificar_acao", {"acao_id": ids["a"]}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
+    assert sb.rpc("verificar_acao", {"acao_id": ids["a"]}).status >= 400
+    assert sb.rpc("fila_moderacao", {"situacao": "divulgacao"}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    fila = sb.rpc("fila_moderacao", {"situacao": "divulgacao"}, jwt=cenario["jwt_a"]).corpo
+    nossas = [m["acao"]["id"] for m in fila if m["acao"]["fonte"] == fonte]
+    assert sorted(nossas) == sorted(ids.values()) and all(m["acao"]["verificada"] is False for m in fila)
+    for x in "abc":
+        assert sb.rpc("verificar_acao", {"acao_id": ids[x]}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert pub() == {"a": True, "b": True, "c": True}
+    assert not [m for m in sb.rpc("fila_moderacao", {"situacao": "divulgacao"}, jwt=cenario["jwt_a"]).corpo if m["acao"]["fonte"] == fonte]
+
+    # reimportar igual mantém; mudar a hora (a) ou o lugar (b) tira a verificação; mudar só o título (c) mantém
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE)
+    assert pub() == {"a": True, "b": True, "c": True}
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", inicio="2099-02-01T10:00"), _item("b", lugar_nome="Praça Nova"),
+                                                         _item("c", descricao="Outro texto.")]}, jwt=sb.SERVICE)
+    assert pub() == {"a": False, "b": False, "c": True}
+
+    # desverificar; ação do app não se verifica; recusar uma importada tira do ar e a reimportação respeita
+    assert sb.rpc("desverificar_acao", {"acao_id": ids["c"]}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert pub()["c"] is False
+    assert sb.rpc("desverificar_acao", {"acao_id": ids["c"]}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
+    sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
+    novo = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"]).corpo["id"]
+    assert sb.rpc("verificar_acao", {"acao_id": novo}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
+    assert sb.rpc("recusar_acao", {"acao_id": ids["a"], "motivo": "post de outra data"}, jwt=cenario["jwt_a"]).status in (200, 204)
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE)
+    assert "a" not in pub()
