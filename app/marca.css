@@ -156,7 +156,7 @@ nav a:focus-visible{border-radius:var(--cp-radius-md)}nav a.cta:focus-visible{bo
   /* marca como na capa do link (pedido do Gui em 2026-10-10): BORA sobre LULA na letra do título da agenda Bora Lula,
      sem o AGENDA; SVG com o contorno das letras, gerado por scripts/gerar_capa.py */
   nav .marca{align-items:center;height:var(--cab);padding:0 8px 0 0}
-  nav .marca img{display:block;height:44px;width:auto}
+  nav .marca img{display:block;height:36px;width:auto}  /* 14 px de respiro acima e abaixo na barra de 64 */
   nav .marca:hover{background:none}
   nav a{color:#fff;font-size:var(--cp-text-sm);font-weight:700;height:var(--cab);border-radius:0}
   nav a:hover{background:rgb(255 255 255 / .14)}
@@ -176,4 +176,4 @@ nav a:focus-visible{border-radius:var(--cp-radius-md)}nav a.cta:focus-visible{bo
   .bloco{margin-top:var(--cp-space-16)}
 }
 /* entre 900 e 1099 px o nome e os itens da barra não cabem em tamanho cheio */
-@media (min-width:900px) and (max-width:1099px){nav .marca img{height:38px}nav a{padding:0 10px}}
+@media (min-width:900px) and (max-width:1099px){nav .marca img{height:32px}nav a{padding:0 10px}}
