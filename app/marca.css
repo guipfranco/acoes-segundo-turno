@@ -1,5 +1,5 @@
 /* Identidade do Comitê Popular do Lula ("Guia de interface web e apps", v1, 2026-10), adotada em 2026-10-10, quando o
-   Eleja o Lula passou a ser uma iniciativa do Comitê. Os tokens moram em tokens.css, o arquivo do guia, sem mexer;
+   site (Bora Lula, antes Eleja o Lula) passou a ser uma iniciativa do Comitê. Os tokens moram em tokens.css, o arquivo do guia, sem mexer;
    aqui eles entram no app: as variáveis antigas do <style> do index.html apontam para os tokens e os componentes
    seguem o guia. Vem depois do <style> e manda nele; fica num arquivo à parte para trocar a marca sem mexer no resto.
    Regras do guia que valem aqui: marca chapada (sombra só para mostrar camada), Montserrat 500/700/800/900, botões em
@@ -148,7 +148,7 @@ nav a:focus-visible{border-radius:var(--cp-radius-md)}
   nav a.ativo:not(.cta)>span:last-child{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:3px}
 }
 
-/* cabeçalho (desktop): vermelho, "Eleja o Lula" à esquerda; o item ativo ocupa a altura toda da barra e leva o
+/* cabeçalho (desktop): vermelho, "Bora Lula" à esquerda; o item ativo ocupa a altura toda da barra e leva o
    sublinhado grosso amarelo colado na borda de baixo */
 @media (min-width:900px){
   :root{--cab:64px}

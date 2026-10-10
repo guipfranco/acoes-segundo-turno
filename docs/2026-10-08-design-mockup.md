@@ -5,11 +5,12 @@ Meetup (cards com cara de evento).
 
 ## Identidade do Comitê Popular do Lula (2026-10-10)
 
-O Eleja o Lula passou a ser uma iniciativa do Comitê Popular do Lula. Vale o "Guia de interface web e apps" do
+O site passou a ser uma iniciativa do Comitê Popular do Lula e, no mesmo dia, mudou de nome: de "Eleja o Lula"
+para "Bora Lula" (pedido do Gui). Vale o "Guia de interface web e apps" do
 Comitê (v1, 2026-10) e o `tokens.css` que o acompanha, copiado sem mudança para `app/tokens.css`. `app/marca.css`
 foi reescrito sobre esses tokens e substitui a seção "Identidade da campanha" abaixo, que fica só como histórico.
 
-- Decisões do Gui: logo do Comitê + "Eleja o Lula" no cabeçalho; só visual e acessibilidade (telas e fluxos
+- Decisões do Gui: logo do Comitê + nome do site no cabeçalho; só visual e acessibilidade (telas e fluxos
   iguais); rodapé e privacidade dizem só "Uma iniciativa do Comitê Popular do Lula" (o Gui tirou o nome dele, o
   "sem vínculo", o "Nenhuma divulgação paga" e o link do código no GitHub).
 - Cards da inicial: a imagem preenche a área 4:5 (`object-fit: cover`), sem o fundo desfocado; corta a sobra dos
@@ -21,7 +22,7 @@ foi reescrito sobre esses tokens e substitui a seção "Identidade da campanha" 
 - Campos com borda `--cp-border-strong`, foco com anel grafite; erro com ícone ⚠ e texto.
 - Cards brancos com borda, raio 8 e padding 16; sem foto, faixas amarela, azul e verde do logo sobre a cor do tipo.
 - Celular: barra de abas branca, aba ativa vermelha e sublinhada, respeita a área segura; logo no topo da inicial.
-  Desktop: cabeçalho vermelho de 64 px só com "Eleja o Lula" (o Gui achou a barra com o logo alta demais; o logo
+  Desktop: cabeçalho vermelho de 64 px só com "Bora Lula" (o Gui achou a barra com o logo alta demais; o logo
   fica no topo da inicial, 180 px), item ativo da altura da barra com sublinhado amarelo colado na borda de baixo,
   "Cadastrar ação" branco. Ícone do Perfil só no contorno, logado ou não. Respiro de 24 a 32 px entre as partes
   do topo da inicial.

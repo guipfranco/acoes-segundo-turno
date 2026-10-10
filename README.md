@@ -1,4 +1,4 @@
-# Eleja o Lula
+# Bora Lula
 
 Site onde quem organiza ações pelo voto do Lula no 2º turno (panfletagem, bandeiraço, adesivaço, porta a
 porta, ligatona, ato, encontro...) cadastra a ação, e quem quer ajudar acha uma perto de si e diz "Eu vou!".
