@@ -1,4 +1,5 @@
-"""Gera a imagem de compartilhamento (app/capa.png, 1200x630). O favicon é a mão do Comitê, não sai daqui.
+"""Gera a imagem de compartilhamento (app/capa.png, 1200x630) e a marca da barra do computador (app/marca-barra.svg).
+O favicon é a mão do Comitê, não sai daqui.
 
 Uso: python scripts/gerar_capa.py
 Cores do guia do Comitê Popular (app/tokens.css: vermelho #C3090A, amarelo #FBCE02, vinho #8E0607), marca chapada.
@@ -39,18 +40,23 @@ A_ESTRELA = ("M307 710C238 548 59 136 -2 0L251 0L286 93L695 93L731 0L992 0C931 1
 _transducer = None
 
 
-def fonte_marca(tam):
+def transducer():
+    """A Transducer Extended baixada do Comitê, como TTF em memória (fontTools)."""
     global _transducer
     if _transducer is None:
         from fontTools.ttLib import TTFont
         pedido = urllib.request.Request(TRANSDUCER, headers={"User-Agent": "Mozilla/5.0"})  # sem isso, 403
         with urllib.request.urlopen(pedido, timeout=30) as r:
-            woff = TTFont(io.BytesIO(r.read()))
-        woff.flavor = None
-        _transducer = io.BytesIO()
-        woff.save(_transducer)
-    _transducer.seek(0)
-    return ImageFont.truetype(_transducer, tam)
+            _transducer = TTFont(io.BytesIO(r.read()))
+        _transducer.flavor = None
+    return _transducer
+
+
+def fonte_marca(tam):
+    ttf = io.BytesIO()
+    transducer().save(ttf)
+    ttf.seek(0)
+    return ImageFont.truetype(ttf, tam)
 
 
 def a_estrela(tam, cor, fundo):
@@ -124,6 +130,64 @@ def capa():
     im.convert("RGB").save(APP / "capa.png", optimize=True)
 
 
+def contorno(texto, x, base, tam):
+    """Caminho SVG (d) das letras de `texto` na Transducer, a partir de (x, base); devolve (d, x final, altura das maiúsculas)."""
+    from fontTools.pens.svgPathPen import SVGPathPen
+    from fontTools.pens.transformPen import TransformPen
+    f = transducer()
+    esc = tam / f["head"].unitsPerEm
+    glifos, cmap, larguras = f.getGlyphSet(), f.getBestCmap(), f["hmtx"]
+    partes = []
+    for letra in texto:
+        nome = cmap[ord(letra)]
+        pen = SVGPathPen(glifos, ntos=lambda v: f"{v:.2f}".rstrip("0").rstrip("."))
+        glifos[nome].draw(TransformPen(pen, (esc, 0, 0, -esc, x, base)))
+        partes.append(pen.getCommands())
+        x += larguras[nome][0] * esc
+    return " ".join(partes), x, f["OS/2"].sCapHeight * esc
+
+
+def a_estrela_svg(x, base, tam):
+    """O A estrelado como caminho SVG (regra evenodd: a estrela fica vazada)."""
+    esc = tam / 1000
+    def ponto(m):
+        xs, ys = m.group(1), m.group(2)
+        return f"{x + (float(xs) + 2) * esc:.2f} {base - float(ys) * esc:.2f}"
+    return re.sub(r"(-?[\d.]+) (-?[\d.]+)", ponto, A_ESTRELA.replace("C", " C ").replace("L", " L ").replace("M", " M "))
+
+
+def marca_barra():
+    """AGENDA na tarja amarela inclinada, à esquerda; BORA sobre LULA à direita, brancos, na letra da agenda."""
+    tam = 30  # BORA e LULA
+    _, xb, cap = contorno("BORA", 0, 0, tam)
+    _, xl, _ = contorno("LUL", 0, 0, tam)
+    largura_lula = xl + tam * 0.04 + tam * 0.994
+    entre = tam * 0.16  # espaço entre as linhas
+    alto = cap * 2 + entre
+    ta = 15  # AGENDA
+    _, xa, cap_a = contorno("AGENDA", 0, 0, ta)
+    folga_x, folga_y = 9, 6
+    tw, th = xa + folga_x * 2, cap_a + folga_y * 2
+    gap = 12
+    x0 = tw + gap + 4  # bloco BORA/LULA depois da tarja (4 de folga para o giro)
+    larg = x0 + max(xb, largura_lula)
+    bloco_x = lambda w: x0 + (max(xb, largura_lula) - w) / 2
+    b1 = cap  # linha de base de BORA
+    b2 = cap * 2 + entre
+    bora, *_ = contorno("BORA", bloco_x(xb), b1, tam)
+    lx = bloco_x(largura_lula)
+    lul, xl, _ = contorno("LUL", lx, b2, tam)
+    a = a_estrela_svg(xl + tam * 0.04, b2, tam)
+    ty = (alto - th) / 2
+    agenda, *_ = contorno("AGENDA", 2 + folga_x, ty + folga_y + cap_a, ta)
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -4 {larg:.0f} {alto + 8:.0f}" role="img" aria-label="Agenda Bora Lula">'
+           f'<g transform="rotate(-6 {2 + tw / 2:.1f} {alto / 2:.1f})"><rect x="2" y="{ty:.1f}" width="{tw:.1f}" height="{th:.1f}" fill="{AMARELO}"/>'
+           f'<path fill="{TINTA}" d="{agenda}"/></g>'
+           f'<path fill="#fff" d="{bora} {lul}"/><path fill="#fff" fill-rule="evenodd" d="{a}"/></svg>\n')
+    (APP / "marca-barra.svg").write_text(svg, encoding="utf-8")
+
+
 if __name__ == "__main__":
     capa()
-    print("ok:", APP / "capa.png")
+    marca_barra()
+    print("ok:", APP / "capa.png", APP / "marca-barra.svg")
