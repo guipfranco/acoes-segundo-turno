@@ -515,17 +515,14 @@ def test_identidade_visual_do_comite_popular():
     tokens = (RAIZ / "app" / "tokens.css").read_text(encoding="utf-8")
     assert HTML.index('href="tokens.css"') < HTML.index("</style>") < HTML.index('href="marca.css"')
     # só Montserrat, só os pesos do guia
-    assert "family=Montserrat:wght@500;700;800;900&display=swap" in HTML
-    # Archivo expandida só para a marca "Bora Lula", e só as letras dela
-    assert "family=Archivo:wdth,wght@125,900&display=swap&text=I3ORALU" in HTML
+    assert "family=Montserrat:wght@500;700;800;900&display=swap" in HTML and "Archivo" not in HTML
     for cor in ["#C3090A", "#A00708", "#8E0607", "#087A23", "#FBCE02", "#0270AA", "#2A2A2A", "#8A847B"]:
         assert cor in tokens, cor
     for token in ["--cp-red-500", "--cp-ink", "--cp-radius-pill", "--cp-focus-light", "--cp-focus-red"]:
         assert f"var({token})" in marca, token
     # logo do Comitê no topo da inicial (fora da barra), com o alt do guia, e a mão do "L" no favicon
     assert '<header class="hero"><img class="logo-hero" src="logo-comite.webp" alt="Comitê Popular do Lula"' in HTML
-    # marca "Bora Lula" desenhada como a arte do Comitê: duas linhas, o B é um I3 amarelo, estrela depois de BORA
-    assert '<a class="marca" href="#/inicio" aria-label="Bora Lula"><span class="bl" aria-hidden="true"><span><b>I3</b>ORA<svg' in HTML
+    assert '<a class="marca" href="#/inicio">Bora Lula</a>' in HTML
     assert 'href="favicon.png"' in HTML and (RAIZ / "app" / "logo-comite.webp").exists()
     assert "?tema=" not in HTML and not list((RAIZ / "app").glob("tema-*.css"))
 
