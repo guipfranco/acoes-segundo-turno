@@ -185,6 +185,13 @@ window.DADOS = {
    "telefone": "(11) 9xxxx-xxxx",
    "bloqueada": false,
    "email": null
+  },
+  {
+   "id": 14,
+   "nome": "Agenda Bora Lula",
+   "papel": "organizador",
+   "organizacao": null,
+   "telefone": "(11) 9xxxx-xxxx"
   }
  ],
  "acoes": [
@@ -850,6 +857,74 @@ window.DADOS = {
    "contatoTipo": "link_grupo",
    "contatoWhatsapp": null,
    "contatoLink": "https://chat.whatsapp.com/exemplo0024"
+  },
+  {
+   "id": 25,
+   "titulo": "Bandeiraço no Largo da Batata",
+   "tipo": "bandeiraço",
+   "descricao": "Bandeiraço pelo Lula no Largo da Batata\n\nFonte: agenda Bora Lula do Comitê Popular.",
+   "organizador": 14,
+   "organizacao": null,
+   "lugar": {
+    "nome": "Largo da Batata",
+    "bairro": "Pinheiros",
+    "cidade": "São Paulo",
+    "lat": -23.5668,
+    "lon": -46.6934
+   },
+   "status": "publicada",
+   "motivoRecusa": null,
+   "prioritaria": false,
+   "criadaEm": "2026-10-08",
+   "contatoTipo": "divulgacao",
+   "contatoLink": "https://exemplo.org/post/bandeiraco-largo-da-batata",
+   "fonte": "bora-lula"
+  },
+  {
+   "id": 26,
+   "titulo": "Panfletagem na feira de domingo",
+   "tipo": "panfletagem",
+   "descricao": "Panfletagem na feira\n\nFonte: Varredura pública das redes (Instagram, Facebook, X, Telegram e sites de organizações).",
+   "organizador": 14,
+   "organizacao": 4,
+   "lugar": {
+    "nome": "São Paulo",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "lat": -23.5505,
+    "lon": -46.6333,
+    "precisao": "cidade"
+   },
+   "status": "publicada",
+   "motivoRecusa": null,
+   "prioritaria": false,
+   "criadaEm": "2026-10-08",
+   "contatoTipo": "divulgacao",
+   "contatoLink": "https://exemplo.org/post/panfletagem-feira",
+   "fonte": "redes"
+  },
+  {
+   "id": 27,
+   "titulo": "Caminhada pela Boa Vista",
+   "tipo": "caminhada",
+   "descricao": "Caminhada pela Boa Vista\n\nFonte: agenda Bora Lula do Comitê Popular.",
+   "organizador": 14,
+   "organizacao": 6,
+   "lugar": {
+    "nome": "Rua da Imperatriz",
+    "bairro": "Boa Vista",
+    "cidade": "Recife",
+    "lat": -8.0601,
+    "lon": -34.8817
+   },
+   "status": "publicada",
+   "motivoRecusa": null,
+   "prioritaria": false,
+   "criadaEm": "2026-10-08",
+   "contatoTipo": "divulgacao",
+   "contatoLink": "https://exemplo.org/post/caminhada-boa-vista",
+   "fonte": "bora-lula",
+   "verificadaEm": "2026-10-09T12:00"
   }
  ],
  "turnos": [
@@ -1055,6 +1130,28 @@ window.DADOS = {
    "acao": 24,
    "inicio": "2026-10-12T20:00",
    "fim": "2026-10-12T21:00",
+   "lotacao": null
+  },
+  {
+   "id": 30,
+   "acao": 25,
+   "inicio": "2026-10-10T16:00",
+   "fim": "2026-10-10T18:00",
+   "lotacao": null
+  },
+  {
+   "id": 31,
+   "acao": 26,
+   "inicio": "2026-10-11T18:00",
+   "fim": "2026-10-11T23:59",
+   "lotacao": null,
+   "horaAproximada": true
+  },
+  {
+   "id": 32,
+   "acao": 27,
+   "inicio": "2026-10-11T09:00",
+   "fim": "2026-10-11T11:00",
    "lotacao": null
   }
  ],

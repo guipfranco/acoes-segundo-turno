@@ -446,7 +446,7 @@ def test_quem_divulga_tem_avatar_e_logo_da_organizacao_vira_capa():
                    "const FONTES=", "'bora-lula':{nome:'Agenda Bora Lula'", "function creditoLogo", "Logo: ", "const avatarLetra=", ".avatar.letra{"]:
         assert trecho in HTML, trecho
     # card e página usam quem divulga (avatar + nome); capa cai no logo quando não há foto própria
-    assert '<div class="meta quem-linha">${quemDivulga(a)}</div>${linhaVao(a)}' in HTML
+    assert '<div class="meta quem-linha">${quemDivulga(a)}</div>${linhaTagDivulga(a)}${linhaVao(a)}' in HTML
     assert "logoCapa(a)?`<div class=\"foto capa" in HTML
     assert ".foto .logo{" in HTML and ".avatar{" in HTML
     api_sb = (RAIZ / "app" / "api-supabase.js").read_text(encoding="utf-8")
@@ -589,3 +589,20 @@ def test_aviso_de_que_o_link_do_grupo_fica_visivel_a_quem_vai():
     trecho = HTML[i:i + 400]
     assert 'Qualquer pessoa com conta Google que disser "Eu vou!" vê este link.' in trecho
     assert "aprovação de um administrador" in trecho and "deixe em branco" in trecho
+
+
+def test_divulgacao_publica_etiqueta_aviso_e_fila():
+    """Importada sem verificação: etiqueta nos cards (vitrine, online, mapa, prévia), aviso na página, aba na Fila."""
+    assert HTML.count("${linhaTagDivulga(a)}") == 4
+    assert "Achamos esta ação numa divulgação pública e ninguém da moderação conferiu ainda" in HTML
+    assert ">Divulgação pública</span>" in HTML
+    assert "filaAba='divulgacao'" in HTML and "divulgacao:'divulgacao'" in HTML and "function filaDivulgacaoHtml" in HTML
+    assert "Marcar como verificada" in HTML and "Tirar verificação" in HTML
+    css = (RAIZ / "app" / "marca.css").read_text(encoding="utf-8")
+    assert ".tag-divulga{" in css and ".aviso-divulga{" in css
+    for js in ("api-exemplo.js", "api-supabase.js"):
+        src = (RAIZ / "app" / js).read_text(encoding="utf-8")
+        assert "divulgacaoPublica" in src and "async verificar(id)" in src and "async desverificar(id)" in src, js
+    d = carregar_dados()
+    importadas = [a for a in d["acoes"] if a.get("fonte")]
+    assert {bool(a.get("verificadaEm")) for a in importadas} == {True, False}

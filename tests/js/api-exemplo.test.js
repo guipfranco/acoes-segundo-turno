@@ -22,7 +22,7 @@ test('publico só traz publicadas e nunca detalhe nem contato', async () => {
   assert.ok(pub.acoes.every(a => a.status === 'publicada'));
   for (const a of pub.acoes) {
     assert.equal(a.detalhe, undefined); assert.equal(a.contatoLink, undefined); assert.equal(a.contatoWhatsapp, undefined);
-    assert.equal(typeof a.organizadorNome, 'string'); assert.ok(['organizador_chama', 'whatsapp', 'link_grupo'].includes(a.contatoTipo));
+    assert.equal(typeof a.organizadorNome, 'string'); assert.ok(['organizador_chama', 'whatsapp', 'link_grupo', 'divulgacao'].includes(a.contatoTipo));
   }
   const t = pub.turnos[0];
   assert.equal(typeof t.vao, 'number');
@@ -274,4 +274,45 @@ test('organização: nome novo liga na hora, nome existente vira pedido; ação 
   d.config.eu = eu.id; const api2 = ApiExemplo.criar(d);
   await assert.rejects(api2.criarAcao(novaAcao(d, { organizacao: verificada.id })), { codigo: 'link_post' }); // com selo também
   assert.equal((await api2.criarAcao(novaAcao(d, { organizacao: verificada.id, organizacao_link: 'https://www.instagram.com/p/x/' }))).status, 'publicada');
+});
+
+test('divulgação pública: importada sem verificação tem a etiqueta; cadastrada no app e verificada não', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const pub = await api.publico();
+  const importadas = pub.acoes.filter(a => a.fonte);
+  assert.ok(importadas.some(a => a.divulgacaoPublica) && importadas.some(a => !a.divulgacaoPublica));
+  assert.ok(pub.acoes.filter(a => !a.fonte).every(a => a.divulgacaoPublica === false));
+});
+
+test('divulgação pública: só moderador verifica; a fila lista as não verificadas e verificar tira da fila', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const alvo = d.acoes.find(a => a.fonte && !a.verificadaEm && a.status === 'publicada');
+  await assert.rejects(api.verificar(alvo.id), { codigo: 'so_moderador' });
+  await assert.rejects(api.fila('divulgacao'), { codigo: 'so_moderador' });
+  d.config.eu = d.pessoas.find(p => p.papel === 'moderador').id; await api.entrar();
+  const fila = await api.fila('divulgacao');
+  assert.ok(fila.some(m => m.acao.id === alvo.id));
+  assert.ok(fila.every(m => m.acao.fonte && m.acao.divulgacaoPublica && m.organizador === null));
+  await api.verificar(alvo.id);
+  assert.ok(!(await api.fila('divulgacao')).some(m => m.acao.id === alvo.id));
+  assert.equal((await api.publico()).acoes.find(a => a.id === alvo.id).divulgacaoPublica, false);
+  await api.desverificar(alvo.id);
+  assert.equal((await api.publico()).acoes.find(a => a.id === alvo.id).divulgacaoPublica, true);
+  const doApp = d.acoes.find(a => !a.fonte && a.status === 'publicada');
+  await assert.rejects(api.verificar(doApp.id), { codigo: 'nao_pode' });
+  // recusar uma importada tira do ar
+  await api.recusar(alvo.id, 'post de outra data');
+  assert.ok(!(await api.publico()).acoes.some(a => a.id === alvo.id));
+});
+
+test('fila divulgação: turno de hora aproximada fica até o fim do dia; o exato sai quando termina', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const aprox = d.turnos.find(t => t.horaAproximada && d.acoes.find(a => a.id === t.acao).fonte);
+  const exato = d.turnos.find(t => !t.horaAproximada && (d.acoes.find(a => a.id === t.acao) || {}).fonte && !d.acoes.find(a => a.id === t.acao).verificadaEm);
+  aprox.inicio = '2026-10-11T18:00'; aprox.fim = '2026-10-11T20:00';
+  exato.inicio = '2026-10-11T18:00'; exato.fim = '2026-10-11T20:00';
+  d.config.agora = '2026-10-11T22:00'; d.config.hoje = '2026-10-11';
+  d.config.eu = d.pessoas.find(p => p.papel === 'moderador').id; await api.entrar();
+  const ids = (await api.fila('divulgacao')).map(m => m.acao.id);
+  assert.ok(ids.includes(aprox.acao)); assert.ok(!ids.includes(exato.acao));
 });
