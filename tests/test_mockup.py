@@ -509,13 +509,22 @@ def test_minha_organizacao_no_perfil_e_quem_organiza_no_cadastro():
     assert "Link do perfil oficial" in HTML and "organizacao_link:precisaPost(c)" in HTML and "Link do post da organização anunciando esta ação" in HTML and "const precisaPost=" in HTML
 
 
-def test_identidade_visual_da_campanha():
-    # paleta e tipografia do manual Lula 2026 (Archivo condensado e Montserrat no lugar de Transducer e Gotham)
+def test_identidade_visual_do_comite_popular():
+    # guia de interface do Comitê Popular do Lula (v1, 2026-10): tokens.css do guia, sem mexer, e marca.css por cima
     marca = (RAIZ / "app" / "marca.css").read_text(encoding="utf-8")
-    assert HTML.index('href="marca.css"') > HTML.index("</style>")  # vem depois do estilo base e manda nele
-    assert "family=Archivo:wdth,wght@62..125" in HTML and "family=Montserrat" in HTML
-    for cor in ["#fd0000", "#a20301", "#ffd400", "#00b923", "#006820", "#0034d2"]:
-        assert cor in marca, cor
+    tokens = (RAIZ / "app" / "tokens.css").read_text(encoding="utf-8")
+    assert HTML.index('href="tokens.css"') < HTML.index("</style>") < HTML.index('href="marca.css"')
+    # só Montserrat, só os pesos do guia
+    assert "family=Montserrat:wght@500;700;800;900&display=swap" in HTML and "Archivo" not in HTML
+    for cor in ["#C3090A", "#A00708", "#8E0607", "#087A23", "#FBCE02", "#0270AA", "#2A2A2A", "#8A847B"]:
+        assert cor in tokens, cor
+    for token in ["--cp-red-500", "--cp-ink", "--cp-radius-pill", "--cp-focus-light", "--cp-focus-red"]:
+        assert f"var({token})" in marca, token
+    # logo do Comitê no topo da inicial (fora da barra), com o alt do guia, e a mão do "L" no favicon
+    assert '<header class="hero"><img class="logo-hero" src="logo-comite.webp" alt="Comitê Popular do Lula"' in HTML
+    # na barra, o nome em texto simples (caixa-alta pelo CSS)
+    assert '<a class="marca" href="#/inicio">Agenda Bora Lula</a>' in HTML
+    assert 'href="favicon.png"' in HTML and (RAIZ / "app" / "logo-comite.webp").exists()
     assert "?tema=" not in HTML and not list((RAIZ / "app").glob("tema-*.css"))
 
 
@@ -550,20 +559,28 @@ def test_scripts_de_cdn_tem_integridade():
         assert re.search(r"@\d+\.\d+\.\d+/|/\d+\.\d+\.\d+/|count\.v\d+\.js", tag), tag
 
 
-RESPONSAVEL = "Site voluntário feito por Guilherme Pereira Franco, sem vínculo com a campanha nem com partido."
-GITHUB = "https://github.com/guipfranco/acoes-segundo-turno"
+RESPONSAVEL = ("Uma iniciativa do Comitê Popular do Lula. "
+               "Não é site oficial da campanha. Nenhuma divulgação paga.")
 
 
 def test_rodape_de_responsabilidade_na_inicial_e_na_privacidade():
-    # lei eleitoral veda anonimato: quem faz o site, sem vínculo e sem divulgação paga
+    # o site é do Comitê Popular do Lula, que não é a campanha; sem impulsionamento pago. O nome do Gui e o link do
+    # código no GitHub saíram a pedido dele (2026-10-10)
     i = HTML.index("function telaInicio"); inicio = HTML[i:HTML.index("function irParaCidade")]
     assert "rodapeHtml()" in inicio
     rodape = HTML[HTML.index("function rodapeHtml"):].split("\n", 1)[0]
-    assert RESPONSAVEL in rodape and "Nenhuma divulgação paga." in rodape
-    assert 'class="rodape sec"' in rodape and 'href="privacidade.html"' in rodape and f'href="{GITHUB}"' in rodape
+    assert RESPONSAVEL in rodape and 'class="rodape sec"' in rodape and 'href="privacidade.html"' in rodape
+    assert "github.com" not in rodape
     assert ".rodape{text-align:center;font-size:13px" in HTML
     priv = re.sub(r"\s+", " ", (RAIZ / "app" / "privacidade.html").read_text(encoding="utf-8"))
-    assert RESPONSAVEL in priv and "Nenhuma divulgação paga." in priv and f'href="{GITHUB}"' in priv
+    assert RESPONSAVEL in priv and "github.com" not in priv
+    assert "Guilherme Pereira Franco" not in rodape and "mailto:" in priv  # pedidos de dados seguem por e-mail
+
+
+def test_cards_da_inicial_preenchem_a_area_da_imagem():
+    marca = (RAIZ / "app" / "marca.css").read_text(encoding="utf-8")
+    assert ".evento .foto .img,.evento-online .foto .img{object-fit:cover}" in marca
+    assert ".evento .foto .fundo,.evento-online .foto .fundo{display:none}" in marca
 
 
 def test_aviso_de_que_o_link_do_grupo_fica_visivel_a_quem_vai():

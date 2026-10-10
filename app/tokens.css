@@ -1,0 +1,74 @@
+/* Comitê Popular do Lula — design tokens (web e apps) v1 */
+:root {
+  /* Marca */
+  --cp-red-500: #C3090A;   /* primária: fundos, botões, links */
+  --cp-red-600: #A00708;   /* hover */
+  --cp-red-700: #8E0607;   /* pressed, texto de erro */
+  --cp-red-vivid: #EA1E24; /* degradês, só texto grande */
+  --cp-green-500: #0B912A; /* bloco de destaque, ilustração */
+  --cp-green-700: #087A23; /* botões e texto verde */
+  --cp-yellow-400: #FBCE02;/* bordas, tarjas, foco sobre vermelho */
+  --cp-blue-500: #048ED6;  /* ilustração, só texto grande */
+  --cp-blue-700: #0270AA;  /* links e botões azuis */
+
+  /* Neutros */
+  --cp-ink: #2A2A2A;       /* texto principal */
+  --cp-ink-muted: #5E5E5E; /* texto secundário */
+  --cp-border: #D9D4CC;    /* divisórias decorativas */
+  --cp-border-strong: #8A847B; /* bordas de inputs e controles (3,7:1) */
+  --cp-surface: #FFFFFF;
+  --cp-surface-alt: #F3F1EE;
+
+  /* Feedback (fundo / texto) */
+  --cp-success-bg: #E3F4E7; --cp-success-fg: #06601C;
+  --cp-warning-bg: #FFF6CC; --cp-warning-fg: #6B5300;
+  --cp-danger-bg:  #FDE8E8; --cp-danger-fg:  #8E0607;
+  --cp-info-bg:    #E1F1FA; --cp-info-fg:    #015A8A;
+
+  /* Tipografia */
+  --cp-font: "Montserrat", system-ui, sans-serif;
+  --cp-text-display: clamp(2.25rem, 1.5rem + 3vw, 3.5rem); /* 36→56 */
+  --cp-text-h1: clamp(2rem, 1.6rem + 1.6vw, 2.5rem);       /* 32→40 */
+  --cp-text-h2: clamp(1.625rem, 1.4rem + 0.9vw, 2rem);     /* 26→32 */
+  --cp-text-h3: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);   /* 20→24 */
+  --cp-text-lg: 1.125rem;  /* 18 */
+  --cp-text-md: 1rem;      /* 16 */
+  --cp-text-sm: 0.875rem;  /* 14 */
+  --cp-text-xs: 0.75rem;   /* 12 */
+
+  /* Espaço (base 4px) */
+  --cp-space-1: 4px;  --cp-space-2: 8px;  --cp-space-3: 12px;
+  --cp-space-4: 16px; --cp-space-6: 24px; --cp-space-8: 32px;
+  --cp-space-12: 48px; --cp-space-16: 64px;
+
+  /* Raios e sombras */
+  --cp-radius-sm: 4px;   /* tags */
+  --cp-radius-md: 8px;   /* inputs, cards */
+  --cp-radius-lg: 16px;  /* modais, bottom sheets */
+  --cp-radius-pill: 999px; /* botões */
+  --cp-shadow-1: 0 1px 2px rgb(42 42 42 / .12);
+  --cp-shadow-2: 0 6px 16px rgb(42 42 42 / .14);
+
+  /* Foco */
+  --cp-focus-light: 0 0 0 3px #FFFFFF, 0 0 0 6px #2A2A2A; /* sobre claro */
+  --cp-focus-red: 0 0 0 3px #FBCE02;                      /* sobre vermelho */
+}
+
+.cp-btn {
+  font: 700 var(--cp-text-md)/1 var(--cp-font);
+  min-height: 44px; padding: 0 var(--cp-space-6);
+  border-radius: var(--cp-radius-pill); border: 2px solid transparent;
+  background: var(--cp-red-500); color: #fff; cursor: pointer;
+}
+.cp-btn:hover { background: var(--cp-red-600); }
+.cp-btn:active { background: var(--cp-red-700); }
+.cp-btn:focus-visible { outline: none; box-shadow: var(--cp-focus-light); }
+.cp-btn:disabled { background: var(--cp-border); color: var(--cp-ink-muted); cursor: not-allowed; }
+.cp-btn--outline { background: transparent; color: var(--cp-red-500); border-color: var(--cp-red-500); }
+.cp-btn--outline:hover { background: var(--cp-danger-bg); }
+.cp-btn--on-red { background: #fff; color: var(--cp-ink); }
+.cp-btn--on-red:focus-visible { box-shadow: var(--cp-focus-red); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
