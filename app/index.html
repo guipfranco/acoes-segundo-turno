@@ -485,7 +485,7 @@ function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='o
   <p class="credito" style="text-align:center;margin-top:24px">Fotos de exemplo do Wikimedia Commons, com licenças livres. O crédito de cada uma está na página da ação.</p>
   ${rodapeHtml()}</div>`}
 // responsabilidade (a lei eleitoral veda anonimato): quem faz o site e que não é propaganda paga
-function rodapeHtml(){return `<footer class="rodape sec">Uma iniciativa do Comitê Popular do Lula.<br><a href="privacidade.html">Privacidade</a></footer>`}
+function rodapeHtml(){return `<footer class="rodape sec">Feito por Guilherme Pereira Franco, voluntário do Comitê Popular do Lula. Não é site oficial da campanha. Nenhuma divulgação paga.<br><a href="privacidade.html">Privacidade</a></footer>`}
 function irParaCidade(lat,lon,rotulo){estado.onde={rotulo,lat,lon};estado.vista={lat,lon,zoom:11};location.hash='#/mapa'}
 // chute da cidade: pede a localização uma vez e escolhe o município mais próximo (capital se estiver a até 40 km)
 function cidadeMaisProxima(p){const eu={lat:p.coords.latitude,lon:p.coords.longitude};let melhor=null,cap=null;
