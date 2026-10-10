@@ -31,7 +31,7 @@
 <script src="https://cdn.jsdelivr.net/npm/pmtiles@4.5.0/dist/pmtiles.js" integrity="sha384-pbKNZbDshUsLnZMIVsn/t+j3xEY9PGfuX5Z22l5rcy/obXz3EwaMx1F5d9sRsJMn" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/protomaps-leaflet@5.1.0/dist/protomaps-leaflet.js" integrity="sha384-pAKrddYWxjFAIJwatOtmmtq9ebz3ZwluHCEg3pqOMpOporUofLqz/l5hs+0LAWaH" crossorigin="anonymous"></script>
 <style>
-:root{--papel:#fff;--tinta:#17171a;--vermelho:#d6232e;--vinho:#8c1420;--nevoa:#eef0f3;--cinza:#6e6e76;--selo:#1f7a3e;--sombra:0 -6px 24px rgba(23,23,26,.14);--nav:60px}
+:root{--papel:#fff;--tinta:#17171a;--vermelho:#d6232e;--vinho:#8c1420;--nevoa:#eef0f3;--cinza:#6e6e76;--selo:#1f7a3e;--sombra:0 -6px 24px rgba(23,23,26,.14);--nav:calc(60px + env(safe-area-inset-bottom,0px))}
 *{box-sizing:border-box}html,body{height:100%}
 body{margin:0;font-family:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--tinta);background:var(--papel);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
 h1{font-size:26px;line-height:1.1;letter-spacing:-.02em;font-weight:800;margin:0 0 8px}

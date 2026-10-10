@@ -8,8 +8,7 @@
    animações de até 200 ms. Logo do Comitê no cabeçalho (mínimo 120 px de largura) e a mão do "L" no favicon. */
 :root{--papel:var(--cp-surface);--tinta:var(--cp-ink);--vermelho:var(--cp-red-500);--vinho:var(--cp-red-700);
   --nevoa:var(--cp-surface-alt);--cinza:var(--cp-ink-muted);--selo:var(--cp-green-700);
-  --amarelo:var(--cp-yellow-400);--azul:var(--cp-blue-700);--sombra:0 -6px 16px rgb(42 42 42 / .14);
-  --nav:calc(60px + env(safe-area-inset-bottom,0px))}
+  --amarelo:var(--cp-yellow-400);--azul:var(--cp-blue-700);--sombra:0 -6px 16px rgb(42 42 42 / .14)}
 body{font-family:var(--cp-font);font-weight:500;line-height:1.55}
 .leaflet-container,.previa .leaflet-popup-content,.etiqueta,.leaflet-container .previa a.leaflet-popup-close-button{font-family:var(--cp-font)}
 b,strong{font-weight:700}
@@ -49,7 +48,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:none;box
 
 /* campos: rótulo visível acima, borda forte (3,7:1), foco com borda e anel grafite */
 label{font-weight:700;font-size:var(--cp-text-sm);color:var(--cp-ink)}
-label.marcar,.opcao{font-weight:500}
+label.marcar,.opcao,label input,label textarea,label select{font-weight:500}
 input,textarea,select{border:1.5px solid var(--cp-border-strong);border-radius:var(--cp-radius-md);min-height:44px}
 input[type=checkbox],input[type=radio]{min-height:0;accent-color:var(--cp-red-500)}
 input:focus,textarea:focus,select:focus{border-color:var(--cp-ink)}
@@ -143,7 +142,7 @@ nav{background:var(--cp-surface);border-top:1px solid var(--cp-border);padding-b
 nav a{color:var(--cp-ink-muted);font-size:var(--cp-text-xs);font-weight:700}
 nav a.ativo{color:var(--cp-red-500)}
 nav a.cta{background:var(--cp-red-500);color:#fff}nav a.cta.ativo{color:#fff;background:var(--cp-red-700)}
-nav a:focus-visible{border-radius:var(--cp-radius-md)}
+nav a:focus-visible{border-radius:var(--cp-radius-md)}nav a.cta:focus-visible{box-shadow:var(--cp-focus-red)}
 @media (max-width:899px){
   nav a.ativo:not(.cta)>span:last-child{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:3px}
 }
