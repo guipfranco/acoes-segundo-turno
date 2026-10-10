@@ -358,7 +358,11 @@ def logo_org(nome):
 
 
 def baixar(destino_pasta=PASTA):
-    req = urllib.request.Request(URL_FEED, headers={"User-Agent": "Mozilla/5.0 acoes-segundo-turno"})
+    # O Cloudflare do comitepopular guarda o acoes.js por um ano (max-age=31536000): sem o parâmetro que muda a cada
+    # chamada, voltava a mesma cópia de 2026-10-09 02:53 por mais de 30 h. Visto em 2026-10-10.
+    url = f"{URL_FEED}?t={int(time.time())}"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 acoes-segundo-turno",
+                                               "Cache-Control": "no-cache"})
     with urllib.request.urlopen(req, timeout=60) as r:
         bruto = r.read()
     destino_pasta.mkdir(parents=True, exist_ok=True)
