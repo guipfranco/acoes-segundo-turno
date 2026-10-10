@@ -188,6 +188,7 @@ coluna não existe e conta como não verificada), mas a aba Divulgação e os bo
   para que as linhas sem hora (ex.: "Noite - Giro nos Bares", que estava como 9h às 11h) passem a "à noite" com
   `hora_aproximada`. A hora muda o `fonte_id` dessas linhas: a ação antiga é encerrada e nasce outra, pela regra de sempre.
   As mensagens do "Fale com a gente" chegam na aba Mensagens da Fila (`#/fila`, só moderador).
+- Em 2026-10-10 (noite): migração 20261010000010 (etiqueta "Divulgação pública", `verificar_acao`) aplicada com `ir_ao_ar.py migrar` e depois merge da branch `divulgacao-publica`. No ar: 548 importadas com etiqueta, 1 cadastrada no app sem.
 
 ## Lista e fotos pelo GitHub Pages
 
