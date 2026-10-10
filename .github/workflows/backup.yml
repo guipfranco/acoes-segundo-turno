@@ -29,7 +29,8 @@ jobs:
       - name: Ligar ao projeto de produção
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: npx --yes supabase@1.200.3 link --project-ref ommitzndniqnmsjsjghb --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+        # 2.x, como em scripts/backup_banco.sh: o pg_dump tem que ser da versão do servidor (Postgres 17)
+        run: npx --yes supabase@2.120.0 link --project-ref ommitzndniqnmsjsjghb --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
       - name: Dump cifrado
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
