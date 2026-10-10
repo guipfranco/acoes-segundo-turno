@@ -159,6 +159,17 @@ test('criar ação: participante vai para análise, verificado publica direto, e
   assert.equal((await api.criarAcao(novaAcao(d))).status, 'publicada');
 });
 
+test('criar ação: guarda o endereço escrito (sem espaço sobrando e até 200 caracteres)', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  d.pessoas.find(p => p.id === d.config.eu).telefone = '(11) 98888-7777';
+  const r = await api.criarAcao(novaAcao(d, { endereco: '  Rua da Consolação, 1000  ' }));
+  assert.equal(d.acoes.find(a => a.id === r.id).lugar.endereco, 'Rua da Consolação, 1000');
+  const longo = await api.criarAcao(novaAcao(d, { endereco: 'x'.repeat(300) }));
+  assert.equal(d.acoes.find(a => a.id === longo.id).lugar.endereco.length, 200);
+  const sem = await api.criarAcao(novaAcao(d));
+  assert.equal(d.acoes.find(a => a.id === sem.id).lugar.endereco, '');
+});
+
 test('criar ação: exige telefone, limita 10 por dia e valida grupo e turnos', async () => {
   const d = dados(); const api = ApiExemplo.criar(d);
   const eu = d.pessoas.find(p => p.id === d.config.eu);

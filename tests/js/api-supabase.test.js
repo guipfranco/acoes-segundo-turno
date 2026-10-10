@@ -96,7 +96,8 @@ test('deAcao converte linha da view no formato AcaoPublica', () => {
   const a = deAcao({ id: 7, titulo: 'T', tipo: 'panfletagem', descricao: 'd', organizador: 'u1', organizador_nome: 'Carlos', organizacao: null,
     lugar_nome: 'Praça', bairro: 'Centro', cidade: 'São Paulo', lat: -23.5, lon: -46.6, online: false,
     foto_url: null, foto_credito: null, foto_pagina: null, prioritaria: true, contato_tipo: 'whatsapp', status: 'publicada', criada_em: '2026-10-08T12:00:00+00:00' });
-  assert.deepEqual(a.lugar, { nome: 'Praça', bairro: 'Centro', cidade: 'São Paulo', lat: -23.5, lon: -46.6, online: false, aproximado: false });
+  assert.deepEqual(a.lugar, { nome: 'Praça', endereco: '', bairro: 'Centro', cidade: 'São Paulo', lat: -23.5, lon: -46.6, online: false, aproximado: false });
+  assert.equal(deAcao({ online: false, lugar_nome: 'Praça', endereco: 'Rua A, 10' }).lugar.endereco, 'Rua A, 10');
   assert.equal(a.fonte, null); assert.equal(a.linkDivulgacao, null);
   assert.equal(a.foto, null); assert.equal(a.organizadorNome, 'Carlos'); assert.equal(a.contatoTipo, 'whatsapp');
   assert.equal(a.criadaEm, '2026-10-08'); assert.equal(a.detalhe, undefined);

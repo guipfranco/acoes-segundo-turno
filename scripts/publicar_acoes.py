@@ -66,11 +66,11 @@ def para_aprovacao(item, motivo):
     return item
 
 
-def sem_ponto(item, cidade, uf, bairro, nome):
+def sem_ponto(item, cidade, uf, bairro, nome, endereco=""):
     """Cidade não reconhecida: sem ponto no mapa, com o que a fonte disse, para a moderação ler."""
     cidade = " - ".join(x for x in (cidade, uf) if x) or None
-    item.update(online=False, lugar_nome=(nome or cidade or "")[:120] or None, bairro=bairro or None, cidade=cidade,
-                lat=None, lon=None, lugar_aproximado=False)
+    item.update(online=False, lugar_nome=(nome or cidade or "")[:120] or None, endereco=endereco[:200] or None,
+                bairro=bairro or None, cidade=cidade, lat=None, lon=None, lugar_aproximado=False)
     return item
 
 
@@ -109,17 +109,17 @@ def item_do_feed(x, lugares, geo=None):
     item["organizacao_tipo"] = bl.tipo_org(item["organizacao"]) if item["organizacao"] else None
     item["organizacao_foto"] = bl.logo_org(item["organizacao"]) if item["organizacao"] else None
     if online:
-        item.update(online=True, lugar_nome=None, bairro=None, cidade=None, lat=None, lon=None, lugar_aproximado=False)
+        item.update(online=True, lugar_nome=None, endereco=None, bairro=None, cidade=None, lat=None, lon=None, lugar_aproximado=False)
     else:
         r = bl.resolver_lugar(cidade, uf, lugares)
         if not r:
-            sem_ponto(item, cidade, uf, None, local or endereco)
+            sem_ponto(item, cidade, uf, None, local or endereco, endereco)
             para_aprovacao(item, "sem cidade reconhecida" if cidade else "sem cidade")
             item["descricao"] = descricao_de(x.get("atividade"), x.get("plataforma"), bl.FONTE)
             return item, None
         cidade, bairro, c = r
         lat, lon, precisao = bl.localizar(geo, endereco, local, cidade, uf, c)
-        item.update(online=False, lugar_nome=(local or endereco or cidade)[:120],
+        item.update(online=False, lugar_nome=(local or endereco or cidade)[:120], endereco=endereco[:200] or None,
                     bairro=(bairro or bl.bairro_do_endereco(endereco, cidade)) or None,
                     cidade=cidade, lat=lat, lon=lon, lugar_aproximado=precisao == "cidade")
     item["descricao"] = descricao_de(x.get("atividade"), x.get("plataforma"), bl.FONTE)
@@ -233,16 +233,16 @@ def item_da_rede(r, lugares, geo=None):
     if link_bruto and not item["link"]:
         item["aviso"] = bl.aviso_link(link_bruto)
     if online:
-        item.update(online=True, lugar_nome=None, bairro=None, cidade=None, lat=None, lon=None, lugar_aproximado=False)
+        item.update(online=True, lugar_nome=None, endereco=None, bairro=None, cidade=None, lat=None, lon=None, lugar_aproximado=False)
     else:
         res = bl.resolver_lugar(cidade, uf, lugares)
         if not res:
-            sem_ponto(item, cidade, uf, bairro, endereco or bairro)
+            sem_ponto(item, cidade, uf, bairro, endereco or bairro, endereco)
             duvida = "; ".join(x for x in (duvida, "sem cidade reconhecida" if cidade else "sem cidade") if x)
         else:
             cidade, bairro_df, c = res
             lat, lon, precisao = bl.localizar(geo, endereco, "", cidade, uf, c)
-            item.update(online=False, lugar_nome=(endereco or bairro or bairro_df or cidade)[:120],
+            item.update(online=False, lugar_nome=(endereco or bairro or bairro_df or cidade)[:120], endereco=endereco[:200] or None,
                         bairro=(bairro or bairro_df or bl.bairro_do_endereco(endereco, cidade)) or None,
                         cidade=cidade, lat=lat, lon=lon, lugar_aproximado=precisao == "cidade")
     item["fonte_id"] = id_redes(item["link"], item["inicio"], item["cidade"], item["titulo"])
