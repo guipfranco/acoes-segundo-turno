@@ -73,6 +73,27 @@
     return { config, organizacoes: orgs.map(deOrg), acoes: acoes.map(deAcao),
       turnos: turnos.filter(t => String(t.inicio).slice(0, 16) >= hoje + 'T00:00').map(deTurno) };
   }
+  async function sha256Hex(texto) {
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
+    return Array.from(new Uint8Array(h), b => b.toString(16).padStart(2, '0')).join('');
+  }
+  // Script do "Fazer login com o Google" (Google Identity Services), baixado só quando alguém clica em Entrar.
+  // Não leva integrity: o Google atualiza o arquivo no mesmo endereço.
+  let googlePromessa = null;
+  function carregarGoogle() {
+    if (window.google && window.google.accounts && window.google.accounts.id) return Promise.resolve(window.google);
+    if (!googlePromessa) {
+      googlePromessa = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+        const tempo = setTimeout(() => reject(new Error('demorou')), 8000);
+        s.onload = () => { clearTimeout(tempo); window.google && window.google.accounts ? resolve(window.google) : reject(new Error('sem google.accounts')); };
+        s.onerror = () => { clearTimeout(tempo); reject(new Error('falhou')); };
+        document.head.appendChild(s);
+      }).catch(e => { googlePromessa = null; throw e; });
+    }
+    return googlePromessa;
+  }
   function erroDe(e) { const x = new Error(e.message || 'erro'); x.codigo = (e.message || '').trim(); x.original = e; return x; }
 
   function criar(cfg) {
@@ -89,6 +110,38 @@
       }
       return snapshotEmMemoria.promessa;
     }
+    // Janela com o botão "Fazer login com o Google". O Google devolve um id_token assinado com o nonce (em sha256) e o
+    // Supabase confere o token e o nonce cru. Resolve true ao entrar e false se a pessoa fechar a janela.
+    async function entrarPeloBotao(google) {
+      const nonce = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+      const nonceSha = await sha256Hex(nonce);
+      return new Promise((resolve, reject) => {
+        const caixa = document.createElement('dialog');
+        caixa.className = 'login-google';
+        caixa.innerHTML = '<h2>Entrar</h2><p>Use sua conta Google para dizer "Eu vou!" e cadastrar ações.</p>'
+          + '<div class="login-google-botao"></div><p class="login-google-erro" hidden></p>'
+          + '<button type="button" class="login-google-fechar">Agora não</button>';
+        const erro = caixa.querySelector('.login-google-erro');
+        let feito = false;
+        const fechar = ok => { if (feito) return; feito = true; caixa.close(); caixa.remove(); resolve(ok); };
+        caixa.querySelector('.login-google-fechar').onclick = () => fechar(false);
+        caixa.addEventListener('cancel', e => { e.preventDefault(); fechar(false); });
+        caixa.addEventListener('click', e => { if (e.target === caixa) fechar(false); });
+        google.accounts.id.initialize({
+          client_id: cfg.googleClientId, nonce: nonceSha, ux_mode: 'popup', itp_support: true,
+          callback: async r => {
+            const { error } = await sb.auth.signInWithIdToken({ provider: 'google', token: r.credential, nonce });
+            if (error) { console.error(error); erro.textContent = 'Não deu para entrar. Tente de novo.'; erro.hidden = false; return; }
+            fechar(true);
+          },
+        });
+        document.body.appendChild(caixa);
+        const largura = Math.min(320, Math.max(200, (document.documentElement.clientWidth || 360) - 80));
+        google.accounts.id.renderButton(caixa.querySelector('.login-google-botao'),
+          { theme: 'filled_black', size: 'large', shape: 'pill', text: 'continue_with', locale: 'pt-BR', width: largura });
+        try { caixa.showModal(); } catch (e) { reject(e); }
+      });
+    }
     const api = {
       modo: 'supabase',
       origemPublico: null, // 'snapshot' | 'supabase', para depuração
@@ -98,6 +151,13 @@
         if (error) throw erroDe(error); return data ? dePessoa(data) : null;
       },
       async entrar() {
+        // Com googleClientId, entra pelo botão do próprio Google (janela sobre o site): a pessoa vê o nome do app e o
+        // endereço do site, não o do Supabase. Se o script do Google não carregar, cai no redirecionamento antigo.
+        if (cfg.googleClientId) {
+          let google = null;
+          try { google = await carregarGoogle(); } catch (e) { console.warn('script do Google não carregou; usando o redirecionamento', e); }
+          if (google) return entrarPeloBotao(google);
+        }
         const volta = location.origin + location.pathname + location.hash;
         const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: volta } });
         if (error) throw erroDe(error);

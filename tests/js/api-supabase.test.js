@@ -196,3 +196,54 @@ test('publico() ao vivo pagina de 1000 em 1000 e não para na página curta', as
   assert.equal(p.acoes.length, 2300); assert.equal(p.acoes[2299].id, 2300);
   assert.equal(p.turnos.length, 1200);
 });
+
+// ---------- entrar ----------
+function ambienteLogin(cfgExtra, google) {
+  const chamadas = { oauth: [], idToken: [], init: null, botao: null };
+  const sb = { auth: { getSession: async () => ({ data: { session: null } }),
+    signInWithOAuth: async a => { chamadas.oauth.push(a); return { error: null }; },
+    signInWithIdToken: async a => { chamadas.idToken.push(a); return { error: null }; } } };
+  // DOM mínimo: a janela de login só precisa de createElement, querySelector, showModal/close e listeners
+  const els = {};
+  const elemento = () => ({ hidden: false, textContent: '', onclick: null, ouvintes: {},
+    set innerHTML(_) { for (const c of ['.login-google-botao', '.login-google-erro', '.login-google-fechar']) els[c] = elemento(); },
+    querySelector: c => els[c], addEventListener(t, f) { this.ouvintes[t] = f; }, showModal() { this.aberta = true; }, close() { this.aberta = false; }, remove() {} });
+  global.document = { createElement: () => (els.caixa = elemento()), body: { appendChild() {} }, documentElement: { clientWidth: 390 } };
+  global.location = { origin: 'https://site', pathname: '/app/', hash: '#/acao/3' };
+  global.window = { supabase: { createClient: () => sb }, google };
+  return { api: criar(Object.assign({ url: 'https://x.supabase.co', anonKey: 'anon' }, cfgExtra)), chamadas, els };
+}
+
+// espera a janela abrir (o nonce passa pelo crypto.subtle, assíncrono)
+async function abriu(els) { for (let i = 0; i < 200 && !(els.caixa && els.caixa.aberta); i++) await new Promise(r => setTimeout(r, 5)); }
+
+test('entrar() sem googleClientId segue no redirecionamento pelo Supabase', async () => {
+  const { api, chamadas } = ambienteLogin({}, undefined);
+  await api.entrar();
+  assert.deepEqual(chamadas.oauth, [{ provider: 'google', options: { redirectTo: 'https://site/app/#/acao/3' } }]);
+});
+
+test('entrar() com googleClientId usa o botão do Google e manda o nonce cru ao Supabase', async () => {
+  const crypto = require('node:crypto');
+  let cb = null, init = null, botao = null;
+  const google = { accounts: { id: { initialize: o => { init = o; cb = o.callback; }, renderButton: (el, o) => { botao = o; } } } };
+  const { api, chamadas, els } = ambienteLogin({ googleClientId: 'cid' }, google);
+  const p = api.entrar();
+  await abriu(els);
+  assert.equal(init.client_id, 'cid'); assert.equal(botao.locale, 'pt-BR'); assert.equal(els.caixa.aberta, true);
+  assert.deepEqual(chamadas.oauth, []);
+  await cb({ credential: 'tok' });
+  assert.equal(await p, true); assert.equal(els.caixa.aberta, false);
+  const [{ provider, token, nonce }] = chamadas.idToken;
+  assert.equal(provider, 'google'); assert.equal(token, 'tok');
+  assert.equal(init.nonce, crypto.createHash('sha256').update(nonce).digest('hex'));
+});
+
+test('entrar() pelo botão: fechar a janela resolve false sem entrar', async () => {
+  const google = { accounts: { id: { initialize() {}, renderButton() {} } } };
+  const { api, chamadas, els } = ambienteLogin({ googleClientId: 'cid' }, google);
+  const p = api.entrar();
+  await abriu(els);
+  els['.login-google-fechar'].onclick();
+  assert.equal(await p, false); assert.deepEqual(chamadas.idToken, []);
+});
