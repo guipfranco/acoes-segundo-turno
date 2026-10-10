@@ -139,6 +139,9 @@ Conferido em 2026-10-09 na pilha local: 222 ações do feed e 57 das redes; capt
   `acoes-segundo-turno`, app "Ações do 2º turno" em Produção, cliente "Cliente Web 1" com origem
   `https://guipfranco.github.io` e callback `https://ommitzndniqnmsjsjghb.supabase.co/auth/v1/callback`.
   Domínios autorizados: `guipfranco.github.io` e `ommitzndniqnmsjsjghb.supabase.co` (o Google recusa `supabase.co`).
+  Desde 2026-10-10 o "Entrar" usa o botão do Google sobre o site (`googleClientId` em `app/config.js`, ID público do
+  mesmo cliente; `signInWithIdToken` com nonce): a tela do Google mostra `guipfranco.github.io`, não o Supabase. Sem o
+  ID, ou se o script do Google não carregar, volta ao redirecionamento. `ir_ao_ar.py config` não escreve esse ID.
 - `app/config.js` usa a chave `sb_publishable_...` (pública, equivalente à anon).
 - Política de privacidade em `app/privacidade.html`, exigida pelo Google para publicar o login.
 - Vaquinha: `configuracao.vaquinha` = `https://doelula.com.br/`.
