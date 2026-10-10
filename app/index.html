@@ -778,7 +778,7 @@ const MODELOS={
  'bandeiraço':{titulo:'Bandeiraço na avenida',descricao:'Bandeiras e faixas do Lula na hora do rush. Traga bandeira se tiver.',dica:'Hora do rush, calçada larga, longe da faixa de pedestres.'},
  'outro':{titulo:'',descricao:'',dica:'Descreva o que vai acontecer e o que a pessoa precisa levar.'}};
 const LUGAR_ONLINE=()=>({nome:'Online',bairro:'Online',cidade:'Online',lat:null,lon:null,online:true});
-function novoCriar(){return {passo:1,editando:null,tipo:null,online:false,titulo:'',descricao:'',foto:'',linkIg:'',enviandoFoto:false,quem:null,orgNome:'',orgLink:'',lugar:{nome:'',endereco:'',bairro:'',cidade:'',lat:null,lon:null},buscaLugar:'',buscandoEnd:false,quando:quandoDe(null),detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
+function novoCriar(){return {passo:1,editando:null,tipo:null,online:false,titulo:'',descricao:'',foto:'',linkIg:'',enviandoFoto:false,quem:null,orgNome:'',orgLink:'',lugar:{nome:'',endereco:'',bairro:'',cidade:'',lat:null,lon:null},buscaLugar:'',buscandoEnd:false,semAchar:false,quando:quandoDe(null),detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
 estado.criar=novoCriar();
 function cv(campo,valor){estado.criar[campo]=valor}
 function escolherTipo(t){const c=estado.criar;c.tipo=t;if(!c.editando){c.titulo=MODELOS[t].titulo;c.descricao=MODELOS[t].descricao}c.erros={};c.passo=2;render()}
@@ -789,20 +789,19 @@ function sugerirCriar(q){const box=document.getElementById('sug-criar');sugLugar
   box.innerHTML=sugLugarCriar.map((l,i)=>`<div onclick="escolherLugarCriar(${i})">${rotuloLugar(l)}</div>`).join('');box.style.display=sugLugarCriar.length?'block':'none'}
 function escolherLugarCriar(i){const l=sugLugarCriar[i];if(!l)return;const c=estado.criar;Object.assign(c.lugar,{bairro:l[0],cidade:l[4]==='d'?'São Paulo':l[0],lat:l[2],lon:l[3]});c.buscaLugar=nomeLugar(l);rerender()}
 // endereço -> ponto no mapa pelo Nominatim (OpenStreetMap, o mesmo da importação). Só no botão, nunca a cada letra:
-// a regra de uso do serviço proíbe autocompletar. Com a cidade escolhida, procura nela; sem, preenche a cidade pelo resultado.
+// a regra de uso do serviço proíbe autocompletar. Um campo só: a pessoa escreve rua, número e cidade, e a cidade e o
+// bairro saem do resultado. Sem resultado, aparece a lista de cidades como plano B (escolher a cidade e arrastar o pino).
 async function acharEndereco(){const c=estado.criar,q=String(c.lugar.endereco||'').trim();
-  if(q.length<4){c.erros={endereco:'Escreva a rua e o número.'};rerender();return}
+  if(q.length<4){c.erros={endereco:'Escreva a rua, o número e a cidade.'};rerender();return}
   c.buscandoEnd=true;c.erros={};rerender();
-  let r=null;try{const u='https://nominatim.openstreetmap.org/search?'+new URLSearchParams({q:[q,c.lugar.cidade,'Brasil'].filter(Boolean).join(', '),
+  let r=null;try{const u='https://nominatim.openstreetmap.org/search?'+new URLSearchParams({q:q+', Brasil',
       format:'jsonv2',addressdetails:'1',limit:'1',countrycodes:'br','accept-language':'pt-BR'});
     const res=await fetch(u);if(res.ok)r=(await res.json())[0]||null}catch(e){}
   c.buscandoEnd=false;
-  if(!r){c.erros={endereco:c.lugar.cidade?`Não achamos esse endereço em ${c.lugar.cidade}. Confira a rua e o número, ou arraste o pino até o lugar.`:'Não achamos esse endereço. Confira a rua e o número, ou escolha a cidade e arraste o pino.'};rerender();return}
-  const p={lat:Number(r.lat),lon:Number(r.lon)};
-  if(c.lugar.cidade&&c.lugar.lat!=null&&distanciaKm({lat:c.lugar.lat,lon:c.lugar.lon},p)>60){c.erros={endereco:`Esse endereço não fica em ${c.lugar.cidade}. Confira a rua ou a cidade.`};rerender();return}
-  if(!c.lugar.cidade){const e=r.address||{},cid=e.city||e.town||e.municipality||e.village||'';
-    if(cid){c.lugar.cidade=cid;c.lugar.bairro=e.suburb||e.city_district||e.neighbourhood||cid;c.buscaLugar=lugarCurto(c.lugar)}}
-  Object.assign(c.lugar,p);rerender()}
+  if(!r){c.semAchar=true;c.erros={endereco:'Não achamos esse endereço. Confira a rua, o número e a cidade. Se não der, escolha a cidade abaixo e arraste o pino até o lugar.'};rerender();return}
+  const e=r.address||{},cid=e.city||e.town||e.municipality||e.village||'';
+  if(cid){c.lugar.cidade=cid;c.lugar.bairro=e.suburb||e.city_district||e.neighbourhood||cid;c.buscaLugar=lugarCurto(c.lugar)}
+  c.semAchar=false;Object.assign(c.lugar,{lat:Number(r.lat),lon:Number(r.lon)});rerender()}
 // um horário por ação (dia, começa, termina) e, se quiser, vagas limitadas; outro horário vira outra ação
 // término antes do início = acaba no dia seguinte (vigília, festa que vira a noite)
 function quandoDe(t){return t?{data:t.inicio.slice(0,10),ini:t.inicio.slice(11,16),fim:t.fim.slice(11,16),limitar:!!t.lotacao,vagas:t.lotacao?String(t.lotacao):'',dataOriginal:t.inicio.slice(0,10)}
@@ -816,7 +815,7 @@ function turnosForm(c){const q=c.quando;if(!(q.data&&q.ini&&q.fim))return [];
   return [{inicio:q.data+'T'+q.ini,fim:(q.fim<q.ini?diaSeguinte(q.data):q.data)+'T'+q.fim,lotacao:q.limitar&&vagasValidas(q.vagas)?Number(q.vagas):null}]}
 function telValido(t){return /^\(\d{2}\) 9[\dx]{4}-[\dx]{4}$/.test(t)||/^\d{11}$/.test(t.replace(/\D/g,''))}
 function validarPasso2(){const c=estado.criar,e={};if(!c.titulo.trim())e.titulo='Dê um título.';
-  if(!c.online){if(!c.lugar.nome.trim())e.lugarNome='Diga o nome do ponto de encontro.';if(c.lugar.lat==null)e.lugar='Escolha a cidade ou ache o endereço no mapa.'}
+  if(!c.online){if(!c.lugar.nome.trim())e.lugarNome='Diga o nome do ponto de encontro.';if(c.lugar.lat==null)e.lugar='Escreva o endereço e toque em "Achar no mapa".'}
   const q=c.quando;if(!q.data)e.quando='Escolha o dia da ação.';else if(!q.ini||!q.fim)e.quando='Informe o horário de início e o de término.';
   else if(q.fim===q.ini)e.quando='O término precisa ser depois do início.';else if(q.data<PUB.config.hoje&&q.data!==q.dataOriginal)e.quando='Esse dia já passou.';
   if(q.limitar&&!vagasValidas(q.vagas))e.vagas='Diga quantas vagas (um número inteiro).';
@@ -832,9 +831,10 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
    <label>Descrição</label><textarea rows="3" oninput="cv('descricao',this.value)">${esc(c.descricao)}</textarea>
    <label style="display:flex;gap:8px;align-items:center;margin-top:18px"><input type="checkbox" style="width:auto" ${c.online?'checked':''} onchange="estado.criar.online=this.checked;rerender()"> Ação online (ligatona, mutirão de mensagens): a pessoa participa de casa</label>
    ${c.online?'<p class="sec">O link da chamada vai no detalhe do encontro, que só quem se inscreve vê.</p>':`<label>Nome do ponto de encontro</label><input placeholder="ex.: Estação Grajaú, saída 2" value="${esc(c.lugar.nome)}" oninput="estado.criar.lugar.nome=this.value">${E('lugarNome')}
-   <label>Cidade ou bairro</label><div style="position:relative"><input id="busca-criar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(c.buscaLugar)}" oninput="sugerirCriar(this.value)"><div id="sug-criar" style="position:absolute;left:0;right:0;top:48px;background:#fff;border-radius:12px;box-shadow:0 8px 28px rgba(23,23,26,.2);z-index:5;display:none"></div></div>
-   <label>Endereço</label><div style="display:flex;gap:8px"><input id="end-criar" placeholder="ex.: Rua da Consolação, 1000" autocomplete="street-address" value="${esc(c.lugar.endereco||'')}" oninput="estado.criar.lugar.endereco=this.value" onkeydown="if(event.key==='Enter'){event.preventDefault();acharEndereco()}"><button class="btn sec" style="flex:none;white-space:nowrap" onclick="acharEndereco()" ${c.buscandoEnd?'disabled':''}>${c.buscandoEnd?'Procurando…':'Achar no mapa'}</button></div>${E('endereco')}
-   <p class="sec" style="margin-top:6px;font-size:14px">O endereço aparece para todo mundo. Use um lugar público (praça, estação, sede); nunca o endereço de uma casa.</p>
+   <label>Endereço</label><div style="display:flex;gap:8px"><input id="end-criar" placeholder="ex.: Rua da Consolação, 1000, São Paulo" autocomplete="street-address" value="${esc(c.lugar.endereco||'')}" oninput="estado.criar.lugar.endereco=this.value" onkeydown="if(event.key==='Enter'){event.preventDefault();acharEndereco()}"><button class="btn sec" style="flex:none;white-space:nowrap" onclick="acharEndereco()" ${c.buscandoEnd?'disabled':''}>${c.buscandoEnd?'Procurando…':'Achar no mapa'}</button></div>${E('endereco')}
+   ${c.lugar.lat!=null&&c.lugar.cidade&&!c.semAchar?`<p style="margin-top:6px;font-size:15px">📍 No mapa: <b>${esc(lugarCurto(c.lugar))}</b></p>`:''}
+   <p class="sec" style="margin-top:6px;font-size:14px">Rua, número e cidade. O endereço aparece para todo mundo: use um lugar público (praça, estação, sede); nunca o endereço de uma casa.</p>
+   ${c.semAchar?`<label>Cidade ou bairro</label><div style="position:relative"><input id="busca-criar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(c.buscaLugar)}" oninput="sugerirCriar(this.value)"><div id="sug-criar" style="position:absolute;left:0;right:0;top:48px;background:#fff;border-radius:12px;box-shadow:0 8px 28px rgba(23,23,26,.2);z-index:5;display:none"></div></div>`:''}
    ${c.lugar.lat!=null?`<p class="sec" style="margin:8px 0 4px">Arraste o pino até o ponto exato do encontro.</p><div id="minimapa" style="height:220px;border-radius:14px"></div>`:''}${E('lugar')}`}
    <label>Dia</label><input type="date" min="${PUB.config.hoje}" value="${c.quando.data}" onchange="estado.criar.quando.data=this.value">
    <div class="horarios"><div><label>Começa</label><input type="time" value="${c.quando.ini}" onchange="estado.criar.quando.ini=this.value;avisoDiaSeguinte()"></div>

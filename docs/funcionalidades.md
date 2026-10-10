@@ -46,10 +46,11 @@ skills em `.claude/skills/`; para operar a produção, `docs/operacao.md`. Atual
   `minhas_acoes`, `encerrar_acao`, `fila_moderacao`, `aprovar_acao`, `recusar_acao`).
 - "Quem organiza?": eu mesmo(a), minha organização ou outra escrita à mão (criada sem selo). Ação em nome de organização
   pede o link do POST oficial da organização anunciando aquela ação (`acao.organizacao_link`, erro `link_post`).
-- Onde: nome do ponto, cidade ou bairro (lista do IBGE) e endereço, opcional e PÚBLICO (decisão do Gui, 2026-10-10;
+- Onde: nome do ponto e um campo só de endereço (rua, número e cidade), PÚBLICO (decisões do Gui, 2026-10-10;
   migração 20261010000030). "Achar no mapa" põe o pino no endereço pelo Nominatim, só no botão (a regra do serviço
-  proíbe autocompletar); sem cidade escolhida, preenche a cidade pelo resultado. O pino segue arrastável. O campo avisa
-  que o endereço aparece para todo mundo e pede lugar público, nunca casa; a Fila mostra o endereço para a moderação.
+  proíbe autocompletar), e tira cidade e bairro do resultado ("📍 No mapa: bairro, cidade"). Não achou: aparece a lista
+  de cidades do IBGE como plano B, e a pessoa arrasta o pino. O campo avisa que o endereço aparece para todo mundo e
+  pede lugar público, nunca casa; a Fila mostra o endereço para a moderação.
 - O cadastro não recarrega a tela ao mudar horário ou "Vagas limitadas" (no iPhone fechava o seletor e rolava ao topo);
   `rerender()` mantém a rolagem.
 - Editar ação, selo e bloquear pelo próprio organizador seguem só no modo exemplo.
