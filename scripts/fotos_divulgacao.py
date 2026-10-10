@@ -71,6 +71,12 @@ def codigo_do_link(link):
     return m.group(1) if m else None
 
 
+def link_da_foto(item):
+    """Post de onde sai a imagem do item: o próprio link ou, na ação do feed sem post, o post das redes que divulga a
+    mesma ação (`link_foto`, posto por publicar_acoes.casar_fotos)."""
+    return item.get("link_foto") or item.get("link")
+
+
 def perfil_do_og(url):
     """og:url vem como https://www.instagram.com/<perfil>/reel/<código>/ quando o post é de um perfil."""
     m = RE_PERFIL.search(url or "")
@@ -168,19 +174,19 @@ def foto_do_item(item, mapa):
     """{url, mini, credito, pagina} para o item da importação, ou None. `mini` é None enquanto a foto ainda está no
     bucket (antes do migrar-pages). O @ do perfil só aparece no crédito quando a ação tem organização pública
     reconhecida; sem isso o perfil pode ser de pessoa comum e o crédito fica genérico."""
-    cod = codigo_do_link(item.get("link"))
+    cod = codigo_do_link(link_da_foto(item))
     f = mapa.get(cod) if cod else None
     if not f or not f.get("url"):
         return None
     perfil = f.get("perfil")
     credito = f"Divulgação de @{perfil} no Instagram" if perfil and item.get("organizacao") else "Divulgação original no Instagram"
-    return {"url": f["url"], "mini": f.get("mini") or None, "credito": credito, "pagina": item["link"]}
+    return {"url": f["url"], "mini": f.get("mini") or None, "credito": credito, "pagina": link_da_foto(item)}
 
 
 def pendentes(itens, mapa):
     vistos = []
     for it in itens:
-        cod = codigo_do_link(it.get("link"))
+        cod = codigo_do_link(link_da_foto(it))
         if cod and cod not in mapa and cod not in vistos:
             vistos.append(cod)
     return vistos
@@ -265,7 +271,7 @@ def codigos_no_pages(itens):
     for it in itens:
         f = it.get("foto") or {}
         if any(str(f.get(k) or "").startswith(BASE_PAGES + "/") for k in ("url", "mini")):
-            cod = codigo_do_link(it.get("link"))
+            cod = codigo_do_link(link_da_foto(it))
             if cod and cod not in cods:
                 cods.append(cod)
     return cods

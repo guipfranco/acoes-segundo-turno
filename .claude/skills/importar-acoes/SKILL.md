@@ -24,12 +24,13 @@ moderação.
 
 ## Rotina (pasta do projeto, na `master` atualizada, com `SUPABASE_ACCESS_TOKEN` no `.env`)
 
-1. Ensaio: `python scripts/publicar_acoes.py bora-lula`. Guarda o feed datado em `levantamento/bora-lula/` e escreve
-   `levantamento/publicar-*.json` e `revisao-*.csv`.
+1. Ensaio: `python scripts/publicar_acoes.py bora-lula --redes levantamento/<consolidado>.csv`. Guarda o feed datado
+   em `levantamento/bora-lula/` e escreve `levantamento/publicar-*.json`, `revisao-*.csv` e `fotos-em-duvida-*.csv`.
+   O `--redes` dá à ação do feed sem post a arte do post das redes que divulga a mesma ação (veja "Imagem das redes").
 2. **Conferir que o feed mudou**: se o arquivo novo é idêntico ao anterior (mesmo md5) e já passou mais de meio dia,
    desconfie de cache antigo, não de feed parado (o servidor de lá guarda por um ano; o script pede com `?t=`).
 3. Ler o `revisao-*.csv` (o que ficou de fora e por quê; avisos com prefixo `aviso:`).
-4. `python scripts/publicar_acoes.py bora-lula --aplicar`. Se houver arte nova, ele grava em `fotos/divulgacao/` e PARA
+4. `python scripts/publicar_acoes.py bora-lula --redes levantamento/<consolidado>.csv --aplicar`. Se houver arte nova, ele grava em `fotos/divulgacao/` e PARA
    sem tocar no banco.
 5. `git add fotos && git commit -m "Fotos: ..." && git push`, esperar o workflow do Pages terminar.
 6. Rodar o mesmo `--aplicar` de novo: confere que o Pages já serve cada foto (HEAD 200) e grava. "O Pages ainda não
@@ -40,6 +41,16 @@ O `fonte_id` das redes sai da própria linha: corrigir título ou hora troca o i
 derrubaria alguém que marcou "Eu vou", o `--aplicar` para; `--forcar` encerra assim mesmo (só com decisão do Gui).
 
 Opções úteis: `--sem-fotos` (não busca arte nova), `--sem-geocodificar`, `--sem-encerrar`. Veja `--help`.
+
+## Imagem das redes para a ação do feed (desde 2026-10-10)
+
+Metade do feed chega sem link nem arte. Com `--redes`, cada ação dessas procura no consolidado o post do Instagram
+que divulga o mesmo ato (mesma regra de "mesmo ato" da deduplicação, inclusive a linha que cita a agenda Bora Lula).
+O post vira só a fonte da imagem (`link_foto`); link, texto e verificação seguem o feed. Casa sozinho quando uma linha
+de título parecido serve só àquela ação e tudo aponta para o mesmo post (card de agenda com várias ações vale: é uma
+linha por ação). O resto vai para `levantamento/fotos-em-duvida-<data>.csv`; o Gui confirma ou recusa em
+`levantamento/fotos-casadas.json`: `{"<fonte_id do feed>": "<link do post>"}` confirma, `null` recusa (a ação fica
+com o cartaz do app). Arte de outra ação no card é o risco: na dúvida, recuse.
 
 ## Fotos e Instagram (o que funciona)
 

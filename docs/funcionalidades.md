@@ -20,6 +20,9 @@ skills em `.claude/skills/`; para operar a produção, `docs/operacao.md`. Atual
   outro (migração 20261009000010).
 - **Fotos**: das ações importadas, a arte do post (em `fotos/divulgacao/`, arte + `-mini.jpg`); das de exemplo, Wikimedia
   Commons com crédito (campo `foto`).
+- **Imagem das redes** (desde 2026-10-10): ação do feed Bora Lula sem post ganha a arte do post das redes que divulga
+  a mesma ação (`publicar_acoes.py --redes`; casamento seguro sozinho, dúvida confirmada pelo Gui em
+  `levantamento/fotos-casadas.json`).
 - **Sem foto** (desde 2026-10-10): o app desenha um cartaz na área da imagem (card, lista online e página da ação):
   cor da marca alternada pelo id, tarja amarela "Bora Lula", o tipo em letra grande e a cidade. Com logo da
   organização, o logo vai no alto do cartaz. Ele fica por baixo da foto e aparece também quando ela não carrega.

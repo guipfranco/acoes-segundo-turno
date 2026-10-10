@@ -8,6 +8,8 @@ Uso:
   python scripts/publicar_acoes.py bora-lula                       # baixa o feed e ENSAIA (não grava)
   python scripts/publicar_acoes.py bora-lula --aplicar             # grava no banco
   python scripts/publicar_acoes.py bora-lula --de ARQ.json         # usa um feed já baixado
+  python scripts/publicar_acoes.py bora-lula --redes ARQ.csv       # ação do feed sem post ganha a arte do post
+                                                                   # das redes que divulga a mesma ação
   python scripts/publicar_acoes.py redes --de ARQ.csv [--feed ARQ.json] [--aplicar]
                                                                    # consolidado das redes, sem o que já está no feed
 
@@ -17,7 +19,8 @@ Destino (variáveis de ambiente ou .env na raiz, nunca no repo), na ordem em que
                                           Management API, como em scripts/ir_ao_ar.py (produção)
 
 O ensaio escreve em levantamento/ (fora do git): publicar-<fonte>-<data>.json com os itens que iriam para o
-banco e revisao-<fonte>-<data>.csv com o que ficou de fora e por quê.
+banco e revisao-<fonte>-<data>.csv com o que ficou de fora e por quê; com --redes, também
+fotos-em-duvida-<data>.csv: posts que talvez sejam da ação, para o Gui confirmar em levantamento/fotos-casadas.json.
 
 Fotos (desde 2026-10-09): a arte dos posts novos é gravada em fotos/divulgacao/ (raiz do repo) e servida pelo
 GitHub Pages, não pelo bucket do Supabase. O endereço gravado no banco só pode apontar para arquivo que o Pages já
@@ -325,6 +328,65 @@ def itens_do_consolidado(linhas, lugares, itens_feed=(), hoje=None, ate=ATE, geo
     return itens, revisao
 
 
+# ---- imagem das redes para a ação do feed que chega sem post (desde 2026-10-10) ----
+# Metade do feed não traz link nem arte, mas a varredura das redes costuma ter o post que divulga a mesma ação (é a
+# linha que itens_do_consolidado descarta como "já está no feed"). O post vira só a fonte da IMAGEM (`link_foto`): o
+# link e o resto do item seguem o feed, e foto nova não tira a verificação. Card com várias ações vem numa linha por
+# ação, então a conta é por linha: casa sozinho quando há linha de título parecido que só serve a esta ação e todas
+# essas linhas são do mesmo post; o resto vai para a lista de dúvidas, e o Gui confirma o que quiser em
+# levantamento/fotos-casadas.json ({"<fonte_id do feed>": "<link do post>"}, ou null para recusar).
+
+def posts_das_redes(linhas, lugares, hoje=None, ate=ATE):
+    """[(linha, item)] das linhas do consolidado com post do Instagram no período. A linha que cita a agenda Bora
+    Lula também conta: é quem organiza divulgando a mesma ação, com a arte."""
+    hoje = hoje or date.today().isoformat()
+    posts = []
+    for r in linhas:
+        if not fd.codigo_do_link(r.get("link")) or not (hoje <= (r.get("data") or "") <= ate):
+            continue
+        texto = re.sub(r"bora\s+lula", "", r.get("texto_original") or "", flags=re.I)
+        item, _ = item_da_rede(dict(r, texto_original=texto), lugares)
+        if item:
+            posts.append((r, item))
+    return posts
+
+
+def divulga_a_acao(acao, r, post):
+    if acao["online"] or post["online"]:
+        return acao["online"] and post["online"] and acao["inicio"][:10] == post["inicio"][:10] and parecidos(acao["titulo"], post["titulo"])
+    return bool(acao["cidade"] and post["cidade"]) and mesmo_ato(acao, post, bool((r.get("hora") or "").strip()))
+
+
+def casar_fotos(itens, posts, confirmadas=None):
+    """Põe `link_foto` na ação do feed sem post próprio. Devolve [(fonte_id, título, links)] das dúvidas: posts
+    que divulgam o mesmo ato mas com título diferente, linha que serviria a mais de uma ação ou posts diferentes."""
+    confirmadas = confirmadas or {}
+    candidatos = {}
+    for it in itens:
+        if fd.codigo_do_link(it.get("link")):
+            continue
+        if it["fonte_id"] in confirmadas:  # null recusa o casamento: a ação fica com o cartaz
+            if fd.codigo_do_link(confirmadas[it["fonte_id"]]):
+                it["link_foto"] = confirmadas[it["fonte_id"]]
+            continue
+        achados = [(r, p) for r, p in posts if divulga_a_acao(it, r, p)]
+        if achados:
+            candidatos[it["fonte_id"]] = (it, achados)
+    fortes = {fid: [(r, p) for r, p in achados if parecidos(it["titulo"], p["titulo"])] for fid, (it, achados) in candidatos.items()}
+    uso = {}  # linha de título parecido -> quantas ações ela serviria
+    for linhas in fortes.values():
+        for r, p in linhas:
+            uso[id(r)] = uso.get(id(r), 0) + 1
+    duvidas = []
+    for fid, (it, achados) in candidatos.items():
+        bons = {p["link"] for r, p in fortes[fid] if uso[id(r)] == 1}
+        if bons and len({fd.codigo_do_link(l) for l in bons}) == 1 and len(bons) == len({p["link"] for _, p in fortes[fid]}):
+            it["link_foto"] = sorted(bons)[0]
+        else:
+            duvidas.append((fid, it["titulo"], " ".join(sorted({p["link"] for _, p in achados}))))
+    return duvidas
+
+
 def encerramentos_com_inscricao(itens, com_inscricao):
     """Ids com inscrição ativa que a importação encerraria por não estarem mais na lista."""
     return sorted(set(com_inscricao) - {i["fonte_id"] for i in itens})
@@ -470,6 +532,16 @@ def resumo(itens, revisao):
     return texto
 
 
+def gravar_duvidas(duvidas):
+    arq = RAIZ / "levantamento" / f"fotos-em-duvida-{datetime.now().strftime('%Y-%m-%d')}.csv"
+    arq.parent.mkdir(exist_ok=True)
+    with arq.open("w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["fonte_id", "titulo", "posts"])
+        w.writerows(duvidas)
+    return arq
+
+
 def gravar_ensaio(fonte, itens, revisao):
     hoje = datetime.now().strftime("%Y-%m-%d")
     pasta = RAIZ / "levantamento"
@@ -489,6 +561,7 @@ def main(argv=None):
     p.add_argument("fonte", choices=["bora-lula", "redes"])
     p.add_argument("--de", help="feed JSON (bora-lula) ou CSV consolidado (redes); bora-lula sem --de baixa o feed")
     p.add_argument("--feed", help="redes: feed JSON para não repetir o que já está nele")
+    p.add_argument("--redes", help="bora-lula: CSV consolidado das redes; a ação do feed sem post ganha a arte do post que a divulga")
     p.add_argument("--hoje", help="AAAA-MM-DD (padrão: hoje, ou o campo hoje do feed)")
     p.add_argument("--ate", default=ATE)
     p.add_argument("--aplicar", action="store_true", help="grava no banco (sem isso só ensaia)")
@@ -509,6 +582,14 @@ def main(argv=None):
                 arq, feed = bl.baixar()
                 print(f"feed guardado em {arq}")
             itens, revisao = itens_do_feed(feed, lugares, hoje=args.hoje, ate=args.ate, geo=geo)
+            if args.redes:
+                with open(args.redes, encoding="utf-8", newline="") as f:
+                    posts = posts_das_redes(list(csv.DictReader(f)), lugares, hoje=args.hoje, ate=args.ate)
+                arq_conf = RAIZ / "levantamento" / "fotos-casadas.json"
+                confirmadas = json.loads(arq_conf.read_text(encoding="utf-8")) if arq_conf.exists() else {}
+                duvidas = casar_fotos(itens, posts, confirmadas)
+                print(f"imagem das redes: {sum(1 for i in itens if i.get('link_foto'))} ações do feed casadas com um post, "
+                      f"{len(duvidas)} em dúvida em {gravar_duvidas(duvidas)}")
         else:
             if not args.de:
                 p.error("redes precisa de --de ARQ.csv")

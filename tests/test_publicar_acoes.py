@@ -368,3 +368,47 @@ def test_baixa_sem_cidade_junta_os_motivos_e_vai_ao_banco_com_status():
     assert itens[0]["motivo_duvida"] == "confiança baixa; sem cidade reconhecida" and itens[0]["status"] == "em análise"
     sql = pa.sql_importar("redes", itens)
     assert "em análise" in sql and "motivo_duvida" in sql
+
+
+def test_acao_do_feed_sem_post_ganha_a_imagem_do_post_das_redes_que_a_divulga():
+    feed_itens, _ = pa.itens_do_feed({"hoje": "2026-10-09", "acoes": [
+        feed_item(id=1, data="2026-10-11", cidade="Recife", uf="PE", atividade="Caminhada Recife com Lula", link=""),
+        feed_item(id=2, data="2026-10-11", cidade="Recife", uf="PE", atividade="Plenária da juventude", hora="18h", hora_ord=18, link=""),
+        feed_item(id=3, data="2026-10-11", cidade="Recife", uf="PE", atividade="Ato no Marco Zero", hora="10h", hora_ord=10,
+                  link="https://www.instagram.com/p/PROPRIO/"),
+        feed_item(id=4, data="2026-10-11", cidade="Olinda", uf="PE", atividade="Bandeiraço em Olinda", link=""),
+        feed_item(id=5, data="2026-10-11", cidade="Olinda", uf="PE", atividade="Panfletagem no Carmo", local="Largo do Carmo", link=""),
+        # card de agenda com duas ações em Caruaru: uma linha por ação, mesmo post
+        feed_item(id=6, data="2026-10-12", cidade="Caruaru", uf="PE", atividade="Panfletagem na feira de Caruaru", link=""),
+        feed_item(id=7, data="2026-10-12", cidade="Caruaru", uf="PE", atividade="Plenária popular de Caruaru", hora="19h", hora_ord=19, link="")]}, LUGARES)
+    linhas = [
+        linha(titulo="Caminhada com Lula em Recife", hora="9:00", link="https://www.instagram.com/p/CAMINHADA/",
+              texto_original="Bora Lula! caminhada"),                     # cita a agenda: serve mesmo assim
+        linha(titulo="Juventude se organiza", hora="18:00", link="https://www.instagram.com/p/JUV/"),  # mesmo ato, título outro
+        linha(titulo="Ato no Marco Zero", hora="10:00", link="https://www.instagram.com/p/OUTRO/"),    # já tem post próprio
+        linha(titulo="Bandeiraço e panfletagem", cidade="Olinda", hora="9:00", endereco="Praça da Moça e Largo do Carmo", link="https://www.instagram.com/p/DOIS/"),  # serve a 4 e 5
+        linha(titulo="Caminhada com Lula em Recife", data="2026-10-30", link="https://www.instagram.com/p/DEPOIS/"),  # fora do período
+        linha(titulo="Sem post", link="https://x.com/algo"),
+        linha(titulo="Panfletagem na feira", cidade="Caruaru", data="2026-10-12", hora="9:00", link="https://www.instagram.com/p/CARD/"),
+        linha(titulo="Plenária popular", cidade="Caruaru", data="2026-10-12", hora="19:00", link="https://www.instagram.com/p/CARD/"),
+    ]
+    posts = pa.posts_das_redes(linhas, LUGARES, hoje="2026-10-09")
+    assert sorted(fd.codigo_do_link(p["link"]) for _, p in posts) == ["CAMINHADA", "CARD", "CARD", "DOIS", "JUV", "OUTRO"]
+    duvidas = pa.casar_fotos(feed_itens, posts)
+    por_id = {i["fonte_id"]: i for i in feed_itens}
+    assert por_id["1"]["link_foto"] == "https://www.instagram.com/p/CAMINHADA/" and not por_id["1"]["link"]  # o link segue o do feed
+    assert "link_foto" not in por_id["3"]                       # o post do próprio feed manda
+    assert por_id["6"]["link_foto"] == por_id["7"]["link_foto"] == "https://www.instagram.com/p/CARD/"  # cada linha do card, uma ação
+    assert all("link_foto" not in por_id[k] for k in ("2", "4", "5"))
+    assert {d[0]: d[2] for d in duvidas} == {"2": "https://www.instagram.com/p/JUV/", "4": "https://www.instagram.com/p/DOIS/",
+                                            "5": "https://www.instagram.com/p/DOIS/"}
+    # o Gui confirma uma dúvida e recusa um casamento automático
+    for i in feed_itens:
+        i.pop("link_foto", None)
+    duvidas = pa.casar_fotos(feed_itens, posts, {"2": "https://www.instagram.com/p/JUV/", "1": None})
+    assert por_id["2"]["link_foto"] == "https://www.instagram.com/p/JUV/" and "link_foto" not in por_id["1"]
+    assert {d[0] for d in duvidas} == {"4", "5"}
+    # a imagem sai do post casado, com o crédito apontando para ele
+    mapa = {"JUV": {"url": "https://s/divulgacao/JUV.jpg", "perfil": "juventude"}}
+    assert sorted(fd.pendentes(feed_itens, {})) == ["CARD", "JUV", "PROPRIO"]
+    assert fd.foto_do_item(por_id["2"], mapa)["pagina"] == "https://www.instagram.com/p/JUV/"
