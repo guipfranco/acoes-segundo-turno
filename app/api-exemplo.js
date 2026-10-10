@@ -208,9 +208,11 @@
         if (!ehModerador()) throw erro('so_moderador');
         // divulgação: importadas no ar sem verificação, com horário que não terminou, da mais próxima para a mais distante
         if (situacao === 'divulgacao') {
-          const prox = a => dados.turnos.filter(t => t.acao === a.id && turnoVale(t)).map(t => t.inicio).sort()[0];
-          return dados.acoes.filter(a => a.fonte && a.status === 'publicada' && !a.verificadaEm && prox(a))
-            .sort((p, q) => prox(p).localeCompare(prox(q))).map(a => ({ acao: completa(a), turnos: comInscritos(a.id), organizador: null }));
+          // turnoVale: o de hora aproximada vale até o fim do dia, como na fila do banco
+          return dados.acoes.filter(a => a.fonte && a.status === 'publicada' && !a.verificadaEm)
+            .map(a => ({ a, prox: dados.turnos.filter(t => t.acao === a.id && turnoVale(t)).map(t => t.inicio).sort()[0] }))
+            .filter(x => x.prox).sort((p, q) => p.prox.localeCompare(q.prox))
+            .map(({ a }) => ({ acao: completa(a), turnos: comInscritos(a.id), organizador: null }));
         }
         // suspensas inclui as importadas: suspender é o jeito de tirar uma importada do ar
         return dados.acoes.filter(a => a.status === situacao && (!a.fonte || situacao === 'rascunho')).sort((p, q) => String(q.criadaEm).localeCompare(String(p.criadaEm)))

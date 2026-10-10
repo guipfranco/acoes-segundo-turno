@@ -610,43 +610,90 @@ def test_feedback_tem_freio_por_pessoa(cenario):
     assert sb.rpc("enviar_feedback", {"texto": "a décima primeira"}, jwt=cenario["jwt_b"]).corpo["message"] == "muitas_mensagens"
 
 
-def test_divulgacao_publica_verificar_e_reimportar_com_mudanca_tira_a_verificacao(cenario):
+def _verificar_todas(cenario, ids):
+    for i in ids:
+        assert sb.rpc("verificar_acao", {"acao_id": i}, jwt=cenario["jwt_a"]).status in (200, 204)
+
+
+def test_divulgacao_publica_so_moderador_verifica_e_a_fila_lista_as_nao_verificadas(cenario):
     fonte = "teste-" + uuid.uuid4().hex[:8]
-    itens = [_item("a"), _item("b"), _item("c")]
+    itens = [_item("a"), _item("b")]
     assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE).status == 200
     ids = {a["titulo"][-1]: a["id"] for a in sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo}
     pub = lambda: {a["titulo"][-1]: a["verificada"] for a in sb.chamar("GET", f"/rest/v1/acao_publica?fonte=eq.{fonte}").corpo}
-    assert pub() == {"a": False, "b": False, "c": False}
+    assert pub() == {"a": False, "b": False}
     # ação cadastrada no app conta como verificada
     assert all(a["verificada"] for a in sb.chamar("GET", "/rest/v1/acao_publica?fonte=is.null&limit=5").corpo)
-
-    # só moderador verifica e vê a aba Divulgação
     assert sb.rpc("verificar_acao", {"acao_id": ids["a"]}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
     assert sb.rpc("verificar_acao", {"acao_id": ids["a"]}).status >= 400
     assert sb.rpc("fila_moderacao", {"situacao": "divulgacao"}, jwt=cenario["jwt_b"]).corpo["message"] == "so_moderador"
     sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
     fila = sb.rpc("fila_moderacao", {"situacao": "divulgacao"}, jwt=cenario["jwt_a"]).corpo
-    nossas = [m["acao"]["id"] for m in fila if m["acao"]["fonte"] == fonte]
-    assert sorted(nossas) == sorted(ids.values()) and all(m["acao"]["verificada"] is False for m in fila)
-    for x in "abc":
-        assert sb.rpc("verificar_acao", {"acao_id": ids[x]}, jwt=cenario["jwt_a"]).status in (200, 204)
-    assert pub() == {"a": True, "b": True, "c": True}
+    assert sorted(m["acao"]["id"] for m in fila if m["acao"]["fonte"] == fonte) == sorted(ids.values())
+    assert all(m["acao"]["verificada"] is False for m in fila)
+    _verificar_todas(cenario, ids.values())
+    assert pub() == {"a": True, "b": True}
     assert not [m for m in sb.rpc("fila_moderacao", {"situacao": "divulgacao"}, jwt=cenario["jwt_a"]).corpo if m["acao"]["fonte"] == fonte]
-
-    # reimportar igual mantém; mudar a hora (a) ou o lugar (b) tira a verificação; mudar só o título (c) mantém
-    sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE)
-    assert pub() == {"a": True, "b": True, "c": True}
-    sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("a", inicio="2099-02-01T10:00"), _item("b", lugar_nome="Praça Nova"),
-                                                         _item("c", descricao="Outro texto.")]}, jwt=sb.SERVICE)
-    assert pub() == {"a": False, "b": False, "c": True}
-
-    # desverificar; ação do app não se verifica; recusar uma importada tira do ar e a reimportação respeita
-    assert sb.rpc("desverificar_acao", {"acao_id": ids["c"]}, jwt=cenario["jwt_a"]).status in (200, 204)
-    assert pub()["c"] is False
-    assert sb.rpc("desverificar_acao", {"acao_id": ids["c"]}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
+    # desverificar; de novo não pode; ação do app não se verifica
+    assert sb.rpc("desverificar_acao", {"acao_id": ids["b"]}, jwt=cenario["jwt_a"]).status in (200, 204)
+    assert pub()["b"] is False
+    assert sb.rpc("desverificar_acao", {"acao_id": ids["b"]}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
     sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
     novo = sb.rpc("criar_acao", {"dados": _nova()}, jwt=cenario["jwt_b"]).corpo["id"]
     assert sb.rpc("verificar_acao", {"acao_id": novo}, jwt=cenario["jwt_a"]).corpo["message"] == "nao_pode"
+    # recusar uma importada tira do ar e a reimportação respeita
     assert sb.rpc("recusar_acao", {"acao_id": ids["a"], "motivo": "post de outra data"}, jwt=cenario["jwt_a"]).status in (200, 204)
     sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE)
     assert "a" not in pub()
+
+
+def test_divulgacao_publica_qualquer_mudanca_da_fonte_tira_a_verificacao_so_foto_nao(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    mudancas = {"titulo": {"titulo": "Importada outro"}, "tipo": {"tipo": "ato"}, "descricao": {"descricao": "Outro texto."},
+                "organizacao": {"organizacao": "Outra Org Teste"}, "lugar_nome": {"lugar_nome": "Praça Nova"}, "bairro": {"bairro": "Vila"},
+                "cidade": {"cidade": "Santo André"}, "lat": {"lat": -23.7}, "online": {"online": True, "lat": None, "lon": None},
+                "aprox": {"lugar_aproximado": False}, "link": {"link": "https://www.instagram.com/p/y/"}, "sem_link": {"link": ""},
+                "inicio": {"inicio": "2099-02-01T10:00"}, "fim": {"fim": "2099-02-01T12:00"}, "hora_aprox": {"hora_aproximada": True}}
+    chaves = list(mudancas) + ["foto", "igual"]
+    itens = [_item(k) for k in chaves]
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE).status == 200
+    linhas = sb.admin("GET", f"/rest/v1/acao?fonte=eq.{fonte}&select=id,fonte_id").corpo
+    ids = {l["fonte_id"]: l["id"] for l in linhas}
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    _verificar_todas(cenario, ids.values())
+    foto = {"url": "https://exemplo.github.io/fotos/x.jpg", "credito": "c", "pagina": None}
+    novos = [_item(k, **mudancas[k]) for k in mudancas] + [_item("foto", foto=foto, organizacao_foto=foto), _item("igual")]
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": novos}, jwt=sb.SERVICE).status == 200
+    ver = {l["fonte_id"]: l["verificada_em"] is not None for l in sb.admin("GET", f"/rest/v1/acao?fonte=eq.{fonte}&select=fonte_id,verificada_em").corpo}
+    assert ver == {**{k: False for k in mudancas}, "foto": True, "igual": True}
+
+
+def test_divulgacao_publica_encerrada_que_volta_e_turno_a_mais_perdem_a_verificacao(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    itens = [_item("a"), _item("b")]
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE)
+    ids = {l["fonte_id"]: l["id"] for l in sb.admin("GET", f"/rest/v1/acao?fonte=eq.{fonte}&select=id,fonte_id").corpo}
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    _verificar_todas(cenario, ids.values())
+    ver = lambda: {l["fonte_id"]: l["verificada_em"] is not None for l in sb.admin("GET", f"/rest/v1/acao?fonte=eq.{fonte}&select=fonte_id,verificada_em").corpo}
+    # "a" sai da agenda (encerrada) e volta igual: perde a verificação
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": [_item("b")]}, jwt=sb.SERVICE)
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE)
+    assert ver() == {"a": False, "b": True}
+    # "b" ganhou um segundo turno por fora: a importação traz um só, então a verificação cai
+    assert sb.admin("POST", "/rest/v1/turno", {"acao": ids["b"], "inicio": "2099-02-02T09:00", "fim": "2099-02-02T11:00"}).status in (200, 201)
+    sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE)
+    assert ver()["b"] is False
+
+
+def test_fila_divulgacao_mantem_hora_aproximada_ate_o_fim_do_dia(cenario):
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    hoje = datetime.now(ZoneInfo("America/Sao_Paulo")).date().isoformat()
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    itens = [_item("aprox", inicio=f"{hoje}T00:00", fim=f"{hoje}T00:01", hora_aproximada=True),
+             _item("exato", inicio=f"{hoje}T00:00", fim=f"{hoje}T00:01")]
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE).status == 200
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    fila = sb.rpc("fila_moderacao", {"situacao": "divulgacao"}, jwt=cenario["jwt_a"]).corpo
+    assert [m["acao"]["titulo"] for m in fila if m["acao"]["fonte"] == fonte] == ["Importada aprox"]

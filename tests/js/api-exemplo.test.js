@@ -304,3 +304,15 @@ test('divulgação pública: só moderador verifica; a fila lista as não verifi
   await api.recusar(alvo.id, 'post de outra data');
   assert.ok(!(await api.publico()).acoes.some(a => a.id === alvo.id));
 });
+
+test('fila divulgação: turno de hora aproximada fica até o fim do dia; o exato sai quando termina', async () => {
+  const d = dados(); const api = ApiExemplo.criar(d);
+  const aprox = d.turnos.find(t => t.horaAproximada && d.acoes.find(a => a.id === t.acao).fonte);
+  const exato = d.turnos.find(t => !t.horaAproximada && (d.acoes.find(a => a.id === t.acao) || {}).fonte && !d.acoes.find(a => a.id === t.acao).verificadaEm);
+  aprox.inicio = '2026-10-11T18:00'; aprox.fim = '2026-10-11T20:00';
+  exato.inicio = '2026-10-11T18:00'; exato.fim = '2026-10-11T20:00';
+  d.config.agora = '2026-10-11T22:00'; d.config.hoje = '2026-10-11';
+  d.config.eu = d.pessoas.find(p => p.papel === 'moderador').id; await api.entrar();
+  const ids = (await api.fila('divulgacao')).map(m => m.acao.id);
+  assert.ok(ids.includes(aprox.acao)); assert.ok(!ids.includes(exato.acao));
+});

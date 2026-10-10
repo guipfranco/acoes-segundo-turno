@@ -1036,6 +1036,9 @@ async function bloquear(pid,aid){const m=(document.getElementById('motivo-b'+aid
   estado.bloqueando=null;estado.erroBloqueio=null;recado('Pessoa bloqueada');await sincronizar()}
 async function desbloquear(pid){if(!confirm('Desbloquear esta pessoa? Ela volta a poder cadastrar ações e dizer que vai.'))return
   try{await API.desbloquear(pid)}catch(e){recado(MENSAGEM[e.codigo]||'Não deu.');return}recado('Pessoa desbloqueada');await sincronizar()}
+// motivo da recusa, aberto pelo botão "Recusar" (abas Em análise e Divulgação)
+function formRecusa(a,exemplo){if(estado.recusando!==a.id)return '';
+  return `<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="${esc(exemplo)}">${estado.erroRecusa?`<div class="erro">${esc(estado.erroRecusa)}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="recusar(${a.id})">Confirmar recusa</button></div>`}
 // importadas no ar que ninguém conferiu, da mais próxima para a mais distante. Verificar tira a etiqueta
 // "Divulgação pública"; recusar tira do ar (a importação seguinte respeita a recusa)
 function filaDivulgacaoHtml(lista){
@@ -1045,7 +1048,7 @@ function filaDivulgacaoHtml(lista){
    <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome)}, ${esc(lugarCurto(a.lugar))}${a.lugar.aproximado?' (ponto aproximado: só a cidade)':''}`}. Turnos: ${m.turnos.map(quandoTurno).join('; ')||'nenhum'}. Origem: ${a.fonte==='bora-lula'?'agenda Bora Lula':'varredura das redes'}.</div>
    <div class="sec">${a.linkDivulgacao?linkExterno(a.linkDivulgacao,'Ver a divulgação original ↗'):'Sem link da divulgação: procure a ação pelo título antes de verificar.'}</div>
    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn mini" onclick="verificar(${a.id})">Verificar</button><button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Recusar</button></div>
-   ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: o post é de outra data">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="recusar(${a.id})">Confirmar recusa</button></div>`:''}</div>`}).join('')}`}
+   ${formRecusa(a,'ex.: o post é de outra data')}</div>`}).join('')}`}
 function telaFila(){const s=estado.sessao;if(!s||s.papel!=='moderador')return '<div class="pagina"><h1>Fila de moderação</h1><p>Só moderadores veem a fila.</p></div>';
   const aba=estado.filaAba,lista=estado.fila||[];
   return `<div class="pagina"><h1>Fila de moderação</h1>
@@ -1061,7 +1064,7 @@ function telaFila(){const s=estado.sessao;if(!s||s.papel!=='moderador')return '<
    ${aba==='suspensas'&&a.motivoRecusa?`<div class="sec">Motivo da suspensão: ${esc(a.motivoRecusa)}</div>`:''}
    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${botoesModerar(a,true)}${aba==='analise'&&o&&!o.verificada?` <button class="btn sec mini" onclick="darSelo(${o.id})">Dar selo à organização</button>`:''}${p.id==null?'':p.bloqueada?` <button class="btn sec mini" onclick="desbloquear(${p.id})">Desbloquear</button>`:` <button class="btn sec mini perigo" onclick="estado.bloqueando=${a.id};estado.erroBloqueio=null;render()">Bloquear organizador</button>`}</div>
    ${estado.bloqueando===a.id?`<label>Motivo do bloqueio</label><input id="motivo-b${a.id}" placeholder="ex.: cadastrou ação falsa">${estado.erroBloqueio?`<div class="erro">${estado.erroBloqueio}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="bloquear(${p.id},${a.id})">Confirmar bloqueio</button> <button class="btn sec mini" onclick="estado.bloqueando=null;estado.erroBloqueio=null;render()">Cancelar</button></div>`:''}
-   ${estado.recusando===a.id?`<label>Motivo da recusa</label><input id="motivo${a.id}" placeholder="ex.: pede dinheiro para o material">${estado.erroRecusa?`<div class="erro">${estado.erroRecusa}</div>`:''}<div style="margin-top:8px"><button class="btn mini" onclick="recusar(${a.id})">Confirmar recusa</button></div>`:''}</div>`}).join('')}`}</div>`}
+   ${formRecusa(a,'ex.: pede dinheiro para o material')}</div>`}).join('')}`}</div>`}
 // ---------- roteamento ----------
 async function recarregar(){PUB=await API.publico();normalizarTipos(PUB.acoes);estado.sessao=await API.sessao()}
 let renderN=0,manterRolagem=false,hashAnterior='';

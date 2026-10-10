@@ -76,7 +76,8 @@ Nasceu do `mapa-segundo-turno` em 2026-10-08. URL, repo e projeto Supabase segue
 - Divulgação pública (branch `divulgacao-publica`, migração 20261010000010): decisão do Gui de 2026-10-10, não confiar na
   revisão da agenda de origem. Toda ação importada vai ao ar com a etiqueta "Divulgação pública" (cards e aviso na página)
   até um moderador verificar na aba Divulgação da Fila (`verificar_acao`/`desverificar_acao`, `acao.verificada_em`); reimportar
-  com data, hora, lugar ou link diferentes tira a verificação. Como operar em `docs/operacao.md`.
+  com qualquer mudança vinda da fonte (só foto e logo não contam) tira a verificação. Ir ao ar: migração em produção ANTES
+  do merge. Como operar em `docs/operacao.md`.
 - Spec em `docs/superpowers/specs/`, desenho visual em `docs/2026-10-08-design-mockup.md`, capturas em
   `docs/capturas/`.
 - Decisões do Gui: inscrição com nome e telefone desde a v1; moderação humana por voluntários no

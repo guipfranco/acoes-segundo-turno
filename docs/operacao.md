@@ -142,12 +142,16 @@ A etiqueta some quando alguém da moderação verifica:
 3. Bateu: **Verificar**. Falsa ou errada: **Recusar** com motivo (sai do ar; a importação seguinte respeita a recusa).
    Na página da ação, o moderador também tem "Marcar como verificada" e "Tirar verificação".
 
-Reimportar com data, hora (inclusive "hora aproximada"), lugar (nome, cidade, ponto, online) ou link diferentes tira a
-verificação sozinho: o que foi conferido já não é o que está no ar, e a ação volta para a aba. Mudança só de título,
-tipo, descrição ou foto mantém. Banco: `acao.verificada_em`/`verificada_por`, funções `verificar_acao` e
+Reimportar com qualquer mudança no que vem da fonte (título, tipo, descrição, organização, lugar, bairro, cidade,
+ponto, online, lugar aproximado, contato/link, horários, hora aproximada, número de turnos) tira a verificação
+sozinho: o que foi conferido já não é o que está no ar, e a ação volta para a aba. Ação que estava encerrada (saiu da
+agenda) e volta também perde. Só foto da ação e logo da organização não contam. Banco: `acao.verificada_em`/`verificada_por`, funções `verificar_acao` e
 `desverificar_acao` (só moderador, ficam em `registro_moderacao`), `fila_moderacao('divulgacao')`; as views expõem
-`verificada` (ação cadastrada no app conta como verificada). Antes de aplicar a migração em produção, o app já mostra a
-etiqueta em todas as importadas (a coluna não existe e conta como não verificada), mas os botões de verificar falham.
+`verificada` (ação cadastrada no app conta como verificada).
+
+**Ordem para ir ao ar: primeiro aplicar a migração 20261010000010 em produção, depois o merge na `master`.** Se o
+merge vier antes, o Pages publica o app novo sem as funções no banco: a etiqueta aparece em todas as importadas (a
+coluna não existe e conta como não verificada), mas a aba Divulgação e os botões de verificar dão erro.
 
 ## Estado da produção (2026-10-09)
 
