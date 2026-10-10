@@ -79,8 +79,8 @@ e nunca apaga um logo já gravado). Em produção elas ainda precisam ser aplica
 redefine pela Management API e guarda em `.env` na raiz (fora do git); os scripts leem o `.env`.
 
 ```bash
-python scripts/publicar_acoes.py bora-lula             # baixa o feed e ensaia: resumo + levantamento/publicar-*.json e revisao-*.csv
-python scripts/publicar_acoes.py bora-lula --aplicar   # grava (insere, atualiza, encerra o que sumiu do feed)
+python scripts/publicar_acoes.py bora-lula --redes levantamento/acoes-consolidado-2026-10-08.csv            # ensaia: resumo + publicar-*.json, revisao-*.csv, fotos-em-duvida-*.csv
+python scripts/publicar_acoes.py bora-lula --redes levantamento/acoes-consolidado-2026-10-08.csv --aplicar  # grava (insere, atualiza, encerra o que sumiu do feed)
 python scripts/publicar_acoes.py redes --de levantamento/acoes-consolidado-2026-10-08.csv --feed levantamento/bora-lula/<data>.json --aplicar
 ```
 
