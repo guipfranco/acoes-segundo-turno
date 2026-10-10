@@ -370,6 +370,12 @@ const linhaTagDivulga=a=>a.divulgacaoPublica?`<div class="meta">${tagDivulga(a)}
 const avisoDivulga=a=>a.divulgacaoPublica?'<div class="aviso-divulga">Achamos esta ação numa divulgação pública e ninguém da moderação conferiu ainda. Confira data, hora e local no post original antes de ir.</div>':'';
 // ação importada: o "Eu vou!" só marca presença; o link da divulgação original fica ao lado, como secundário
 function botaoDivulgacao(a){return a.linkDivulgacao?`<a class="btn sec mini" href="${esc(a.linkDivulgacao)}" target="_blank" rel="noopener">Ver a divulgação original ↗</a>`:''}
+// endereço escrito por quem cadastrou ou vindo da fonte; não repete quando é o próprio nome do ponto
+const enderecoDe=l=>{const e=String(l&&l.endereco||'').trim();return e&&e.toLowerCase()!==String(l.nome||'').trim().toLowerCase()?e:''};
+// "Como chegar" abre a rota no app de mapas (o link do Google Maps funciona no Android, no iPhone e no computador).
+// Ponto exato vai pela coordenada do pino; ponto aproximado (centro da cidade) vai pelo endereço escrito, se houver.
+function linkComoChegar(l){const e=String(l.endereco||'').trim(),d=!l.aproximado?`${l.lat},${l.lon}`:e?`${e}, ${l.cidade}`:null;
+  return d?`<a class="btn sec mini" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(d)}" target="_blank" rel="noopener">Como chegar ↗</a>`:''}
 function lugarAproximadoNota(l){return l.aproximado?`<div class="sec" style="font-size:14px;margin-top:4px">📍 Ponto aproximado: o mapa marca o centro de ${esc(l.cidade)}. O local exato está na divulgação.</div>`:''}
 // pinos no centro da mesma cidade abrem em espiral para não se empilharem
 function espalhar(lista){const grupos={};return lista.map(x=>{const l=x.a.lugar;if(!l.aproximado)return [l.lat,l.lon];const k=l.lat.toFixed(3)+','+l.lon.toFixed(3);const i=grupos[k]=(grupos[k]||0)+1;if(i===1)return [l.lat,l.lon];const r=0.0025*Math.sqrt(i),ang=i*2.4;return [l.lat+r*Math.sin(ang),l.lon+r*Math.cos(ang)*1.1]})}
@@ -674,7 +680,7 @@ const deBrasilia=iso=>new Date(iso.slice(0,16)+':00-03:00');
 const utcAgenda=iso=>fmtUtc(deBrasilia(iso));
 const fimAgenda=t=>t.fim?utcAgenda(t.fim):fmtUtc(new Date(deBrasilia(t.inicio).getTime()+2*3600e3)); // sem fim: 2 horas
 const linkAcao=a=>location.origin+location.pathname+'#/acao/'+a.id;
-const ondeAgenda=a=>ehOnline(a)?'Online':[a.lugar.nome,lugarCurto(a.lugar)].filter(Boolean).join(', ');
+const ondeAgenda=a=>ehOnline(a)?'Online':[a.lugar.nome,enderecoDe(a.lugar),lugarCurto(a.lugar)].filter(Boolean).join(', ');
 const textoAgenda=a=>`${(a.descricao||'').slice(0,600)}\n\nMais informações: ${linkAcao(a)}`;
 function linkGoogleAgenda(a,t){const fim=fimAgenda(t);
   const q=new URLSearchParams({action:'TEMPLATE',text:a.titulo,dates:`${utcAgenda(t.inicio)}/${fim}`,details:textoAgenda(a),location:ondeAgenda(a)});
@@ -743,8 +749,8 @@ function telaAcao(){const ab=estado.acaoAberta;if(!ab)return '<div class="pagina
   ${fechada?`<p class="erro">${avisoFora(a,ts)}</p>`:futuros.length?ctaTopo(a,futuros):'<p class="erro">Esta ação já aconteceu.</p>'}
   <p style="margin-top:12px;white-space:pre-line">${esc(a.descricao)}</p>
   <h2>Onde</h2>${ehOnline(a)?`<div><strong>Online</strong></div><div class="sec" style="font-size:15px">Você participa de casa. O link da chamada vai para quem se inscreve.</div>`:
-  `<div><strong>${esc(a.lugar.nome)}</strong></div><div class="sec" style="font-size:15px">${esc(lugarCurto(a.lugar))}</div>${lugarAproximadoNota(a.lugar)}
-  <div id="minimapa" style="height:200px;border-radius:14px;margin:10px 0"></div>`}</div>
+  `<div><strong>${esc(a.lugar.nome)}</strong></div>${enderecoDe(a.lugar)?`<div style="font-size:15px">${esc(enderecoDe(a.lugar))}</div>`:''}<div class="sec" style="font-size:15px">${esc(lugarCurto(a.lugar))}</div>${lugarAproximadoNota(a.lugar)}
+  <div id="minimapa" style="height:200px;border-radius:14px;margin:10px 0"></div>${linkComoChegar(a.lugar)}`}</div>
   <aside class="acao-lado"><h2>Quando</h2>
   ${ts.map(t=>`<div class="linha"><div>${t.horaAproximada?`<strong>${quandoTurno(t)}</strong><div class="sec" style="font-size:14px">A divulgação não informou o horário exato: confira no link original.</div>`:`<strong>${fmtData(t.inicio)}</strong> até ${hora(new Date(t.fim))}`}</div><div class="sec">${fechada?'':`${vaoNo(t)?quantosVao(vaoNo(t)):'Ninguém disse que vai ainda. Seja a primeira pessoa!'}${t.lotacao?` (${t.lotacao} vagas)`:''}`}</div><div style="margin-top:10px">${fechada?'':botaoTurno(a,t,'lado')}</div>
     ${depoisDoBotao(t,'lado',futuros)}${fechada?'':botaoAgenda(a,t)}</div>`).join('')}</aside>
@@ -772,7 +778,7 @@ const MODELOS={
  'bandeiraço':{titulo:'Bandeiraço na avenida',descricao:'Bandeiras e faixas do Lula na hora do rush. Traga bandeira se tiver.',dica:'Hora do rush, calçada larga, longe da faixa de pedestres.'},
  'outro':{titulo:'',descricao:'',dica:'Descreva o que vai acontecer e o que a pessoa precisa levar.'}};
 const LUGAR_ONLINE=()=>({nome:'Online',bairro:'Online',cidade:'Online',lat:null,lon:null,online:true});
-function novoCriar(){return {passo:1,editando:null,tipo:null,online:false,titulo:'',descricao:'',foto:'',linkIg:'',enviandoFoto:false,quem:null,orgNome:'',orgLink:'',lugar:{nome:'',bairro:'',cidade:'',lat:null,lon:null},buscaLugar:'',quando:quandoDe(null),detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
+function novoCriar(){return {passo:1,editando:null,tipo:null,online:false,titulo:'',descricao:'',foto:'',linkIg:'',enviandoFoto:false,quem:null,orgNome:'',orgLink:'',lugar:{nome:'',endereco:'',bairro:'',cidade:'',lat:null,lon:null},buscaLugar:'',buscandoEnd:false,quando:quandoDe(null),detalhe:'',grupo:'',nome:'',telefone:'',organizacao:null,erros:{}}}
 estado.criar=novoCriar();
 function cv(campo,valor){estado.criar[campo]=valor}
 function escolherTipo(t){const c=estado.criar;c.tipo=t;if(!c.editando){c.titulo=MODELOS[t].titulo;c.descricao=MODELOS[t].descricao}c.erros={};c.passo=2;render()}
@@ -782,6 +788,21 @@ let sugLugarCriar=[];
 function sugerirCriar(q){const box=document.getElementById('sug-criar');sugLugarCriar=buscarLugares(q,5);estado.criar.buscaLugar=q;
   box.innerHTML=sugLugarCriar.map((l,i)=>`<div onclick="escolherLugarCriar(${i})">${rotuloLugar(l)}</div>`).join('');box.style.display=sugLugarCriar.length?'block':'none'}
 function escolherLugarCriar(i){const l=sugLugarCriar[i];if(!l)return;const c=estado.criar;Object.assign(c.lugar,{bairro:l[0],cidade:l[4]==='d'?'São Paulo':l[0],lat:l[2],lon:l[3]});c.buscaLugar=nomeLugar(l);rerender()}
+// endereço -> ponto no mapa pelo Nominatim (OpenStreetMap, o mesmo da importação). Só no botão, nunca a cada letra:
+// a regra de uso do serviço proíbe autocompletar. Com a cidade escolhida, procura nela; sem, preenche a cidade pelo resultado.
+async function acharEndereco(){const c=estado.criar,q=String(c.lugar.endereco||'').trim();
+  if(q.length<4){c.erros={endereco:'Escreva a rua e o número.'};rerender();return}
+  c.buscandoEnd=true;c.erros={};rerender();
+  let r=null;try{const u='https://nominatim.openstreetmap.org/search?'+new URLSearchParams({q:[q,c.lugar.cidade,'Brasil'].filter(Boolean).join(', '),
+      format:'jsonv2',addressdetails:'1',limit:'1',countrycodes:'br','accept-language':'pt-BR'});
+    const res=await fetch(u);if(res.ok)r=(await res.json())[0]||null}catch(e){}
+  c.buscandoEnd=false;
+  if(!r){c.erros={endereco:c.lugar.cidade?`Não achamos esse endereço em ${c.lugar.cidade}. Confira a rua e o número, ou arraste o pino até o lugar.`:'Não achamos esse endereço. Confira a rua e o número, ou escolha a cidade e arraste o pino.'};rerender();return}
+  const p={lat:Number(r.lat),lon:Number(r.lon)};
+  if(c.lugar.cidade&&c.lugar.lat!=null&&distanciaKm({lat:c.lugar.lat,lon:c.lugar.lon},p)>60){c.erros={endereco:`Esse endereço não fica em ${c.lugar.cidade}. Confira a rua ou a cidade.`};rerender();return}
+  if(!c.lugar.cidade){const e=r.address||{},cid=e.city||e.town||e.municipality||e.village||'';
+    if(cid){c.lugar.cidade=cid;c.lugar.bairro=e.suburb||e.city_district||e.neighbourhood||cid;c.buscaLugar=lugarCurto(c.lugar)}}
+  Object.assign(c.lugar,p);rerender()}
 // um horário por ação (dia, começa, termina) e, se quiser, vagas limitadas; outro horário vira outra ação
 // término antes do início = acaba no dia seguinte (vigília, festa que vira a noite)
 function quandoDe(t){return t?{data:t.inicio.slice(0,10),ini:t.inicio.slice(11,16),fim:t.fim.slice(11,16),limitar:!!t.lotacao,vagas:t.lotacao?String(t.lotacao):'',dataOriginal:t.inicio.slice(0,10)}
@@ -795,7 +816,7 @@ function turnosForm(c){const q=c.quando;if(!(q.data&&q.ini&&q.fim))return [];
   return [{inicio:q.data+'T'+q.ini,fim:(q.fim<q.ini?diaSeguinte(q.data):q.data)+'T'+q.fim,lotacao:q.limitar&&vagasValidas(q.vagas)?Number(q.vagas):null}]}
 function telValido(t){return /^\(\d{2}\) 9[\dx]{4}-[\dx]{4}$/.test(t)||/^\d{11}$/.test(t.replace(/\D/g,''))}
 function validarPasso2(){const c=estado.criar,e={};if(!c.titulo.trim())e.titulo='Dê um título.';
-  if(!c.online){if(!c.lugar.nome.trim())e.lugarNome='Diga o nome do ponto de encontro.';if(c.lugar.lat==null)e.lugar='Marque o lugar no mapa.'}
+  if(!c.online){if(!c.lugar.nome.trim())e.lugarNome='Diga o nome do ponto de encontro.';if(c.lugar.lat==null)e.lugar='Escolha a cidade ou ache o endereço no mapa.'}
   const q=c.quando;if(!q.data)e.quando='Escolha o dia da ação.';else if(!q.ini||!q.fim)e.quando='Informe o horário de início e o de término.';
   else if(q.fim===q.ini)e.quando='O término precisa ser depois do início.';else if(q.data<PUB.config.hoje&&q.data!==q.dataOriginal)e.quando='Esse dia já passou.';
   if(q.limitar&&!vagasValidas(q.vagas))e.vagas='Diga quantas vagas (um número inteiro).';
@@ -812,6 +833,8 @@ function telaCriar(){const c=estado.criar,E=k=>c.erros[k]?`<div class="erro">${c
    <label style="display:flex;gap:8px;align-items:center;margin-top:18px"><input type="checkbox" style="width:auto" ${c.online?'checked':''} onchange="estado.criar.online=this.checked;rerender()"> Ação online (ligatona, mutirão de mensagens): a pessoa participa de casa</label>
    ${c.online?'<p class="sec">O link da chamada vai no detalhe do encontro, que só quem se inscreve vê.</p>':`<label>Nome do ponto de encontro</label><input placeholder="ex.: Estação Grajaú, saída 2" value="${esc(c.lugar.nome)}" oninput="estado.criar.lugar.nome=this.value">${E('lugarNome')}
    <label>Cidade ou bairro</label><div style="position:relative"><input id="busca-criar" placeholder="Cidade ou bairro" autocomplete="off" value="${esc(c.buscaLugar)}" oninput="sugerirCriar(this.value)"><div id="sug-criar" style="position:absolute;left:0;right:0;top:48px;background:#fff;border-radius:12px;box-shadow:0 8px 28px rgba(23,23,26,.2);z-index:5;display:none"></div></div>
+   <label>Endereço</label><div style="display:flex;gap:8px"><input id="end-criar" placeholder="ex.: Rua da Consolação, 1000" autocomplete="street-address" value="${esc(c.lugar.endereco||'')}" oninput="estado.criar.lugar.endereco=this.value" onkeydown="if(event.key==='Enter'){event.preventDefault();acharEndereco()}"><button class="btn sec" style="flex:none;white-space:nowrap" onclick="acharEndereco()" ${c.buscandoEnd?'disabled':''}>${c.buscandoEnd?'Procurando…':'Achar no mapa'}</button></div>${E('endereco')}
+   <p class="sec" style="margin-top:6px;font-size:14px">O endereço aparece para todo mundo. Use um lugar público (praça, estação, sede); nunca o endereço de uma casa.</p>
    ${c.lugar.lat!=null?`<p class="sec" style="margin:8px 0 4px">Arraste o pino até o ponto exato do encontro.</p><div id="minimapa" style="height:220px;border-radius:14px"></div>`:''}${E('lugar')}`}
    <label>Dia</label><input type="date" min="${PUB.config.hoje}" value="${c.quando.data}" onchange="estado.criar.quando.data=this.value">
    <div class="horarios"><div><label>Começa</label><input type="time" value="${c.quando.ini}" onchange="estado.criar.quando.ini=this.value;avisoDiaSeguinte()"></div>
@@ -913,7 +936,7 @@ async function publicarAcao(){const c=estado.criar,e={};if(!telValido(c.telefone
     atualizarTurnos(c,a.id);estado.aviso='Ação atualizada.';estado.criar=novoCriar();await recarregar();location.hash='#/perfil';return}
   let r;
   try{if(c.telefone!==(estado.sessao.telefone||''))estado.sessao=await API.salvarTelefone(c.telefone);
-    r=await API.criarAcao({titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,foto:c.foto,online:c.online,lugar_nome:lugar.nome,bairro:lugar.bairro,cidade:lugar.cidade,lat:lugar.lat,lon:lugar.lon,
+    r=await API.criarAcao({titulo:c.titulo,tipo:c.tipo,descricao:c.descricao,foto:c.foto,online:c.online,lugar_nome:lugar.nome,endereco:lugar.endereco||'',bairro:lugar.bairro,cidade:lugar.cidade,lat:lugar.lat,lon:lugar.lon,
       detalhe:c.detalhe,grupo:c.grupo,organizacao:c.quem==='minha'&&minhaOrg()?minhaOrg().id:null,organizacao_nome:c.quem==='outra'?c.orgNome.trim():'',organizacao_link:precisaPost(c)?normLink(c.orgLink):'',turnos:turnosForm(c)})}
   catch(err){c.erros={geral:MENSAGEM[err.codigo]||'Não deu para enviar. Tente de novo.'};render();return}
   contar('cadastrar-acao-enviada');estado.aviso=r.status==='publicada'?'Publicada! Sua ação já aparece no mapa.':'Recebemos! Sua ação está em análise. Você acompanha a situação aqui no Perfil.';
@@ -1047,7 +1070,7 @@ function filaDuvidaHtml(m){const a=m.acao,semLugar=!ehOnline(a)&&(a.lugar.lat==n
   return `<div class="linha">${cardAcao({a,t:m.turnos.find(turnoVale)||m.turnos[0]||{inicio:PUB.config.hoje+'T00:00'},km:null})}
    <div class="aviso-divulga">Veio da ${a.fonte==='bora-lula'?'agenda Bora Lula':'varredura das redes'} com dúvida: <strong>${esc(m.duvida||'sem motivo anotado')}</strong>. Está fora do ar.</div>
    <p style="white-space:pre-line;font-size:15px;margin:4px 0 8px">${esc(a.descricao)}</p>
-   <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome||'sem lugar')}, ${esc(lugarCurto(a.lugar)||'sem cidade')}`}. Turnos: ${m.turnos.map(quandoTurno).join('; ')||'nenhum'}.</div>
+   <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome||'sem lugar')}, ${enderecoDe(a.lugar)?esc(enderecoDe(a.lugar))+', ':''}${esc(lugarCurto(a.lugar)||'sem cidade')}`}. Turnos: ${m.turnos.map(quandoTurno).join('; ')||'nenhum'}.</div>
    <div class="sec">${a.linkDivulgacao?linkExterno(a.linkDivulgacao,'Ver a divulgação original ↗'):'Sem link da divulgação: procure a ação pelo título antes de aprovar.'}</div>
    ${semLugar?'<div class="sec">Sem lugar no mapa: a fonte não trouxe uma cidade que a gente reconheça. Recuse, ou peça a quem organiza para cadastrar a ação pelo app.</div>':''}
    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${semLugar?'':`<button class="btn mini" onclick="aprovar(${a.id})">Aprovar</button>`}<button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Recusar</button></div>
@@ -1056,7 +1079,7 @@ function filaDivulgacaoHtml(lista){
   return `<p class="sec">Ações que vieram da agenda Bora Lula e da varredura das redes. Estão no ar com a etiqueta "Divulgação pública". Abra o post original e confira: é ação pelo Lula, a data, a hora e o lugar batem. Se bater, marque como verificada. Se for falsa ou estiver errada, recuse.</p>
   ${lista.length?'':'<div class="vazio"><p>Nada para conferir.</p></div>'}
   ${lista.map(m=>{const a=m.acao;return `<div class="linha">${cardAcao({a,t:m.turnos.find(turnoVale)||m.turnos[0]||{inicio:PUB.config.hoje+'T00:00'},km:null})}
-   <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome)}, ${esc(lugarCurto(a.lugar))}${a.lugar.aproximado?' (ponto aproximado: só a cidade)':''}`}. Turnos: ${m.turnos.map(quandoTurno).join('; ')||'nenhum'}. Origem: ${a.fonte==='bora-lula'?'agenda Bora Lula':'varredura das redes'}.</div>
+   <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome)}, ${enderecoDe(a.lugar)?esc(enderecoDe(a.lugar))+', ':''}${esc(lugarCurto(a.lugar))}${a.lugar.aproximado?' (ponto aproximado: só a cidade)':''}`}. Turnos: ${m.turnos.map(quandoTurno).join('; ')||'nenhum'}. Origem: ${a.fonte==='bora-lula'?'agenda Bora Lula':'varredura das redes'}.</div>
    <div class="sec">${a.linkDivulgacao?linkExterno(a.linkDivulgacao,'Ver a divulgação original ↗'):'Sem link da divulgação: procure a ação pelo título antes de verificar.'}</div>
    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn mini" onclick="verificar(${a.id})">Verificar</button><button class="btn sec mini" onclick="estado.recusando=${a.id};render()">Recusar</button></div>
    ${formRecusa(a,'ex.: o post é de outra data')}</div>`}).join('')}`}
@@ -1068,7 +1091,7 @@ function telaFila(){const s=estado.sessao;if(!s||s.papel!=='moderador')return '<
   ${lista.length?'':'<div class="vazio"><p>Nada por aqui.</p></div>'}
   ${lista.map(m=>{if(aba==='analise'&&m.acao.fonte)return filaDuvidaHtml(m);const a=m.acao,t=m.turnos[0]||{inicio:(a.criadaEm||PUB.config.hoje)+'T00:00'},p=m.organizador||{},o=a.organizacao?org(a.organizacao):null;return `<div class="linha">${cardAcao({a,t,km:null})}
    <p style="white-space:pre-line;font-size:15px;margin:4px 0 8px">${esc(a.descricao)}</p>
-   <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome)}, ${esc(lugarCurto(a.lugar))}`}. Turnos: ${m.turnos.map(quandoTurno).join('; ')||'nenhum'}.${a.detalhe?` Detalhe: ${esc(a.detalhe)}.`:''}${a.contatoLink?` Grupo: ${esc(a.contatoLink)}.`:''}</div>
+   <div class="sec">${ehOnline(a)?'Online':`${esc(a.lugar.nome)}, ${enderecoDe(a.lugar)?esc(enderecoDe(a.lugar))+', ':''}${esc(lugarCurto(a.lugar))}`}. Turnos: ${m.turnos.map(quandoTurno).join('; ')||'nenhum'}.${a.detalhe?` Detalhe: ${esc(a.detalhe)}.`:''}${a.contatoLink?` Grupo: ${esc(a.contatoLink)}.`:''}</div>
    ${a.organizacaoDados?`<div class="sec">Em nome de: <strong>${esc(a.organizacaoDados.nome)}</strong> ${a.organizacaoDados.verificada?'<span class="selo">✓ verificada</span>':'(sem selo)'} · ${a.organizacaoLink?linkExterno(a.organizacaoLink,'post da organização anunciando ↗'):'sem post da organização'}${a.organizacaoDados.link_oficial?` · ${linkExterno(a.organizacaoDados.link_oficial)}`:''}</div>
    <div class="sec">Confira se o post é do perfil oficial da organização e anuncia esta ação (data e lugar).</div>`:''}
    <div class="sec">Quem criou: ${esc(p.nome)}${p.bloqueada?' <span class="status recusada">bloqueada</span>':''}, ${esc(p.telefone||'sem telefone')}${p.email?`, ${esc(p.email)}`:''}. Já criou ${p.criadas} ações (${p.aprovadas} aprovadas, ${p.recusadas} recusadas).</div>

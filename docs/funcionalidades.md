@@ -13,7 +13,9 @@ skills em `.claude/skills/`; para operar a produção, `docs/operacao.md`. Atual
 - **Mapa** (`#/mapa`): lista que acompanha o enquadramento; clicar no pino abre prévia da ação e marca o card na lista.
   Tiles do OpenStreetMap. Filtros da inicial e do mapa são separados e não passam de uma tela para a outra.
 - **Página da ação** (`#/acao/<id>`): turnos, local, quem organiza, "Eu vou!", "Adicionar à agenda" (Google Agenda e
-  arquivo .ics) para turno futuro. Ação online (`lugar.online: true`) não tem pino nem minimapa. O formulário do
+  arquivo .ics) para turno futuro. Mostra o endereço (`acao.endereco`, se não repete o nome do ponto) e "Como chegar",
+  que abre a rota no Google Maps pelo pino (ponto aproximado: pelo endereço escrito). Ação online (`lugar.online: true`)
+  não tem pino nem minimapa. O formulário do
   "Eu vou!" abre onde a pessoa tocou (topo no celular, coluna "Quando" no computador).
 - **Desktop** (≥ 900 px): cabeçalho no topo e página da ação em duas colunas. Celular vem primeiro.
 - **Tipos de ação**: panfletagem, encontro, ato, caminhada, cultural, bandeiraço, adesivaço, porta a porta, ligatona,
@@ -44,6 +46,10 @@ skills em `.claude/skills/`; para operar a produção, `docs/operacao.md`. Atual
   `minhas_acoes`, `encerrar_acao`, `fila_moderacao`, `aprovar_acao`, `recusar_acao`).
 - "Quem organiza?": eu mesmo(a), minha organização ou outra escrita à mão (criada sem selo). Ação em nome de organização
   pede o link do POST oficial da organização anunciando aquela ação (`acao.organizacao_link`, erro `link_post`).
+- Onde: nome do ponto, cidade ou bairro (lista do IBGE) e endereço, opcional e PÚBLICO (decisão do Gui, 2026-10-10;
+  migração 20261010000030). "Achar no mapa" põe o pino no endereço pelo Nominatim, só no botão (a regra do serviço
+  proíbe autocompletar); sem cidade escolhida, preenche a cidade pelo resultado. O pino segue arrastável. O campo avisa
+  que o endereço aparece para todo mundo e pede lugar público, nunca casa; a Fila mostra o endereço para a moderação.
 - O cadastro não recarrega a tela ao mudar horário ou "Vagas limitadas" (no iPhone fechava o seletor e rolava ao topo);
   `rerender()` mantém a rolagem.
 - Editar ação, selo e bloquear pelo próprio organizador seguem só no modo exemplo.
@@ -78,7 +84,8 @@ resumido. Tabela `feedback` sem acesso direto (`enviar_feedback`, freio de 10/h 
   no repo privado do levantamento). Importadas por `scripts/publicar_acoes.py` via função SQL `importar_acoes`
   (migrações 20261009000001 a 03): organizador é uma pessoa de sistema, `fonte`/`fonte_id`, `lugar_aproximado`, contato
   `divulgacao` sem inscrição, logo da organização (Commons, mapa `LOGOS` em `scripts/bora_lula.py`).
-- Endereço vira ponto exato pelo Nominatim (cache em `levantamento/geocache.json`).
+- Endereço vira ponto exato pelo Nominatim (cache em `levantamento/geocache.json`) e fica guardado em `acao.endereco`
+  para o app mostrar. Endereço que muda na fonte tira a verificação (só se já havia um).
 - **Dúvida vai para aprovação** (migração 20261010000020): a importação não descarta ação por dúvida. Confiança baixa
   na varredura ou cidade não reconhecida entra "em análise" (fora do ar, `acao.motivo_duvida`, aba Em análise da Fila);
   aprovar põe no ar já verificada. O resto vai ao ar com a etiqueta; sem Lula explícito deixou de ser corte. Fora só
@@ -113,4 +120,5 @@ resumido. Tabela `feedback` sem acesso direto (`enviar_feedback`, freio de 10/h 
 - 2026-10-08: nasce do `mapa-segundo-turno`; app navegável no modo exemplo; levantamento de fontes.
 - 2026-10-09: produção ligada (Supabase `ommitzndniqnmsjsjghb`, login Google); cadastro, moderação, organizações,
   canceladas, feedback, segurança, fotos e lista pelo Pages, cópia do banco.
-- 2026-10-10: nome "Agenda Bora Lula" (antes "Eleja o Lula" e "Ações do 2º turno"), marca do Comitê, divulgação pública.
+- 2026-10-10: nome "Agenda Bora Lula" (antes "Eleja o Lula" e "Ações do 2º turno"), marca do Comitê, divulgação pública, endereço
+  da ação.

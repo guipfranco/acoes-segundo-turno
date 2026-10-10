@@ -36,6 +36,7 @@ def test_item_do_feed_presencial_online_e_sem_cidade():
     assert motivo is None
     assert item["fonte_id"] == "1" and item["tipo"] == "panfletagem" and item["organizacao_tipo"] == "partido"
     assert item["lugar_nome"] == "Praça da Moça" and item["bairro"] == "Centro" and item["cidade"] == "Diadema"
+    assert item["endereco"] == "Praça da Moça, 10 - Centro"  # guardado para o app mostrar, além de achar o ponto
     assert item["lugar_aproximado"] is True and item["lat"] is not None  # sem geocodificador: centro da cidade
     assert item["organizacao_foto"]["url"].startswith("https://commons.wikimedia.org/wiki/Special:Redirect/file/")
     predio = [{"lat": "-23.6900", "lon": "-46.6200", "category": "amenity", "name": "Praça da Moça", "address": {"city": "Diadema", "ISO3166-2-lvl4": "BR-SP"}}]
@@ -47,12 +48,14 @@ def test_item_do_feed_presencial_online_e_sem_cidade():
     assert item["link"] == "https://www.instagram.com/p/x/" and "Fonte:" in item["descricao"]
     on, _ = pa.item_do_feed(feed_item(online=True, cidade="", uf="", plataforma="YouTube"), LUGARES)
     assert on["online"] is True and on["lat"] is None and on["lugar_aproximado"] is False and "(YouTube)" in on["descricao"]
+    assert on["endereco"] is None
     # cidade que não reconhecemos: não some, vai para aprovação, sem ponto no mapa e com o que a fonte disse
     sc, motivo = pa.item_do_feed(feed_item(cidade="", uf=""), LUGARES)
     assert motivo is None and sc["status"] == "em análise" and sc["motivo_duvida"] == "sem cidade" and sc["lat"] is None
     xyz, _ = pa.item_do_feed(feed_item(cidade="Xyz", uf="SP"), LUGARES)
     assert (xyz["status"], xyz["motivo_duvida"]) == ("em análise", "sem cidade reconhecida")
     assert xyz["cidade"] == "Xyz - SP" and xyz["lugar_nome"] == "Praça da Moça" and xyz["lat"] is None and xyz["lon"] is None
+    assert xyz["endereco"] == "Praça da Moça, 10 - Centro"  # a moderação lê o endereço que a fonte deu
     assert "status" not in item  # a que tem lugar vai ao ar (status padrão da importação)
     df, _ = pa.item_do_feed(feed_item(cidade="Ceilândia", uf="DF", endereco=""), LUGARES)
     assert df["cidade"] == "Brasília" and df["bairro"] == "Ceilândia" and -16 < df["lat"] < -15
@@ -111,6 +114,7 @@ def test_itens_do_consolidado_filtra_e_deduplica_contra_o_feed():
     itens = [i for i in itens if i["titulo"] in ("Plenária das mulheres", "Live")]
     pl = itens[0]
     assert pl["organizacao"] == "Juventude PT Recife" and pl["organizacao_tipo"] == "partido"
+    assert pl["endereco"] is None  # a linha não trouxe endereço
     assert pl["bairro"] == "Boa Vista" and pl["lugar_nome"] == "Boa Vista" and pl["inicio"] == "2026-10-11T15:00" and pl["tipo"] == "encontro"
     assert len(pl["fonte_id"]) == 16 and "Varredura" in pl["descricao"]
     assert itens[1]["online"] is True and itens[1]["inicio"] == "2026-10-11T09:00"

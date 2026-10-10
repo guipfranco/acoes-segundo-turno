@@ -108,8 +108,21 @@ def test_criar_pela_api_e_so_verificado_publica_direto():
         assert codigo in HTML, codigo
 
 
+def test_endereco_publico_com_aviso_busca_no_botao_e_como_chegar():
+    # cadastro: campo de endereço com o aviso de que é público; a busca no Nominatim só roda no botão (regra do serviço)
+    assert "<label>Endereço</label>" in HTML and "Achar no mapa" in HTML
+    assert "O endereço aparece para todo mundo. Use um lugar público (praça, estação, sede); nunca o endereço de uma casa." in HTML
+    assert "https://nominatim.openstreetmap.org/search?" in HTML and "oninput=\"estado.criar.lugar.endereco=this.value\"" in HTML
+    assert "endereco:lugar.endereco||''" in HTML  # vai para criar_acao
+    # página da ação: endereço (se não repete o nome do ponto) e o link de rota; a agenda e a Fila mostram também
+    assert "const enderecoDe=" in HTML and "function linkComoChegar" in HTML and "Como chegar ↗" in HTML
+    assert "https://www.google.com/maps/dir/?api=1&destination=" in HTML
+    assert "${linkComoChegar(a.lugar)}" in HTML and "enderecoDe(a.lugar),lugarCurto(a.lugar)" in HTML
+    assert HTML.count("${enderecoDe(a.lugar)?esc(enderecoDe(a.lugar))+', ':''}") == 3  # as três abas da Fila
+
+
 def test_validacao_dos_campos_obrigatorios():
-    for s in ["Dê um título.", "Diga o nome do ponto de encontro.", "Marque o lugar no mapa.", "Escolha o dia da ação.",
+    for s in ["Dê um título.", "Diga o nome do ponto de encontro.", "Escolha a cidade ou ache o endereço no mapa.", "Escolha o dia da ação.",
               "Telefone no formato", "q.fim===q.ini", "diaSeguinte", "Diga quantas vagas (um número inteiro).", "vagasValidas", "Vagas limitadas"]:
         assert s in HTML, s
 

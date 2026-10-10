@@ -186,7 +186,7 @@
         }
         const id = Math.max(0, ...dados.acoes.map(a => a.id)) + 1;
         const lugar = d.online ? { nome: 'Online', bairro: 'Online', cidade: 'Online', lat: null, lon: null, online: true }
-          : { nome: d.lugar_nome, bairro: d.bairro || '', cidade: d.cidade || '', lat: d.lat, lon: d.lon };
+          : { nome: d.lugar_nome, endereco: String(d.endereco || '').trim().slice(0, 200), bairro: d.bairro || '', cidade: d.cidade || '', lat: d.lat, lon: d.lon };
         dados.acoes.push({ id, titulo: d.titulo.trim(), tipo: d.tipo, descricao: d.descricao || '', organizador: sessao, organizacao: orgId, organizacaoLink: orgId ? orgLink : null,
           lugar, detalhe: d.detalhe || '', contatoTipo: grupo ? 'link_grupo' : 'organizador_chama', contatoLink: grupo || null,
           foto: { url: foto, credito: '' },

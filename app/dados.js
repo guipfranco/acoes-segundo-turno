@@ -260,6 +260,7 @@ window.DADOS = {
    "organizacao": 1,
    "lugar": {
     "nome": "Praça da Sé",
+    "endereco": "Praça da Sé, s/n, em frente à catedral",
     "bairro": "Sé",
     "cidade": "São Paulo",
     "lat": -23.5505,

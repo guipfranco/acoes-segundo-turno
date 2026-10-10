@@ -763,3 +763,37 @@ def test_publicada_que_perde_o_ponto_na_fonte_guarda_o_lugar_e_perde_a_verificac
     assert r.status == 200, r.corpo
     a = _acao_da_fonte(fonte, "a")
     assert (a["status"], a["cidade"], a["lat"], a["verificada_em"]) == ("publicada", "Diadema", -23.68, None)
+
+
+def test_endereco_publico_no_cadastro_e_ausente_na_acao_online(cenario):
+    sb.rpc("salvar_telefone", {"telefone": "11977776666"}, jwt=cenario["jwt_b"])
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['b']}", {"papel": "organizador"})  # publica direto
+    r = sb.rpc("criar_acao", {"dados": _nova(endereco="  Rua da Consolação, 1000  ")}, jwt=cenario["jwt_b"])
+    assert r.status == 200, r.corpo
+    pub = sb.chamar("GET", f"/rest/v1/acao_publica?id=eq.{r.corpo['id']}&select=endereco").corpo
+    assert pub == [{"endereco": "Rua da Consolação, 1000"}]  # público, sem espaço sobrando, para quem nem entrou
+    longo = sb.rpc("criar_acao", {"dados": _nova(endereco="x" * 300)}, jwt=cenario["jwt_b"]).corpo["id"]
+    assert len(sb.admin("GET", f"/rest/v1/acao?id=eq.{longo}&select=endereco").corpo[0]["endereco"]) == 200
+    vazio = sb.rpc("criar_acao", {"dados": _nova(endereco="  ")}, jwt=cenario["jwt_b"]).corpo["id"]
+    online = sb.rpc("criar_acao", {"dados": _nova(online=True, endereco="Rua A, 1")}, jwt=cenario["jwt_b"]).corpo["id"]
+    for i in (vazio, online):
+        assert sb.admin("GET", f"/rest/v1/acao?id=eq.{i}&select=endereco").corpo[0]["endereco"] is None
+    minhas = sb.rpc("minhas_acoes", {}, jwt=cenario["jwt_b"]).corpo
+    assert any(m["acao"]["endereco"] == "Rua da Consolação, 1000" for m in minhas)
+
+
+def test_importacao_guarda_o_endereco_e_so_tira_a_verificacao_quando_ele_muda(cenario):
+    fonte = "teste-" + uuid.uuid4().hex[:8]
+    # "velha" simula a ação importada antes da coluna existir (sem endereço)
+    itens = [_item("velha"), _item("muda", endereco="Rua A, 10"), _item("igual", endereco="Rua A, 10")]
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": itens}, jwt=sb.SERVICE).status == 200
+    assert _acao_da_fonte(fonte, "muda")["endereco"] == "Rua A, 10"
+    sb.admin("PATCH", f"/rest/v1/pessoa?id=eq.{cenario['a']}", {"papel": "moderador"})
+    _verificar_todas(cenario, [_acao_da_fonte(fonte, k)["id"] for k in ("velha", "muda", "igual")])
+    novos = [_item("velha", endereco="Rua B, 20"), _item("muda", endereco="Rua C, 30"), _item("igual", endereco="Rua A, 10")]
+    assert sb.rpc("importar_acoes", {"fonte": fonte, "itens": novos}, jwt=sb.SERVICE).status == 200
+    ver = {k: _acao_da_fonte(fonte, k) for k in ("velha", "muda", "igual")}
+    # a que não tinha endereço ganha o dele sem perder a verificação (primeira reimportação depois da migração)
+    assert (ver["velha"]["endereco"], ver["velha"]["verificada_em"] is not None) == ("Rua B, 20", True)
+    assert (ver["muda"]["endereco"], ver["muda"]["verificada_em"]) == ("Rua C, 30", None)
+    assert ver["igual"]["verificada_em"] is not None
