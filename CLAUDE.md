@@ -8,6 +8,10 @@ acha uma perto de si e diz "Eu vou!". Iniciativa do Comitê Popular do Lula (nã
 - Repo, URL e projeto Supabase seguem o nome antigo `acoes-segundo-turno` por decisão do Gui.
 - O que o app faz, tela a tela: `docs/funcionalidades.md`. Operação da produção: `docs/operacao.md`.
 
+> **Congelado desde 2026-10-10 até a fusão com o boralula.org** (ver "Decisões do Gui"): aqui só entram correção de
+> erro, importação de ações, moderação e operação. Funcionalidade nova não começa neste repo: vai para o boralula, no
+> repo `comite-popular-tech/agregador-de-agendas`. Se pedirem uma novidade aqui, lembre disso antes de começar.
+
 ## Regras que valem sempre
 
 - Tudo em pt-BR (código, comentários, commits, docs), datas AAAA-MM-DD.
