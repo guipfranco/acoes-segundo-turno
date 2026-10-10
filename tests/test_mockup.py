@@ -522,7 +522,8 @@ def test_identidade_visual_do_comite_popular():
         assert f"var({token})" in marca, token
     # logo do Comitê no topo da inicial (fora da barra), com o alt do guia, e a mão do "L" no favicon
     assert '<header class="hero"><img class="logo-hero" src="logo-comite.webp" alt="Comitê Popular do Lula"' in HTML
-    assert '<a class="marca" href="#/inicio">Bora Lula</a>' in HTML
+    # marca "Bora Lula" desenhada como a arte do Comitê: duas linhas, o B é um 13 amarelo, estrela depois de BORA
+    assert '<a class="marca" href="#/inicio" aria-label="Bora Lula"><span class="bl" aria-hidden="true"><span><b>13</b>ORA<svg' in HTML
     assert 'href="favicon.png"' in HTML and (RAIZ / "app" / "logo-comite.webp").exists()
     assert "?tema=" not in HTML and not list((RAIZ / "app").glob("tema-*.css"))
 

@@ -22,7 +22,8 @@ foi reescrito sobre esses tokens e substitui a seção "Identidade da campanha" 
 - Campos com borda `--cp-border-strong`, foco com anel grafite; erro com ícone ⚠ e texto.
 - Cards brancos com borda, raio 8 e padding 16; sem foto, faixas amarela, azul e verde do logo sobre a cor do tipo.
 - Celular: barra de abas branca, aba ativa vermelha e sublinhada, respeita a área segura; logo no topo da inicial.
-  Desktop: cabeçalho vermelho de 64 px só com "Bora Lula" (o Gui achou a barra com o logo alta demais; o logo
+  Desktop: cabeçalho vermelho de 64 px só com a marca "Bora Lula" desenhada em CSS como a arte do Comitê (duas
+  linhas inclinadas em caixa-alta, o B é um 13 amarelo, estrela branca depois de BORA) (o Gui achou a barra com o logo alta demais; o logo
   fica no topo da inicial, 180 px), item ativo da altura da barra com sublinhado amarelo colado na borda de baixo,
   "Cadastrar ação" branco. Ícone do Perfil só no contorno, logado ou não. Respiro de 24 a 32 px entre as partes
   do topo da inicial.
