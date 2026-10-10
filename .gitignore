@@ -13,3 +13,6 @@ supabase/.temp/
 
 # cópias cifradas do banco (scripts/backup_banco.sh): têm dados pessoais, nunca versionar
 backups/
+
+# configuração pessoal do Claude Code (pode liberar comandos de produção): nunca versionar
+.claude/settings.local.json

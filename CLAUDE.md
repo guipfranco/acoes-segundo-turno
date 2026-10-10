@@ -1,116 +1,72 @@
 # CLAUDE.md
 
-Repo da plataforma "Agenda Bora Lula" (nome visível desde 2026-10-10; antes "Eleja o Lula" e "Ações do 2º turno"), de ações do 2º turno
-pelo voto do Lula. Desde 2026-10-10 é uma iniciativa do Comitê Popular do Lula (que não é a campanha) e segue o "Guia de
-interface web e apps" do Comitê: tokens em `app/tokens.css` (arquivo do guia, não editar), aplicação em `app/marca.css`
-(Montserrat, botões em pílula de 44 px, foco visível, cards com borda), logo do Comitê no topo da inicial e, na barra de cima do
-computador, "BORA" sobre "LULA" na letra do título da agenda do Comitê (Transducer Extended, com o "A" estrelado), em
-`app/marca-barra.svg`; a capa do link (`app/capa.png`, com a tarja "AGENDA") e esse SVG saem de `scripts/gerar_capa.py`,
-que baixa a fonte do site do Comitê (comercial: nunca versionar o arquivo da fonte); detalhes em `docs/2026-10-08-design-mockup.md`. Rodapé (inicial e privacidade), a pedido do Gui:
-"Uma iniciativa do Comitê Popular do Lula. Não é site oficial da campanha. Nenhuma divulgação paga.", sem o nome dele
-e sem link do código.
-Nasceu do `mapa-segundo-turno` em 2026-10-08. URL, repo e projeto Supabase seguem `acoes-segundo-turno` por decisão do Gui.
+**Agenda Bora Lula**: site onde quem organiza ações pelo voto do Lula no 2º turno cadastra a ação e quem quer ajudar
+acha uma perto de si e diz "Eu vou!". Iniciativa do Comitê Popular do Lula (não é a campanha). Mantenedor: Gui
+(guipfranco), que decide produto, dá o OK de merge e é o único com acesso à produção.
 
-- Tudo em pt-BR, datas AAAA-MM-DD. Push logo depois de cada commit.
-- `app/` (antes `mockup/`) é o app: estático, sem build. Publicado em https://guipfranco.github.io/acoes-segundo-turno/
-  (GitHub Pages via `.github/workflows/pages.yml`, só a pasta `app/`; repo público desde 2026-10-08). O artifact
-  do claude.ai foi aposentado e apagado em 2026-10-09: o único endereço é o Pages, com tiles do OpenStreetMap
-  (o ramo Protomaps de `app/fundo.js` só valia dentro do artifact).
-- Camada de dados em `app/api.js` (escolhe `api-exemplo.js`, dados fictícios em memória, ou `api-supabase.js`,
-  Supabase com login Google, conforme `app/config.js`; `?modo=exemplo` força o exemplo). Regras sensíveis são
-  funções SQL em `supabase/migrations/`. Nunca commitar service_role, senha do banco nem segredo do Google
-  (a chave anon é pública). Operação e banco local em `docs/operacao.md`.
-- Testes: `python -m pytest tests -q` (telas; `tests/test_supabase.py` só roda com `SUPABASE_URL`,
-  `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_KEY` da pilha local) e `node --test "tests/js/*.test.js"`.
-  Roteiro e2e do Inscreva-se em `tests/e2e/vou.spec.mjs` (precisa de `playwright`, fora do package.json).
-- Sem dado pessoal real no repo (nome, telefone, e-mail, link de grupo de pessoa comum). Desde 2026-10-09 o Gui
-  liberou dados reais de AÇÕES PÚBLICAS e de ORGANIZAÇÕES públicas (partidos, mandatos, movimentos, comitês) nos
-  dados versionados e em produção, sempre com crédito à fonte (hoje: agenda Bora Lula do Comitê Popular). Pessoas
-  de exemplo continuam inventadas; ação importada tem como organizador uma pessoa de sistema, nunca pessoa real.
-  A pasta `levantamento/` segue fora do git deste repo porque guarda a varredura bruta com nomes e telefones.
-  Desde 2026-10-09 ela é um repo próprio, PRIVADO: https://github.com/guipfranco/acoes-levantamento (clonar dentro
-  de `levantamento/`; commit e push lá depois de cada rodada; nunca tornar público nem copiar para cá).
-- Estado em 2026-10-08: app navegável (modo exemplo completo; Supabase + login Google na v1 etapas 1-2).
-- Produção ligada em 2026-10-09: Supabase ref `ommitzndniqnmsjsjghb` e login Google; estado em `docs/operacao.md`.
-- Telas: inicial sem mapa (estilo Meetup): busca por cidade que chuta a cidade pela geolocalização, filtro
-  "Quando" (em breve, hoje, amanhã, esta semana, fim de semana, próxima semana, escolher datas), sem filtro de
-  formato (só o link "Prefiro ajudar online"), vitrine por cidade (SP, Recife, BH, Porto Alegre, Salvador) com
-  foto por ação e bloco "Online"; a cidade de "Perto de você" é um botão que abre a busca de cidade. Filtros da
-  inicial e do mapa são separados e não passam de uma tela para a outra. Mapa com lista que acompanha o
-  enquadramento em `#/mapa`; clicar no pino abre prévia da ação e marca o card na lista. Turno futuro tem
-  "Adicionar à agenda" (Google Agenda e arquivo .ics). Tipos de ação (desde 2026-10-09): panfletagem, encontro, ato,
-  caminhada, cultural, bandeiraço, adesivaço, porta a porta, ligatona, outro. Ação online: `lugar.online: true`, sem
-  pino nem minimapa. Desktop (≥ 900 px) com cabeçalho no topo e página da ação em duas colunas. Fotos das ações
-  vêm do Wikimedia Commons (campo `foto` com crédito).
-- Conta e cadastro de ação (em produção desde 2026-10-09: migrações 20261009000020 a 22 aplicadas, função
-  previa-instagram publicada, Gui com papel moderador): logado, o botão da conta vira "Perfil" (`#/perfil`: WhatsApp,
-  resumo do "Eu vou", ações que criei com situação e motivo da recusa, Sair no fim); deslogado, "Entrar" escuro e
-  convite na inicial. "Eu vou!" em toda ação; na de divulgação (importada) só marca presença, sem telefone (migração
-  20261009000020). Qualquer pessoa logada cadastra ação ("Cadastrar ação", botão vermelho da barra e da inicial): nasce "em análise", exceto verificado (papel organizador ou
-  moderador, ou membro de organização verificada), que publica direto; limite de 10 por dia e 10 em análise
-  (migração 20261009000021: `criar_acao`, `minhas_acoes`, `encerrar_acao`, `fila_moderacao`, `aprovar_acao`,
-  `recusar_acao`). Fila (`#/fila`) só para moderador (abas Em análise, Publicadas e Organizações).
-  Organização (migração 20261009000023, em produção desde 2026-10-09): no Perfil a pessoa cadastra a sua (nome, tipo, logo);
-  nome novo cria sem selo e liga na hora, nome que já existe vira pedido para a moderação; selo dado na Fila. No
-  cadastro, "Quem organiza?": eu mesmo(a), minha organização ou outra escrita à mão (criada sem selo).
-  Verificação: no Perfil, link do perfil oficial da organização (`link_oficial`); em toda ação em nome de organização
-  (a minha, com ou sem selo, ou outra), link do POST oficial da organização anunciando aquela ação
-  (`acao.organizacao_link`, erro `link_post`). A moderação confere pelos dois na Fila. Imagem obrigatória no cadastro (passo 3 de 4): enviada do celular,
-  reduzida no navegador e guardada no bucket `fotos-acoes` (migração 20261009000022), ou puxada do link do post pela
-  função `supabase/functions/previa-instagram` (precisa de `supabase functions deploy previa-instagram` em produção). Editar ação, selo, bloquear seguem só no modo exemplo.
-  Canceladas não somem (migração 20261009000040, em produção desde 2026-10-09): "Encerrar" virou "Cancelar ação" (status segue `encerrada`); `acao.publicada_em`
-  (gatilho) marca a primeira ida ao ar, e só a cancelada que já esteve publicada abre pelo link para todos (sem dados
-  de contato); importada encerrada mostra "Saiu da agenda" ou "Já aconteceu"; desistência fica no histórico do Perfil
-  ("você desistiu") e quem organiza vê quem desistiu, só pelo nome. O formulário do "Eu vou!" abre onde a pessoa tocou
-  (topo no celular, coluna "Quando" no computador).
-  Correções do primeiro uso real e "Fale com a gente" (branch `feedback-1009`, migração 20261009000050): turno que já
-  terminou some das listas, do mapa e do "Eu vou!" (`config.agora`, em Brasília; no exemplo, `dados.config.agora`);
-  `turno.hora_aproximada` (divulgação que só diz "à noite": o app mostra "sex 09/10, à noite" e avisa; a importação das
-  redes marca pelo texto, `bl.faixa_aproximada`); bloco Online da inicial é lista compacta por horário; o cadastro não
-  recarrega a tela ao mudar horário ou "Vagas limitadas" (no iPhone fechava o seletor e rolava ao topo) e `rerender()`
-  mantém a rolagem nos filtros. Feedback: `#/contato` (e `#/contato/<acao>` na página da ação), logado ou não, texto +
-  contato opcional + tela + navegador resumido, tabela `feedback` sem acesso direto (`enviar_feedback`, freio de 10/h por
-  pessoa e 100/h anônimas; `feedbacks` e `tratar_feedback` só moderador), aba Mensagens na Fila.
-- Segurança e tráfego (2026-10-09, noite, branches `seguranca-1009` e `fotos-e-lista-pages`, em produção): migração 20261009000051 (imagem de ação e logo só do próprio Storage; `importar_acoes` descarta link que não é http(s); `bloquear_pessoa`/`desbloquear_pessoa` com botão na Fila; máximo de 40 fotos por pessoa no bucket) e 20261009000060 (`acao.foto_mini_url`). `previa-instagram` limita 10 chamadas por pessoa por hora. Scripts de CDN com `integrity`; GoatCounter fixado em `count.v5.js`. Rodapé na inicial e na privacidade (texto atual no topo deste arquivo). Fotos das ações importadas moram em `fotos/divulgacao/` na raiz (arte + `-mini.jpg`) e saem pelo Pages; `publicar_acoes.py --aplicar` só grava depois que as fotos estão commitadas, enviadas e servidas (HEAD); `fotos_divulgacao.py migrar-pages` trouxe o acervo (431 ações) em 2026-10-09. A vitrine lê `publico.json`, gerado pelo workflow do Pages de hora em hora (`scripts/snapshot_publico.py`, config da `origin/master`), com plano B no Supabase se tiver mais de 3 h; logado ou depois de escrever vai direto ao Supabase. Rotinas e incidentes em `docs/operacao.md` ("Lista e fotos pelo GitHub Pages", "Incidentes e abuso"). Decisões do Gui: telefones dos inscritos continuam visíveis ao organizador na hora; segundo moderador fica para depois; domínio próprio + Cloudflare ele mesmo faz depois.
-- Escala (2026-10-09, branch `escala-1009`): a página da ação (`api.acao`) para quem só olha também vem do `publico.json` (ação fora do arquivo, recém-aprovada ou cancelada, segue ao vivo); a mesma página baixa o arquivo uma vez por minuto; as leituras ao vivo pedem as views de 1000 em 1000 (`tudo()` em `api-supabase.js`), porque a API corta em `max_rows` sem avisar. Cópia diária do banco: `.github/workflows/backup.yml` roda `scripts/backup_banco.sh producao` (dump do esquema + dados de public/auth/storage, cifrado com `BACKUP_SENHA`, artefato por 90 dias); precisa dos segredos `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` e `BACKUP_SENHA` no repo. Como abrir e restaurar em `docs/operacao.md`, "Cópia do banco". `backups/` está no .gitignore.
-- Divulgação pública (migração 20261010000010, em produção desde 2026-10-10): decisão do Gui de 2026-10-10, não confiar na
-  revisão da agenda de origem. Toda ação importada vai ao ar com a etiqueta "Divulgação pública" (cards e aviso na página)
-  até um moderador verificar na aba Divulgação da Fila (`verificar_acao`/`desverificar_acao`, `acao.verificada_em`); reimportar
-  com qualquer mudança vinda da fonte (só foto e logo não contam) tira a verificação. Mudança desse tipo: migração em produção ANTES
-  do merge. Como operar em `docs/operacao.md`.
-- Dúvida vai para aprovação (migração 20261010000020, 2026-10-10): a importação não descarta mais ação por dúvida;
-  confiança baixa ou cidade não reconhecida entra "em análise" (fora do ar, `acao.motivo_duvida`, aba Em análise da Fila),
-  o resto vai ao ar com a etiqueta. Sem Lula explícito deixou de ser corte. Fora só repetição e datas fora da janela.
-- Spec em `docs/superpowers/specs/`, desenho visual em `docs/2026-10-08-design-mockup.md`, capturas em
-  `docs/capturas/`.
-- Decisões do Gui: inscrição com nome e telefone desde a v1; moderação humana por voluntários no
-  início, automação depois; uma vaquinha só, geral, apontando para arrecadação oficial; busca por
-  lugar livre (Brasil inteiro), referência visual Airbnb/Meetup.
-- Pages publica a cada push que toque `app/` (qualquer branch; desde 2026-10-09): a raiz é sempre a `master` e cada outra
-  branch do origin vira prévia em https://guipfranco.github.io/acoes-segundo-turno/previa/<branch>/ (lista em `/previa/`),
-  montada por `scripts/montar_pages.sh`: dados de exemplo por padrão (`?modo=real` usa o Supabase de produção, cuidado
-  com branch de migração não aplicada), sem GoatCounter, `noindex`, etiqueta amarela com o nome da branch. Ao terminar
-  um trabalho num worktree: push da branch e mandar ao Gui o link da prévia (não subir servidor local). Apagar a branch
-  no origin depois do merge tira a prévia.
-- Fluxo de branches (desde 2026-10-09, endurecido no mesmo dia): TODA mudança de código (app, scripts, testes,
-  migrações), por menor que seja, é feita num worktree com branch própria, nunca direto na `master`. O merge na
-  `master` só acontece com OK do Gui. Direto na `master` só o que não é código: documentação, CLAUDE.md e o merge
-  em si. Sessões paralelas trabalham cada uma no seu worktree e na sua branch; a pasta principal fica na `master`, estável, para levantamento, publicação
-  (`publicar_acoes.py --aplicar` grava em produção) e merges, um de cada vez (cada push na `master` republica o
-  Pages). `levantamento/` só existe na pasta principal (não vai para worktree; noutra máquina, clonar o repo privado). A pilha local do Supabase é
-  compartilhada: não rodar `test_supabase.py` nem migrações em duas sessões ao mesmo tempo. Remover o worktree
-  (`git worktree remove`) depois do merge.
-- Levantamento de ações reais (2026-10-08): pasta `levantamento/` (no .gitignore, nunca versionar: tem nomes e links)
-  guarda a varredura de fontes e o balanço em `levantamento/RODADA-1.md`. Fonte principal: agenda "Bora Lula" do
-  Comitê Popular (JSON público). `python scripts/bora_lula.py` baixa o feed, guarda cópia datada em
-  `levantamento/bora-lula/` e gera `levantamento/dados-bora-lula.js` no formato de `app/dados.js` (modo exemplo).
-  Para produção: `python scripts/publicar_acoes.py bora-lula [--aplicar]` (e `redes --de CSV --feed JSON`) chama a
-  função SQL `importar_acoes` (migração 20261009000001: pessoa de sistema, `fonte`/`fonte_id`, `lugar_aproximado`,
-  contato `divulgacao` sem inscrição; migração 20261009000002: logo da organização). O endereço vira ponto exato pelo
-  Nominatim (cache em `levantamento/geocache.json`); organização reconhecível ganha logo do Commons (`LOGOS` em
-  `scripts/bora_lula.py`). Imagem do post do Instagram como foto da ação: `python scripts/fotos_divulgacao.py coletar`
-  (prévia de link, sem login; bucket `divulgacao`, migração 20261009000003); o `publicar_acoes.py --aplicar` já
-  faz essa busca sozinho para os posts novos.
-  Como rodar em `docs/operacao.md`; checklist resolvido em
-  `docs/2026-10-08-plano-expansao-varredura.md`, seção "Publicar". Testes em `tests/test_bora_lula.py`,
-  `tests/test_publicar_acoes.py` e `tests/test_supabase.py` (pilha local).
+- No ar: https://guipfranco.github.io/acoes-segundo-turno/ (GitHub Pages da `master`).
+- Repo, URL e projeto Supabase seguem o nome antigo `acoes-segundo-turno` por decisão do Gui.
+- O que o app faz, tela a tela: `docs/funcionalidades.md`. Operação da produção: `docs/operacao.md`.
+
+## Regras que valem sempre
+
+- Tudo em pt-BR (código, comentários, commits, docs), datas AAAA-MM-DD.
+- **Nunca dado pessoal real** no repo (nome, telefone, e-mail, link de grupo de pessoa comum), nem em teste, captura
+  ou issue. Ações e organizações públicas (partidos, mandatos, movimentos, comitês) podem, sempre com crédito à fonte.
+  Pessoas de exemplo são inventadas; ação importada tem como organizador uma pessoa de sistema.
+- **Nunca segredo**: `service_role`, senha do banco, token do Supabase, segredo do Google. A chave anon/publishable em
+  `app/config.js` é pública por desenho. Segredos locais ficam em `.env` (fora do git).
+- **Sem build, sem framework**: `app/` é HTML, CSS e JS puros. Scripts de CDN com versão exata e `integrity`.
+- `app/tokens.css` é arquivo do guia do Comitê: não editar. Estilo vai em `app/marca.css`.
+- Celular primeiro; desktop (≥ 900 px) depois.
+- Comandos que gravam em produção (`publicar_acoes.py --aplicar`, `ir_ao_ar.py`, `fotos_divulgacao.py ... --aplicar`,
+  `limpar_fotos.py --aplicar`, `supabase db push`/`functions deploy`) só o Gui roda. Sem o token eles não funcionam;
+  com ele, não rode sem pedido explícito.
+
+## Como trabalhar
+
+1. Branch nova a partir da `master` atualizada para toda mudança de código (app, scripts, testes, migrações), por
+   menor que seja: `git switch master && git pull && git switch -c <nome-curto>`. Nada de worktree.
+2. Testes passando antes de cada commit: `python -m pytest tests -q` e `node --test "tests/js/*.test.js"`.
+3. Commit em pt-BR e push logo em seguida. Cada push que toca `app/` gera prévia em
+   https://guipfranco.github.io/acoes-segundo-turno/previa/<branch>/ (dados de exemplo).
+4. Pull request contra `master` com o link da prévia. Merge só com OK do Gui. Depois do merge, apagar a branch no
+   origin (tira a prévia).
+5. Direto na `master` só o que não é código: documentação, CLAUDE.md, skills.
+
+Skills do projeto (`.claude/skills/`), carregue a que bate com a tarefa:
+
+| Tarefa | Skill |
+| --- | --- |
+| Mexer em tela, estilo, filtro, texto, camada de dados (`app/`) | `mexer-no-app` |
+| Criar ou mudar tabela, view, função SQL, RLS (`supabase/`) | `mudar-banco` |
+| Abrir PR, prévia, merge, conferir antes de entregar | `entregar-mudanca` |
+| Importar ações da agenda Bora Lula ou das redes, fotos dos posts (só o Gui) | `importar-acoes` |
+| Moderação, incidente, migração em produção, cópia do banco, cotas (só o Gui) | `operar-producao` |
+
+## Mapa
+
+| Pasta | O que é |
+| --- | --- |
+| `app/` | o site inteiro. `index.html` (telas), `api.js` escolhe `api-exemplo.js` (dados de `dados.js`) ou `api-supabase.js` |
+| `supabase/migrations/` | esquema, RLS e funções SQL (as regras sensíveis moram aqui); `supabase/functions/previa-instagram` |
+| `scripts/` | importação (`bora_lula.py`, `publicar_acoes.py`, `fotos_divulgacao.py`), Pages, snapshot, backup, produção |
+| `tests/` | pytest (telas, scripts; `test_supabase.py` só com pilha local) e `tests/js/` (`node --test`) |
+| `fotos/divulgacao/` | artes das ações importadas, servidas pelo Pages (as URLs estão gravadas no banco: não renomear) |
+| `docs/` | spec em `docs/superpowers/specs/`, desenho em `docs/2026-10-08-design-mockup.md`, capturas em `docs/capturas/` |
+| `.github/workflows/` | `pages.yml` (publicação + prévias + `publico.json` de hora em hora), `backup.yml` (cópia diária) |
+
+Fora do repo: `levantamento/` (no .gitignore) é o repo PRIVADO https://github.com/guipfranco/acoes-levantamento, com a
+varredura bruta (nomes e telefones). Nunca copiar nada de lá para cá nem torná-lo público.
+
+## Decisões do Gui (não reabrir sem ele)
+
+- Inscrição com nome e telefone desde a v1; telefones dos inscritos visíveis a quem organiza.
+- Moderação humana por voluntários; automação depois. Segundo moderador fica para depois.
+- Toda ação importada vai ao ar como "Divulgação pública" até a moderação verificar (não confiamos na revisão da
+  agenda de origem).
+- Uma vaquinha só, geral, apontando para a arrecadação oficial (`https://doelula.com.br/`).
+- Busca por lugar livre (Brasil inteiro); referência visual Airbnb/Meetup.
+- Rodapé fixo: "Uma iniciativa do Comitê Popular do Lula. Não é site oficial da campanha. Nenhuma divulgação paga."
+- Domínio próprio + Cloudflare: o Gui faz depois. Mudança para o repo `comite-popular-tech/agregador-de-agendas`
+  planejada em `docs/2026-10-10-mudanca-para-agregador.md`.

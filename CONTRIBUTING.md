@@ -13,6 +13,13 @@ preferimos mudanças pequenas e frequentes a grandes reformas.
 3. Leia a spec em `docs/superpowers/specs/` e o desenho visual em `docs/2026-10-08-design-mockup.md` para
    entender as decisões já tomadas.
 
+## Se você usa o Claude Code
+
+O `CLAUDE.md` da raiz resume as regras e o mapa do projeto, e `.claude/skills/` tem um roteiro para cada tipo de
+tarefa (mexer no app, mudar o banco, entregar a mudança, importar ações, operar a produção). O Claude carrega a skill
+certa sozinho; vale pedir pelo nome ("use a skill mudar-banco"). As duas de produção são só para o mantenedor. Ao
+mudar como algo funciona, atualize a skill e o `docs/funcionalidades.md` no mesmo PR.
+
 ## Regras da casa
 
 - **Tudo em português do Brasil**: código, comentários, commits, issues, documentação. Datas em AAAA-MM-DD.
