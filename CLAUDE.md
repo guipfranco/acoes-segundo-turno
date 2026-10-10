@@ -1,10 +1,12 @@
 # CLAUDE.md
 
-Repo da plataforma "Bora Lula" (nome visível desde 2026-10-10; antes "Eleja o Lula" e "Ações do 2º turno"), de ações do 2º turno
+Repo da plataforma "Agenda Bora Lula" (nome visível desde 2026-10-10; antes "Eleja o Lula" e "Ações do 2º turno"), de ações do 2º turno
 pelo voto do Lula. Desde 2026-10-10 é uma iniciativa do Comitê Popular do Lula (que não é a campanha) e segue o "Guia de
 interface web e apps" do Comitê: tokens em `app/tokens.css` (arquivo do guia, não editar), aplicação em `app/marca.css`
-(Montserrat, botões em pílula de 44 px, foco visível, cards com borda), logo do Comitê no topo da inicial e "AGENDA BORA
-LULA" na barra de cima; detalhes em `docs/2026-10-08-design-mockup.md`. Rodapé (inicial e privacidade), a pedido do Gui:
+(Montserrat, botões em pílula de 44 px, foco visível, cards com borda), logo do Comitê no topo da inicial e, na barra de cima do
+computador, "BORA" sobre "LULA" na letra do título da agenda do Comitê (Transducer Extended, com o "A" estrelado), em
+`app/marca-barra.svg`; a capa do link (`app/capa.png`, com a tarja "AGENDA") e esse SVG saem de `scripts/gerar_capa.py`,
+que baixa a fonte do site do Comitê (comercial: nunca versionar o arquivo da fonte); detalhes em `docs/2026-10-08-design-mockup.md`. Rodapé (inicial e privacidade), a pedido do Gui:
 "Uma iniciativa do Comitê Popular do Lula. Não é site oficial da campanha. Nenhuma divulgação paga.", sem o nome dele
 e sem link do código.
 Nasceu do `mapa-segundo-turno` em 2026-10-08. URL, repo e projeto Supabase seguem `acoes-segundo-turno` por decisão do Gui.
