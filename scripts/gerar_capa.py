@@ -38,7 +38,7 @@ def texto_centrado(d, texto, f, cy, largura, cor):
     d.text(((largura - w) // 2 - dx, cy - h // 2 - dy), texto, font=f, fill=cor)
 
 
-def caixa_inclinada(texto, f, fundo, cor, folga=(44, 28), angulo=20):
+def caixa_inclinada(texto, f, fundo, cor, folga=(44, 28), angulo=6):
     """Tarja chapada com texto (fundo None: só o texto), girada no sentido anti-horário, pesando para a esquerda
     (RGBA transparente para colar sobre a capa)."""
     w, h, dx, dy = medir(f, texto)
@@ -56,15 +56,14 @@ def capa():
     im = Image.new("RGBA", (w, h), VERMELHO)
     d = ImageDraw.Draw(im)
     # tudo dentro do quadrado central (x de 285 a 915)
-    texto_centrado(d, "AGENDA", fonte(56), 62, w, BRANCO)
-    # BORA e LULA no mesmo ângulo, pesando para a esquerda; LULA desce no eixo inclinado (por isso fica mais à direita)
-    bora = caixa_inclinada("BORA", fonte(118), None, BRANCO, folga=(30, 14))
-    im.alpha_composite(bora, ((w - bora.width) // 2 - 32, 232 - bora.height // 2))
-    lula = caixa_inclinada("LULA", fonte(118), AMARELO, TINTA, folga=(30, 14))
-    im.alpha_composite(lula, ((w - lula.width) // 2 + 32, 382 - lula.height // 2))
+    # só AGENDA inclinado, na tarja amarela, pesando para a esquerda; BORA e LULA retos e centrados
+    agenda = caixa_inclinada("AGENDA", fonte(54), AMARELO, TINTA, folga=(26, 12))
+    im.alpha_composite(agenda, ((w - agenda.width) // 2, 92 - agenda.height // 2))
+    texto_centrado(d, "BORA", fonte(150), 262, w, BRANCO)
+    texto_centrado(d, "LULA", fonte(150), 425, w, BRANCO)
     f = fonte(34)
-    texto_centrado(d, "Ações do 2º turno", f, 543, w, BRANCO)
-    texto_centrado(d, "perto de você", f, 586, w, BRANCO)
+    texto_centrado(d, "Ações do 2º turno", f, 535, w, BRANCO)
+    texto_centrado(d, "perto de você", f, 578, w, BRANCO)
     im.convert("RGB").save(APP / "capa.png", optimize=True)
 
 
