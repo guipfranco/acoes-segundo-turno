@@ -15,7 +15,9 @@ set -euo pipefail
 alvo="${1:?uso: backup_banco.sh local|producao [pasta]}"
 saida="${2:-backups}"
 : "${BACKUP_SENHA:?defina BACKUP_SENHA (senha da cifra)}"
-CLI="npx --yes supabase@1.200.3"   # mesma versão do package.json
+# CLI 2.x: escolhe o pg_dump da versão do servidor. O 1.200.3 do package.json traz pg_dump 15 e a produção
+# roda Postgres 17 ("aborting because of server version mismatch", visto em 2026-10-10).
+CLI="npx --yes supabase@${SUPABASE_CLI:-2.120.0}"
 
 case "$alvo" in
   local) flags=(--local) ;;
