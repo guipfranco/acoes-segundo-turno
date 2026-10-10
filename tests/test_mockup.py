@@ -559,13 +559,13 @@ def test_scripts_de_cdn_tem_integridade():
         assert re.search(r"@\d+\.\d+\.\d+/|/\d+\.\d+\.\d+/|count\.v\d+\.js", tag), tag
 
 
-RESPONSAVEL = ("Feito por Guilherme Pereira Franco, voluntário do Comitê Popular do Lula. "
+RESPONSAVEL = ("Uma iniciativa do Comitê Popular do Lula. "
                "Não é site oficial da campanha. Nenhuma divulgação paga.")
 
 
 def test_rodape_de_responsabilidade_na_inicial_e_na_privacidade():
-    # lei eleitoral veda anonimato (Lei 9.504, art. 57-D): pessoa natural responsável, sem dizer que é da campanha e
-    # sem impulsionamento pago; o link do código no GitHub saiu a pedido do Gui (2026-10-10)
+    # o site é do Comitê Popular do Lula, que não é a campanha; sem impulsionamento pago. O nome do Gui e o link do
+    # código no GitHub saíram a pedido dele (2026-10-10)
     i = HTML.index("function telaInicio"); inicio = HTML[i:HTML.index("function irParaCidade")]
     assert "rodapeHtml()" in inicio
     rodape = HTML[HTML.index("function rodapeHtml"):].split("\n", 1)[0]
@@ -574,8 +574,7 @@ def test_rodape_de_responsabilidade_na_inicial_e_na_privacidade():
     assert ".rodape{text-align:center;font-size:13px" in HTML
     priv = re.sub(r"\s+", " ", (RAIZ / "app" / "privacidade.html").read_text(encoding="utf-8"))
     assert RESPONSAVEL in priv and "github.com" not in priv
-    # LGPD: quem responde pelos dados, com o e-mail de contato
-    assert "O responsável pelos dados é Guilherme Pereira Franco" in priv and "mailto:" in priv
+    assert "Guilherme Pereira Franco" not in rodape and "mailto:" in priv  # pedidos de dados seguem por e-mail
 
 
 def test_cards_da_inicial_preenchem_a_area_da_imagem():

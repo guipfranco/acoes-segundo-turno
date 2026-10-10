@@ -11,10 +11,9 @@ Comitê (v1, 2026-10) e o `tokens.css` que o acompanha, copiado sem mudança par
 foi reescrito sobre esses tokens e substitui a seção "Identidade da campanha" abaixo, que fica só como histórico.
 
 - Decisões do Gui: logo do Comitê + nome do site no cabeçalho; só visual e acessibilidade (telas e fluxos
-  iguais); rodapé e privacidade: "Feito por Guilherme Pereira Franco, voluntário do Comitê Popular do
-  Lula. Não é site oficial da campanha. Nenhuma divulgação paga." (Lei 9.504, art. 57-D: sem anonimato, pessoa
-  natural responsável, o Comitê não é a campanha); sem o link do código no GitHub. A privacidade diz que o
-  responsável pelos dados (LGPD) é o Gui.
+  iguais); rodapé e privacidade: "Uma iniciativa do Comitê Popular do Lula. Não é site oficial da campanha.
+  Nenhuma divulgação paga." O Gui tirou o nome dele e o link do código no GitHub; os pedidos sobre dados
+  pessoais seguem pelo e-mail da privacidade.
 - Cards da inicial: a imagem preenche a área 4:5 (`object-fit: cover`), sem o fundo desfocado; corta a sobra dos
   stories 9:16 e das artes quadradas. A página da ação segue com a arte inteira.
 - Cores `--cp-*`: vermelho 500 para botões e links, 600 no hover, 700 pressionado e erro; verde e azul de texto
