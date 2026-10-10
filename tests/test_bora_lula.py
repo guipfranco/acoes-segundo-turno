@@ -212,3 +212,29 @@ def test_link_que_nao_e_http_e_descartado_com_aviso():
     assert "javascript:" not in a1["descricao"] and a1["aviso"].startswith("link descartado")
     assert a2["link"] == "https://x/2" and a2["contatoTipo"] == "divulgacao" and "aviso" not in a2
     assert "AVISO: 1 links descartados" in bl.resumo(d) and "ids 1" in bl.resumo(d)
+
+
+def test_baixar_fura_o_cache_do_cloudflare(monkeypatch, tmp_path):
+    """O acoes.js vem com max-age de um ano: cada download precisa de URL nova."""
+    pedidos = []
+
+    class Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            return b'{"hoje": "2026-10-10", "acoes": []}'
+
+    def falso(req, timeout=None):
+        pedidos.append(req)
+        return Resp()
+
+    monkeypatch.setattr(bl.urllib.request, "urlopen", falso)
+    arq, feed = bl.baixar(tmp_path)
+    assert feed["acoes"] == [] and arq.exists()
+    url = pedidos[0].full_url
+    assert url.startswith(bl.URL_FEED + "?t=")
+    assert pedidos[0].get_header("Cache-control") == "no-cache"
