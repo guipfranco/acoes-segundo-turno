@@ -47,9 +47,12 @@ skills em `.claude/skills/`; para operar a produção, `docs/operacao.md`. Atual
 - "Quem organiza?": eu mesmo(a), minha organização ou outra escrita à mão (criada sem selo). Ação em nome de organização
   pede o link do POST oficial da organização anunciando aquela ação (`acao.organizacao_link`, erro `link_post`).
 - Onde: nome do ponto e um campo só de endereço (rua, número e cidade), PÚBLICO (decisões do Gui, 2026-10-10;
-  migração 20261010000030). "Achar no mapa" põe o pino no endereço pelo Nominatim, só no botão (a regra do serviço
-  proíbe autocompletar), e tira cidade e bairro do resultado ("📍 No mapa: bairro, cidade"). Não achou: aparece a lista
-  de cidades do IBGE como plano B, e a pessoa arrasta o pino. O campo avisa que o endereço aparece para todo mundo e
+  migração 20261010000030). Enquanto a pessoa digita, sugestões pelo Photon (komoot, OpenStreetMap, feito para
+  autocompletar), consultado SEM o número da casa (com ele trazia outra rua de mesmo número; "25 de Março" conta como nome).
+  Escolher a sugestão completa rua, número e cidade e pede ao Nominatim a casa exata (uma consulta, na escolha). O botão
+  "Achar no mapa" (ou Enter) usa o Nominatim direto. Cidade e bairro saem do resultado ("📍 No mapa: bairro, cidade").
+  O mapa só tem a rua, sem o número: aviso para arrastar o pino. Não achou: aparece a lista de cidades do IBGE como
+  plano B, e a pessoa arrasta o pino. O campo avisa que o endereço aparece para todo mundo e
   pede lugar público, nunca casa; a Fila mostra o endereço para a moderação.
 - O cadastro não recarrega a tela ao mudar horário ou "Vagas limitadas" (no iPhone fechava o seletor e rolava ao topo);
   `rerender()` mantém a rolagem.

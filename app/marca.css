@@ -74,7 +74,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{border-radius:va
 .selo,.meta.vao{color:var(--cp-green-700)}
 
 /* divisórias decorativas */
-.linha,.card,.insc,.evento-online,.turno-meu .pessoa,.turno-meu .desistiram,#sugestoes div,#sug-criar div,#sug-cidade div{border-top-color:var(--cp-border)}
+.linha,.card,.insc,.evento-online,.turno-meu .pessoa,.turno-meu .desistiram,#sugestoes div,#sug-criar div,#sug-cidade div,#sug-end>div{border-top-color:var(--cp-border)}
 .avatar,.logo-org{border-color:var(--cp-border)}
 
 /* cards: fundo branco, borda, raio 8, padding 16; um botão por card */
