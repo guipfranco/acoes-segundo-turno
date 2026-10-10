@@ -1,10 +1,58 @@
 # Eleja o Lula
 
-Plataforma onde quem organiza ações para eleger o Lula no 2º turno (panfletagem, adesivaço, roda de
-conversa, ligatona...) cadastra a ação, e quem quer ajudar acha uma perto de si e se inscreve.
-Desenho em `docs/superpowers/specs/2026-10-08-plataforma-acoes-design.md`.
+Site onde quem organiza ações pelo voto do Lula no 2º turno (panfletagem, bandeiraço, adesivaço, porta a
+porta, ligatona, ato, encontro...) cadastra a ação, e quem quer ajudar acha uma perto de si e diz "Eu vou!".
 
-Estado: **app em `app/`**, publicado em https://guipfranco.github.io/acoes-segundo-turno/ (GitHub Pages, workflow em `.github/workflows/pages.yml`, só a pasta `app/`). O site publicado ainda roda com dados de exemplo até `app/config.js` ser preenchido (ainda não ligado em produção; ver `docs/operacao.md`). Lê do Supabase (esquema, RLS e funções em `supabase/migrations/`) com login Google: Inscreva-se e Minhas inscrições funcionam de verdade; Criar ação, Minhas ações e Fila de moderação só existem no modo exemplo até a próxima etapa. Abra com `?modo=exemplo` para navegar com dados fictícios (pessoas e organizações inventadas, em `app/dados.js`); sem Supabase configurado em `app/config.js` o app já abre assim. Camada de dados em `app/api.js` (escolhe `api-exemplo.js` ou `api-supabase.js`). Inicial sem mapa, estilo Meetup: busca por cidade, filtro de data com intervalo, formato presencial ou online, vitrine de ações por cidade com foto; o mapa fica em `#/mapa`. A busca por lugar usa `app/lugares.js` (municípios do IBGE via kelvins/municipios-brasileiros, MIT, e os 96 distritos da capital). Capturas em `docs/capturas/`; desenho visual em `docs/2026-10-08-design-mockup.md`.
+**No ar:** https://guipfranco.github.io/acoes-segundo-turno/
 
-Operação (banco local, migrações, papéis, o que falta para ir ao ar): `docs/operacao.md`.
-Testes: `python -m pytest tests -q` e `node --test "tests/js/*.test.js"`.
+Código aberto sob a licença MIT. Contribuições são bem-vindas: leia o [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Como funciona
+
+- **Inicial** sem mapa, estilo Meetup: busca por cidade (chuta a sua pela geolocalização), filtro "Quando",
+  vitrine por cidade com foto por ação e bloco "Online". O mapa fica em `#/mapa`.
+- **Página da ação** com turnos, local, quem organiza, "Eu vou!" e "Adicionar à agenda".
+- **Conta** com login Google: perfil, minhas ações, cadastro de ação (nasce "em análise" e passa por
+  moderação humana; organizações verificadas publicam direto).
+- **Ações de divulgação** importadas da agenda Bora Lula do Comitê Popular, com crédito à fonte.
+- **Fale com a gente** em `#/contato` para mandar sugestão ou avisar de erro.
+
+## Como rodar no seu computador
+
+O app é estático, sem build: a pasta `app/` é o site inteiro. Basta servir a pasta:
+
+```sh
+python -m http.server 8000 -d app
+```
+
+e abrir http://localhost:8000/?modo=exemplo. O `?modo=exemplo` usa dados fictícios em memória
+(`app/dados.js`, pessoas e organizações inventadas), então tudo funciona sem banco nem login: cadastrar
+ação, moderar, inscrever-se. É assim que a maior parte das mudanças de interface é feita e testada.
+
+Sem `?modo=exemplo` o app lê o Supabase configurado em `app/config.js` (a produção). Para mexer em banco,
+regras de acesso e funções SQL (pasta `supabase/`), rode a pilha local do Supabase: veja `docs/operacao.md`.
+
+## Testes
+
+```sh
+python -m pytest tests -q          # telas e scripts (test_supabase.py só roda com a pilha local)
+node --test "tests/js/*.test.js"   # camada de dados
+```
+
+## Mapa do repositório
+
+| Pasta | O que é |
+| --- | --- |
+| `app/` | o site: HTML, CSS e JS sem framework. Camada de dados em `api.js` (`api-exemplo.js` ou `api-supabase.js`) |
+| `supabase/migrations/` | esquema, RLS e funções SQL; `supabase/functions/` tem a função de prévia de link |
+| `scripts/` | importação de ações (Bora Lula), fotos, snapshot público, cópia do banco |
+| `tests/` | pytest e `node --test` |
+| `docs/` | spec (`docs/superpowers/specs/`), desenho visual, operação (`docs/operacao.md`), capturas |
+| `fotos/divulgacao/` | fotos das ações importadas, servidas pelo Pages |
+| `.github/workflows/` | publicação no Pages (com prévia por branch em `/previa/<branch>/`), cópia diária do banco |
+
+## Dados e privacidade
+
+Não há dado pessoal real no repositório: pessoas de exemplo são inventadas. Ações e organizações públicas
+(partidos, mandatos, movimentos, comitês) aparecem com crédito à fonte. Política de privacidade e responsável
+pelo site estão no próprio app.
