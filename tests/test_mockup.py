@@ -454,6 +454,22 @@ def test_quem_divulga_tem_avatar_e_logo_da_organizacao_vira_capa():
     assert "montarPublico(cfg, orgs, acoes, turnos)" in api_sb  # caminho ao vivo, paginado por tudo()
 
 
+def test_acao_sem_foto_ganha_cartaz_em_vez_de_emoji_e_faixas():
+    # decisão do Gui (2026-10-10): emoji e faixas do logo saem; a área da imagem leva um cartaz desenhado pelo app
+    assert "function cartaz(a,tam,comLogo)" in HTML and "const CORES_CARTAZ=['vermelho','verde','azul','vinho']" in HTML
+    assert 'class="cartaz-tarja">Bora Lula</span>' in HTML and "a.tipo==='outro'?'ação':a.tipo" in HTML
+    # cartaz por baixo em card, lista online e página (sem foto vira capa também, sem o quadradinho com emoji)
+    assert "${cartaz(a,'card',lg)}" in HTML and "${cartaz(a,'mini',lg)}" in HTML
+    assert "${cartaz(a,'capa')}${imgFoto(a,true)}" in HTML and "${cartaz(a,'capa',true)}${imgLogo(logoCapa(a))}" in HTML
+    assert '<div class="cubo ${CLASSE[a.tipo]}" style="margin-bottom:10px">' not in HTML
+    for f in ["function fotoEvento", "function cardOnline"]:
+        corpo = HTML[HTML.index(f):HTML.index("\n", HTML.index(f))]
+        assert "ICONES[" not in corpo, f
+    marca = (RAIZ / "app" / "marca.css").read_text(encoding="utf-8")
+    assert "container-type:inline-size" in marca and ".cartaz-tarja{" in marca and ".foto.com-logo .logo{" in marca
+    assert "var(--cp-blue-500) 68% 74%" not in marca and "radial-gradient(circle at 18% 12%" not in HTML
+
+
 def test_cards_com_colunas_iguais_e_sem_zero_vao():
     # minmax(0,1fr): uma imagem ou nome comprido não alarga a coluna (os cards ficavam de tamanhos diferentes)
     assert "grid-template-columns:repeat(4,minmax(0,1fr))" in HTML

@@ -85,10 +85,20 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{border-radius:va
 .foto,.foto.mini,.cubo,.cartao,.turno-meu,.moderar,.logo-org{border-radius:var(--cp-radius-md)}
 .foto .logo{border-radius:var(--cp-radius-md);box-shadow:var(--cp-shadow-1)}
 .cartao,.moderar{background:var(--cp-surface-alt)}
-/* sem foto: a área de imagem leva as faixas coloridas do logo sobre uma cor da marca (atrás do ícone e da foto) */
-.foto{isolation:isolate}
-.foto::after{display:block;z-index:-1;background:linear-gradient(-14deg,transparent 0 62%,var(--cp-yellow-400) 62% 68%,var(--cp-blue-500) 68% 74%,var(--cp-green-500) 74% 80%,transparent 80%)}
-.foto.capa.natural::after{display:none}
+/* sem foto: cartaz desenhado pelo app (função cartaz no index.html), por baixo da foto e da logo. Fundo nas cores
+   escuras do guia, que seguram texto branco pequeno (a cidade); tarja amarela; medidas em cqw, relativas ao card */
+.foto{isolation:isolate;container-type:inline-size}
+.cartaz{position:absolute;inset:0;z-index:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:3cqw;padding:9cqw 8cqw;color:#fff;text-align:left;overflow:hidden}
+.cartaz::before{content:'';position:absolute;right:-18cqw;top:-18cqw;width:70cqw;height:70cqw;border-radius:50%;background:rgb(255 255 255 / .08)}
+.cartaz-vermelho{background:var(--cp-red-500)}.cartaz-verde{background:var(--cp-green-700)}.cartaz-azul{background:var(--cp-blue-700)}.cartaz-vinho{background:var(--cp-red-700)}
+.cartaz-tarja{background:var(--cp-yellow-400);color:var(--cp-ink);font:900 max(10px,5.2cqw)/1.25 var(--cp-font);text-transform:uppercase;letter-spacing:.06em;padding:.15em .45em;transform:rotate(-3deg);transform-origin:left bottom}
+.cartaz-tipo{font-family:var(--cp-font);font-weight:900;text-transform:uppercase;line-height:.92}
+.cartaz-onde{font:700 max(11px,6cqw)/1.2 var(--cp-font)}
+.foto.mini .cartaz{padding:8cqw;align-items:center;justify-content:center;text-align:center}.foto.mini .cartaz-tarja{display:none}
+.foto.capa .cartaz{padding:5cqw 6cqw;gap:1.6cqw}.foto.capa .cartaz-tarja{font-size:2.6cqw}.foto.capa .cartaz-onde{font-size:3.2cqw}
+/* com logo da organização: o logo no alto, o texto embaixo e sem a tarja */
+.foto.com-logo .logo{top:36%;height:44%;width:56%}.foto.com-logo .cartaz-tarja{display:none}
+.foto.capa.com-logo .logo{top:42%;height:58%;width:34%}
 /* cards da inicial (e a prévia do cadastro, que imita o card): a imagem preenche a área 4:5 e corta a sobra,
    sem o fundo desfocado; a página da ação segue mostrando a arte inteira */
 .evento .foto .img,.evento-online .foto .img{object-fit:cover}
