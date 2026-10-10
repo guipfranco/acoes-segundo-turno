@@ -157,32 +157,18 @@ def a_estrela_svg(x, base, tam):
 
 
 def marca_barra():
-    """AGENDA na tarja amarela inclinada, à esquerda; BORA sobre LULA à direita, brancos, na letra da agenda."""
-    tam = 30  # BORA e LULA
+    """BORA sobre LULA, brancos, na letra da agenda, com o A estrelado (sem o AGENDA, pedido do Gui em 2026-10-10)."""
+    tam = 30
     _, xb, cap = contorno("BORA", 0, 0, tam)
     _, xl, _ = contorno("LUL", 0, 0, tam)
     largura_lula = xl + tam * 0.04 + tam * 0.994
+    larg = max(xb, largura_lula)
     entre = tam * 0.16  # espaço entre as linhas
     alto = cap * 2 + entre
-    ta = 15  # AGENDA
-    _, xa, cap_a = contorno("AGENDA", 0, 0, ta)
-    folga_x, folga_y = 9, 6
-    tw, th = xa + folga_x * 2, cap_a + folga_y * 2
-    gap = 12
-    x0 = tw + gap + 4  # bloco BORA/LULA depois da tarja (4 de folga para o giro)
-    larg = x0 + max(xb, largura_lula)
-    bloco_x = lambda w: x0 + (max(xb, largura_lula) - w) / 2
-    b1 = cap  # linha de base de BORA
-    b2 = cap * 2 + entre
-    bora, *_ = contorno("BORA", bloco_x(xb), b1, tam)
-    lx = bloco_x(largura_lula)
-    lul, xl, _ = contorno("LUL", lx, b2, tam)
-    a = a_estrela_svg(xl + tam * 0.04, b2, tam)
-    ty = (alto - th) / 2
-    agenda, *_ = contorno("AGENDA", 2 + folga_x, ty + folga_y + cap_a, ta)
-    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -4 {larg:.0f} {alto + 8:.0f}" role="img" aria-label="Agenda Bora Lula">'
-           f'<g transform="rotate(-6 {2 + tw / 2:.1f} {alto / 2:.1f})"><rect x="2" y="{ty:.1f}" width="{tw:.1f}" height="{th:.1f}" fill="{AMARELO}"/>'
-           f'<path fill="{TINTA}" d="{agenda}"/></g>'
+    bora, *_ = contorno("BORA", (larg - xb) / 2, cap, tam)
+    lul, xl, _ = contorno("LUL", (larg - largura_lula) / 2, alto, tam)
+    a = a_estrela_svg(xl + tam * 0.04, alto, tam)
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {larg:.1f} {alto:.1f}" role="img" aria-label="Agenda Bora Lula">'
            f'<path fill="#fff" d="{bora} {lul}"/><path fill="#fff" fill-rule="evenodd" d="{a}"/></svg>\n')
     (APP / "marca-barra.svg").write_text(svg, encoding="utf-8")
 

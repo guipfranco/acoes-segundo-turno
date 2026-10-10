@@ -153,8 +153,8 @@ nav a:focus-visible{border-radius:var(--cp-radius-md)}nav a.cta:focus-visible{bo
   :root{--cab:64px}
   nav{background:var(--cp-red-500);border-top:0;border-bottom:0;padding-bottom:0}
   nav .barra{max-width:1200px;padding:0 32px}
-  /* marca como na capa do link (pedido do Gui em 2026-10-10): AGENDA na tarja amarela inclinada e BORA sobre LULA na
-     letra do título da agenda Bora Lula; SVG com o contorno das letras, gerado por scripts/gerar_capa.py */
+  /* marca como na capa do link (pedido do Gui em 2026-10-10): BORA sobre LULA na letra do título da agenda Bora Lula,
+     sem o AGENDA; SVG com o contorno das letras, gerado por scripts/gerar_capa.py */
   nav .marca{align-items:center;height:var(--cab);padding:0 8px 0 0}
   nav .marca img{display:block;height:44px;width:auto}
   nav .marca:hover{background:none}
