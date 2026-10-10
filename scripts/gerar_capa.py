@@ -38,13 +38,15 @@ def texto_centrado(d, texto, f, cy, largura, cor):
     d.text(((largura - w) // 2 - dx, cy - h // 2 - dy), texto, font=f, fill=cor)
 
 
-def caixa_inclinada(texto, f, fundo, cor, folga=(44, 28), angulo=-3):
-    """Tarja cheia e chapada com texto, girada (RGBA transparente para colar sobre a capa)."""
+def caixa_inclinada(texto, f, fundo, cor, folga=(44, 28), angulo=20):
+    """Tarja chapada com texto (fundo None: só o texto), girada no sentido anti-horário, pesando para a esquerda
+    (RGBA transparente para colar sobre a capa)."""
     w, h, dx, dy = medir(f, texto)
     cw, ch = w + folga[0] * 2, h + folga[1] * 2
     im = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    d.rectangle([0, 0, cw, ch], fill=fundo)
+    if fundo:
+        d.rectangle([0, 0, cw, ch], fill=fundo)
     d.text((folga[0] - dx, folga[1] - dy), texto, font=f, fill=cor)
     return im.rotate(angulo, resample=Image.BICUBIC, expand=True)
 
@@ -54,13 +56,15 @@ def capa():
     im = Image.new("RGBA", (w, h), VERMELHO)
     d = ImageDraw.Draw(im)
     # tudo dentro do quadrado central (x de 285 a 915)
-    texto_centrado(d, "AGENDA", fonte(64), 110, w, BRANCO)
-    texto_centrado(d, "BORA", fonte(150), 225, w, BRANCO)
-    caixa = caixa_inclinada("LULA", fonte(150), AMARELO, TINTA, folga=(36, 18))
-    im.alpha_composite(caixa, ((w - caixa.width) // 2, 395 - caixa.height // 2))
+    texto_centrado(d, "AGENDA", fonte(56), 62, w, BRANCO)
+    # BORA e LULA no mesmo ângulo, pesando para a esquerda; LULA desce no eixo inclinado (por isso fica mais à direita)
+    bora = caixa_inclinada("BORA", fonte(118), None, BRANCO, folga=(30, 14))
+    im.alpha_composite(bora, ((w - bora.width) // 2 - 32, 232 - bora.height // 2))
+    lula = caixa_inclinada("LULA", fonte(118), AMARELO, TINTA, folga=(30, 14))
+    im.alpha_composite(lula, ((w - lula.width) // 2 + 32, 382 - lula.height // 2))
     f = fonte(34)
-    texto_centrado(d, "Ações do 2º turno", f, 525, w, BRANCO)
-    texto_centrado(d, "perto de você", f, 568, w, BRANCO)
+    texto_centrado(d, "Ações do 2º turno", f, 543, w, BRANCO)
+    texto_centrado(d, "perto de você", f, 586, w, BRANCO)
     im.convert("RGB").save(APP / "capa.png", optimize=True)
 
 
