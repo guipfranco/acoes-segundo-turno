@@ -10,3 +10,6 @@ node_modules/
 supabase/.branches/
 supabase/.temp/
 .env
+
+# cópias cifradas do banco (scripts/backup_banco.sh): têm dados pessoais, nunca versionar
+backups/

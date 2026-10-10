@@ -1,0 +1,44 @@
+name: Cópia diária do banco
+
+# O plano Free do Supabase não faz backup. Todo dia às 00:17 de Brasília (03:17 UTC) este workflow roda
+# scripts/backup_banco.sh producao e guarda o .tar.gz cifrado como artefato por 90 dias. O repo é público e
+# qualquer pessoa logada no GitHub baixa artefato: só a cifra (BACKUP_SENHA) protege nomes, e-mails e telefones.
+# Segredos do repo (Settings > Secrets and variables > Actions): SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD, BACKUP_SENHA.
+# Como abrir e restaurar: docs/operacao.md, "Cópia do banco".
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  copiar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Ligar ao projeto de produção
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: npx --yes supabase@1.200.3 link --project-ref ommitzndniqnmsjsjghb --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+      - name: Dump cifrado
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          BACKUP_SENHA: ${{ secrets.BACKUP_SENHA }}
+        run: bash scripts/backup_banco.sh producao backups
+      - uses: actions/upload-artifact@v4
+        with:
+          name: banco-${{ github.run_id }}
+          path: backups/*.tar.gz.enc
+          retention-days: 90
+          if-no-files-found: error

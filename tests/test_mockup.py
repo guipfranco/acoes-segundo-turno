@@ -451,7 +451,7 @@ def test_quem_divulga_tem_avatar_e_logo_da_organizacao_vira_capa():
     assert ".foto .logo{" in HTML and ".avatar{" in HTML
     api_sb = (RAIZ / "app" / "api-supabase.js").read_text(encoding="utf-8")
     assert "foto_url,foto_credito,foto_pagina" in api_sb and "orgs.map(deOrg)" in api_sb
-    assert "montarPublico(cfgR.data, orgR.data, acR.data, tR.data)" in api_sb
+    assert "montarPublico(cfg, orgs, acoes, turnos)" in api_sb  # caminho ao vivo, paginado por tudo()
 
 
 def test_cards_com_colunas_iguais_e_sem_zero_vao():

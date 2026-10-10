@@ -8,7 +8,7 @@ function supabaseFalso(dados, sessao) {
   const sb = { auth: { getSession: async () => ({ data: { session: sessao || null } }) }, rpc: async () => ({ data: null, error: null }), from(v) {
     views.push(v);
     const q = { then: (ok, erro) => Promise.resolve({ data: dados[v] || [], error: null }).then(ok, erro) };
-    for (const m of ['select', 'gte', 'eq', 'order', 'maybeSingle']) q[m] = () => q;
+    for (const m of ['select', 'gte', 'eq', 'order', 'range', 'maybeSingle']) q[m] = () => q;
     return q;
   } };
   return { sb, views };
@@ -116,4 +116,83 @@ test('deTurno corta os segundos e dePessoa mantém o contrato', () => {
   assert.deepEqual(dePessoa({ id: 'u', nome: 'N', email: 'e', telefone: null, papel: 'participante', bloqueada: false }),
     { id: 'u', nome: 'N', email: 'e', telefone: null, papel: 'participante', bloqueada: false, organizacao: null });
   assert.match(hojeBrasilia(), /^\d{4}-\d{2}-\d{2}$/);
+});
+
+// ---- página da ação pelo snapshot e paginação do caminho ao vivo (2026-10-09) ----
+
+// Supabase de mentira que honra range(a, b), eq(col, val) e maybeSingle(), e registra as chamadas de rpc
+function supabasePaginado(dados, sessao) {
+  const views = [], rpcs = [];
+  const sb = { auth: { getSession: async () => ({ data: { session: sessao || null } }) },
+    rpc: async (nome) => { rpcs.push(nome); return { data: null, error: null }; },
+    from(v) {
+      views.push(v);
+      let a = 0, b = Infinity, so = null, single = false;
+      const q = { then: (ok, erro) => {
+        let linhas = dados[v] || [];
+        if (so) linhas = linhas.filter(r => r[so.col] === so.val);
+        linhas = linhas.slice(a, Math.min(b + 1, a + 1000)); // como o PostgREST: no máximo max_rows (1000) por resposta
+        return Promise.resolve({ data: single ? (linhas[0] || null) : linhas, error: null }).then(ok, erro);
+      } };
+      for (const m of ['select', 'gte', 'order']) q[m] = () => q;
+      q.eq = (col, val) => { so = { col, val }; return q; };
+      q.range = (x, y) => { a = x; b = y; return q; };
+      q.maybeSingle = () => { single = true; return q; };
+      return q;
+    } };
+  return { sb, views, rpcs };
+}
+function ambientePaginado(dados, fetchFalso, sessao) {
+  const { sb, views, rpcs } = supabasePaginado(dados, sessao);
+  global.window = { supabase: { createClient: () => sb } };
+  global.fetch = fetchFalso;
+  return { api: criar({ url: 'https://x.supabase.co', anonKey: 'anon' }), views, rpcs };
+}
+const snapComAcoes = () => ({ geradoEm: new Date().toISOString(), configuracao: [], organizacoes: [],
+  acoes: [{ id: 7, titulo: 'Do arquivo', online: true }, { id: 8, titulo: 'Outra', online: true }],
+  turnos: [{ id: 70, acao: 7, inicio: amanha(), fim: amanha() }, { id: 80, acao: 8, inicio: amanha(), fim: amanha() }, { id: 71, acao: 7, inicio: amanha(), fim: amanha() }] });
+
+test('acao(id) sem sessão vem do snapshot: só os turnos daquela ação, sem tocar no Supabase', async () => {
+  const { api, views, rpcs } = ambientePaginado(bancoFalso, resposta(200, snapComAcoes()));
+  const r = await api.acao(7);
+  assert.equal(r.acao.titulo, 'Do arquivo'); assert.deepEqual(r.turnos.map(t => t.id), [70, 71]);
+  assert.deepEqual(r.inscrita, []); assert.equal(r.combinado, null);
+  assert.deepEqual(views, []); assert.deepEqual(rpcs, []);
+});
+
+test('acao(id) cai no Supabase quando a ação não está no snapshot, com sessão ou depois de escrever', async () => {
+  const banco = Object.assign({}, bancoFalso, { acao_publica: [{ id: 2, titulo: 'Do banco', online: true }], turno_publico: [{ id: 20, acao: 2, inicio: amanha(), fim: amanha() }] });
+  // fora do snapshot (aprovada há menos de 1 h, ou cancelada)
+  let amb = ambientePaginado(banco, resposta(200, snapComAcoes()));
+  let r = await amb.api.acao(2);
+  assert.equal(r.acao.titulo, 'Do banco'); assert.deepEqual(r.turnos.map(t => t.id), [20]);
+  assert.ok(amb.views.includes('acao_publica')); assert.deepEqual(amb.rpcs, ['acao_para_mim']);
+  // com sessão: nem lê o arquivo
+  let fetches = 0;
+  amb = ambientePaginado(banco, async (...a) => { fetches++; return resposta(200, snapComAcoes())(...a); }, { user: { id: 'u1' } });
+  await amb.api.acao(2);
+  assert.equal(fetches, 0); assert.ok(amb.views.includes('acao_publica'));
+  // depois de escrever nesta página
+  amb = ambientePaginado(banco, resposta(200, snapComAcoes()));
+  await amb.api.inscrever(20);
+  await amb.api.acao(2);
+  assert.ok(amb.views.includes('acao_publica'));
+});
+
+test('a mesma página baixa o publico.json uma vez: inicial e ação em seguida compartilham a leitura', async () => {
+  let fetches = 0;
+  const { api, views } = ambientePaginado(bancoFalso, async (...a) => { fetches++; return resposta(200, snapComAcoes())(...a); });
+  await api.publico(); await api.acao(7); await api.acao(8);
+  assert.equal(fetches, 1); assert.deepEqual(views, []);
+});
+
+test('publico() ao vivo pagina de 1000 em 1000 e não para na página curta', async () => {
+  const muitas = Array.from({ length: 2300 }, (_, i) => ({ id: i + 1, titulo: 'A' + i, online: true }));
+  const turnos = Array.from({ length: 1200 }, (_, i) => ({ id: i + 1, acao: i + 1, inicio: amanha(), fim: amanha() }));
+  const banco = Object.assign({}, bancoFalso, { acao_publica: muitas, turno_publico: turnos });
+  const { api } = ambientePaginado(banco, resposta(404, null));
+  const p = await api.publico();
+  assert.equal(api.origemPublico, 'supabase');
+  assert.equal(p.acoes.length, 2300); assert.equal(p.acoes[2299].id, 2300);
+  assert.equal(p.turnos.length, 1200);
 });
