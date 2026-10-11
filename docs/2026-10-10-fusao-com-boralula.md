@@ -9,6 +9,20 @@ A Agenda Bora Lula deixa de existir como site: tudo o que ela faz passa a existi
 (telefone no "Eu vou!" e moderação antes de publicar) valendo para o site inteiro, e o endereço antigo passa a levar
 ao boralula.org.
 
+## Situação (2026-10-10, fim do dia)
+
+- Item A entrou no `main` do agregador (PR #36, juntado pelo Carlos). Ainda não está em produção: falta o núcleo
+  seguir os passos de produção do PR (migração, ligar a fonte `bora-lula`).
+- A equipe do boralula escreveu outro caminho para a mudança: `docs/superpowers/specs/2026-10-10-agenda-gui-no-supabase-design.md`
+  no agregador. O banco da Agenda entra como está no Supabase do boralula, o app da Agenda passa a morar em
+  `boralula.org/agenda/` e o Supabase do Gui é pausado; a convergência dos esquemas fica para uma etapa 2.
+- **O Gui aceitou esse caminho**: por um tempo são dois sites em paralelo dentro do boralula, com a mesma ação do
+  Comitê aparecendo nos dois quando a fonte `bora-lula` for ligada. Contas, a 1 inscrição futura e o papel de
+  moderador não vão junto (o Gui avisa e é refeito à mão).
+- Condição: alguém precisa manter a importação do feed rodando contra o banco do boralula depois da troca, senão
+  `boralula.org/agenda/` fica com ações velhas (sem as novas e com as mudadas ou canceladas erradas).
+- Os itens B a E abaixo continuam valendo como destino da etapa 2.
+
 ## Onde está cada coisa
 
 - Código da Agenda Bora Lula no agregador: pasta `acoes-segundo-turno/` (trazida por `git subtree`, com histórico;
