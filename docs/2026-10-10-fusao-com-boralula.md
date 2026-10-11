@@ -20,7 +20,9 @@ ao boralula.org.
   Comitê aparecendo nos dois quando a fonte `bora-lula` for ligada. Contas, a 1 inscrição futura e o papel de
   moderador não vão junto (o Gui avisa e é refeito à mão).
 - Condição: alguém precisa manter a importação do feed rodando contra o banco do boralula depois da troca, senão
-  `boralula.org/agenda/` fica com ações velhas (sem as novas e com as mudadas ou canceladas erradas).
+  `boralula.org/agenda/` fica com ações velhas (sem as novas e com as mudadas ou canceladas erradas). **Decisão do
+  Gui: o Carlos roda à mão** (`scripts/publicar_acoes.py bora-lula --ref <ref do boralula>`, com o
+  `SUPABASE_ACCESS_TOKEN` dele), pelo menos 2 vezes por dia.
 - Os itens B a E abaixo continuam valendo como destino da etapa 2.
 
 ## Onde está cada coisa
