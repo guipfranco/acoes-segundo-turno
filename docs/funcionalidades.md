@@ -132,3 +132,6 @@ resumido. Tabela `feedback` sem acesso direto (`enviar_feedback`, freio de 10/h 
   canceladas, feedback, segurança, fotos e lista pelo Pages, cópia do banco.
 - 2026-10-10: nome "Agenda Bora Lula" (antes "Eleja o Lula" e "Ações do 2º turno"), marca do Comitê, divulgação pública, endereço
   da ação.
+- 2026-10-17: o site volta ao ar no Pages (sai o redirecionamento para boralula.org), agora lendo e gravando no Supabase
+  do boralula (`zpcghehadrztxjlkjnzj`), onde a Agenda mora desde a fusão; sai o botão "Doar" e o "Prefere ajudar com
+  dinheiro?".
