@@ -69,7 +69,7 @@ varredura bruta (nomes e telefones). Nunca copiar nada de lá para cá nem torn�
 - Moderação humana por voluntários; automação depois. Segundo moderador fica para depois.
 - Toda ação importada vai ao ar como "Divulgação pública" até a moderação verificar (não confiamos na revisão da
   agenda de origem).
-- Uma vaquinha só, geral, apontando para a arrecadação oficial (`https://doelula.com.br/`).
+- Sem botão de doar (saiu em 2026-10-17; antes era uma vaquinha só, apontando para `https://doelula.com.br/`).
 - Busca por lugar livre (Brasil inteiro); referência visual Airbnb/Meetup.
 - Rodapé fixo: "Uma iniciativa do Comitê Popular do Lula. Não é site oficial da campanha. Nenhuma divulgação paga."
 - Domínio próprio + Cloudflare: o Gui faz depois.

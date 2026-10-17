@@ -1,5 +1,5 @@
 // Configuração pública do app. Sem `supabase`, o app roda no modo exemplo (dados fictícios em memória).
 // A chave anon do Supabase é pública por desenho: o que protege os dados é o RLS no banco.
-window.CONFIG = { supabase: { url: 'https://ommitzndniqnmsjsjghb.supabase.co', anonKey: 'sb_publishable_s8RK7ex9EwN6b6mz46JY7g_SLsupkXe',
-  // ID público do cliente OAuth do Google (o mesmo do provedor no Supabase): liga o botão do Google sobre o site
-  googleClientId: '691198373003-m2p6k0kk454kvaom1n8bmor0nmluj47a.apps.googleusercontent.com' } };
+// Desde 2026-10-17 o app lê e grava no Supabase do boralula.org (o mesmo que boralula.org publica em /config.js), onde
+// a Agenda mora depois da fusão. Sem googleClientId: o login vai pelo redirecionamento do Supabase.
+window.CONFIG = { supabase: { url: 'https://zpcghehadrztxjlkjnzj.supabase.co', anonKey: 'sb_publishable_9M1Tdg2C5GYkI3Hf87McXA__C2Xxwuq' } };

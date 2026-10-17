@@ -10,10 +10,11 @@ def test_tem_as_seis_telas():
         assert f"function {nome}" in HTML, nome
 
 
-def test_nav_e_doar():
+def test_nav_sem_doar():
     assert 'id="app"' in HTML
     assert "<nav" in HTML
-    assert "Doar" in HTML
+    # a doação saiu do app em 2026-10-17, a pedido do Gui
+    assert "Doar" not in HTML and "linkDoar" not in HTML and "vaquinha" not in HTML
 import json
 
 DADOS_JS = (RAIZ / "app" / "dados.js").read_text(encoding="utf-8") if (RAIZ / "app" / "dados.js").exists() else ""
@@ -509,10 +510,10 @@ def test_eu_vou_na_divulgacao_marca_presenca_sem_formulario():
     assert "Ver a divulgação original" in HTML
 
 
-def test_criar_acao_e_o_cta_principal_e_doar_fica_na_barra():
+def test_criar_acao_e_o_cta_principal_da_barra():
     nav = HTML[HTML.index("<nav>"):HTML.index("</nav>")]
-    assert 'class="cta" href="#/criar"' in nav and 'id="doar"' in nav and "Inscrições" not in nav
-    assert "Doe para a campanha do Lula" in HTML and "Uma vaquinha só" not in HTML
+    assert 'class="cta" href="#/criar"' in nav and 'id="doar"' not in nav and "Inscrições" not in nav
+    assert "Doe para a campanha do Lula" not in HTML
 
 
 def test_inscricoes_em_lista_sem_nome_e_telefone():
@@ -572,7 +573,7 @@ def test_contagem_de_visitas_goatcounter_sem_dado_pessoal():
     assert "location.pathname+(location.hash||'#/inicio')" in HTML
     assert "window.addEventListener('hashchange',contarTela)" in HTML
     for evento in ["eu-vou-clique", "eu-vou-confirmado", "entrar", "cadastrar-acao-abrir", "cadastrar-acao-enviada",
-                   "agenda-google", "agenda-ics", "doar", "compartilhar"]:
+                   "agenda-google", "agenda-ics", "compartilhar"]:
         assert f"contar('{evento}')" in HTML, evento
     # o evento leva só o nome: nada de sessão, telefone ou e-mail
     contar = HTML.split("function contar(", 1)[1].split("\n", 1)[0]

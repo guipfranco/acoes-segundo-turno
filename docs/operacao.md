@@ -170,6 +170,18 @@ agenda) e volta também perde. Só foto da ação e logo da organização não c
 merge vier antes, o Pages publica o app novo sem as funções no banco: a etiqueta aparece em todas as importadas (a
 coluna não existe e conta como não verificada), mas a aba Divulgação e os botões de verificar dão erro.
 
+## Banco desde 2026-10-17
+
+`app/config.js` aponta para o Supabase do boralula (`zpcghehadrztxjlkjnzj`, chave pública copiada de
+`https://boralula.org/config.js`), sem `googleClientId`. O projeto antigo (`ommitzndniqnmsjsjghb`) ficou parado em
+2026-10-10 e o que está abaixo descreve ele. Limites conhecidos:
+
+- Login: o Google volta para `guipfranco.github.io` só se esse endereço estiver nas Redirect URLs do Supabase do
+  boralula (Authentication > URL Configuration); senão a pessoa cai logada em boralula.org.
+- Imagem do cadastro de ação e logo de organização: o boralula fechou o bucket `fotos-acoes` em 2026-10-15 e envia
+  pelo Worker (`/api/agenda/foto`), que recusa outro site. Daqui o envio falha, e sem imagem o banco recusa a ação
+  (`sem_foto`).
+
 ## Estado da produção (2026-10-09)
 
 - Supabase: projeto `acoes-segundo-turno`, ref `ommitzndniqnmsjsjghb`, São Paulo, plano Free. As três

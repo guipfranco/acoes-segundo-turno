@@ -278,7 +278,6 @@ dialog.login-google{border:0;border-radius:20px;padding:28px 24px 18px;max-width
   <a href="#/mapa" data-rota="mapa"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14l-6 2.5z"/><path d="M9 4v14M15 6.5v14"/></svg></span><span>Mapa</span></a>
   <a href="#/fila" data-rota="fila" data-so-moderador style="display:none"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.8-5"/></svg></span><span>Fila</span></a>
   <a href="#/perfil" id="conta" data-rota="perfil" onclick="return contaClique()"><span id="conta-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/></svg></span><span id="conta-rotulo">Entrar</span></a>
-  <a id="doar" href="#" target="_blank" rel="noopener" onclick="contar('doar')"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5 4.4 13a4.6 4.6 0 0 1 6.5-6.5l1.1 1.1 1.1-1.1a4.6 4.6 0 0 1 6.5 6.5z"/></svg></span><span>Doar</span></a>
   <a class="cta" href="#/criar" data-rota="criar" onclick="novaCriacao()"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span><span class="so-cel">Ação</span><span class="so-desk">Cadastrar ação</span></span></a>
 </div></nav>
 <script src="dados.js"></script>
@@ -314,7 +313,7 @@ const filtroNovo=()=>({quando:'breve',de:'',ate:'',formato:'qualquer',tipo:null}
 const estado={onde:null,filtros:{inicio:filtroNovo(),mapa:filtroNovo()},perto:null,geoTentada:false,gaveta:'baixa',vista:{lat:-23.62,lon:-46.62,zoom:10},foco:null,sel:null,filaAba:'analise',inscrevendo:null,minhasAberta:null,recusando:null,erroRecusa:null,bloqueando:null,erroBloqueio:null,aviso:null,sessao:null,acaoAberta:null,vitrineAberta:{}};
 let telaAtual='inicio',rotaAnterior=null,ultimaLista=null;
 const F=()=>estado.filtros[telaAtual==='mapa'?'mapa':'inicio'];
-let PUB={config:{hoje:'',frase:'',vaquinha:'#'},organizacoes:[],acoes:[],turnos:[]};
+let PUB={config:{hoje:'',frase:''},organizacoes:[],acoes:[],turnos:[]};
 const org=id=>PUB.organizacoes.find(o=>o.id===id);
 const pessoa=id=>DADOS.pessoas.find(p=>p.id===id); // só telas de organizador e moderador (modo exemplo)
 const eu=()=>estado.sessao?estado.sessao.id:null;
@@ -497,7 +496,6 @@ function telaInicio(){const perto=estado.perto||PADRAO,soOnline=F().formato==='o
   <div id="bloco-online">${blocoOnline(acoesOnline())}</div>
   ${soOnline?'':VITRINE.filter(c=>c[0]!==perto.rotulo).map(c=>blocoVitrine(esc(c[0]),acoesPerto({lat:c[2],lon:c[3]}),linkMapa({rotulo:c[0],lat:c[2],lon:c[3]}),'','',c[0])).join('')}
   <section class="bloco"><div class="vazio"><p>Não achou ação na sua cidade?</p><a class="btn" href="#/criar" onclick="novaCriacao()">Cadastrar a primeira ação</a></div></section>
-  <section class="bloco"><div class="vazio" style="padding-top:8px"><p style="font-size:15px;font-weight:600">Prefere ajudar com dinheiro?</p>${linkDoar()}</div></section>
   <section class="bloco"><div class="vazio" style="padding-top:8px"><p style="font-size:15px;font-weight:600">Achou um erro ou quer falar com a gente?</p><p class="sec" style="font-size:14px;margin-top:-6px">Ação com dado errado, botão que não funciona, ideia: conte pra gente.</p><a class="btn sec" href="#/contato">Enviar mensagem</a></div></section>
   <p class="credito" style="text-align:center;margin-top:24px">Fotos de exemplo do Wikimedia Commons, com licenças livres. O crédito de cada uma está na página da ação.</p>
   ${rodapeHtml()}</div>`}
@@ -630,8 +628,6 @@ async function entrar(){contar('entrar');await API.entrar();await sincronizar()}
 async function sair(){await API.sair();localStorage.removeItem('vouPendente');estado.inscrevendo=null;await sincronizar()}
 // logado, o botão da conta leva ao Perfil (onde fica o Sair); deslogado, entra com o Google
 function contaClique(){if(estado.sessao)return true;entrar().catch(e=>console.error(e));return false}
-// a doação é uma só, geral, e aponta para a arrecadação oficial (configuracao.vaquinha)
-const linkDoar=()=>`<a class="btn sec" href="${esc(PUB.config.vaquinha||'#')}" target="_blank" rel="noopener">Doe para a campanha do Lula ↗</a>`;
 // menu "⋯": ações que não podem ser fáceis demais de tocar (desistir, encerrar) só aparecem depois de abrir
 const menuMais=itens=>`<details class="mais"><summary aria-label="Mais opções" title="Mais opções">⋯</summary><div class="opcoes">${itens}</div></details>`;
 const botaoEntrar=()=>`<button class="btn google" onclick="entrar()"><span class="g" aria-hidden="true">G</span> Entrar com Google</button>`;
@@ -1180,7 +1176,6 @@ async function render(){
   const rotaNav={minhas:'perfil',inscricoes:'perfil'}[rota]||rota||'inicio';
   document.querySelectorAll('nav a[data-rota]').forEach(a=>a.classList.toggle('ativo',a.dataset.rota===rotaNav));
   document.querySelectorAll('nav a[data-so-exemplo]').forEach(a=>a.style.display=API.modo==='exemplo'?'':'none');
-  document.getElementById('doar').href=PUB.config.vaquinha||'#';
   document.querySelectorAll('nav a[data-so-moderador]').forEach(a=>a.style.display=estado.sessao&&estado.sessao.papel==='moderador'?'':'none');
   document.getElementById('conta-rotulo').textContent=estado.sessao?'Perfil':'Entrar';
   document.getElementById('conta-icone').classList.toggle('logado',!!estado.sessao);
