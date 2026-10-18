@@ -291,7 +291,7 @@ dialog.login-google{border:0;border-radius:20px;padding:28px 24px 18px;max-width
 <!-- contagem de visitas sem cookie (GoatCounter, painel em acoes-segundo-turno.goatcounter.com): a tela vem do hash,
      sem a query (onde passa o code do login); não conta em localhost. Versão fixa (count.v5.js) com o hash publicado
      em https://www.goatcounter.com/help/countjs-versions, para o navegador recusar o script se ele mudar -->
-<script>window.goatcounter={path:()=>location.pathname+(location.hash||'#/inicio')}</script>
+<script>window.goatcounter={path:()=>location.pathname+(location.hash||'#/inicio').split('?')[0]}</script>
 <script data-goatcounter="https://acoes-segundo-turno.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ" crossorigin="anonymous"></script>
 <script>
 // ---------- dados e helpers ----------
@@ -533,12 +533,19 @@ function telaMapa(){
    <button class="alca" onclick="alternarGaveta()" aria-label="Abrir ou fechar a lista"><span></span></button>
    <div class="cabeca"><div class="topo-gaveta"><strong id="contagem" onclick="alternarGaveta()"></strong></div>${filtrosHtml()}</div></div>
    <div id="lista" onscroll="maisCards()"></div></div></div>`}
+// enquadramento do mapa no endereço (#/mapa?lat=..&lon=..&z=..), para copiar o link e mandar, como no Google Maps
+function vistaDoHash(h){const q=new URLSearchParams((h||'').split('?')[1]||'');if(!q.has('lat')||!q.has('lon'))return null;
+  const lat=Number(q.get('lat')),lon=Number(q.get('lon')),z=q.has('z')?Math.round(Number(q.get('z'))):11;
+  if(!Number.isFinite(lat)||!Number.isFinite(lon)||!Number.isFinite(z)||Math.abs(lat)>90||Math.abs(lon)>180)return null;
+  return {lat,lon,zoom:Math.min(18,Math.max(3,z))}}
+function hashDaVista(v){return `#/mapa?lat=${v.lat.toFixed(5)}&lon=${v.lon.toFixed(5)}&z=${v.zoom}`}
 function montarMapa(){
   const el=document.getElementById('mapa');if(!el)return;
   mapa=L.map(el,{zoomControl:false}).setView([estado.vista.lat,estado.vista.lon],estado.vista.zoom);
   L.control.zoom({position:'bottomright'}).addTo(mapa);
   fundoBase(mapa);
-  const este=mapa;mapa.on('moveend',()=>{if(mapa!==este)return;const c=mapa.getCenter();estado.vista={lat:c.lat,lon:c.lng,zoom:mapa.getZoom()};atualizarLista()});
+  const este=mapa;mapa.on('moveend',()=>{if(mapa!==este)return;const c=mapa.getCenter();estado.vista={lat:c.lat,lon:c.lng,zoom:mapa.getZoom()};
+    hashAnterior=hashDaVista(estado.vista);history.replaceState(null,'',location.pathname+location.search+hashAnterior);atualizarLista()});
   desenharPinos();atualizarLista();
 }
 function etiquetaPino(x){return L.divIcon({html:`<span class="etiqueta ${estado.foco===x.a.id?'foco':''} ${estado.sel===x.a.id?'sel':''}">${ICONES[x.a.tipo]} ${quandoCurto(x.t)}</span>`,className:'',iconSize:[0,0]})}
@@ -1148,7 +1155,8 @@ let renderN=0,manterRolagem=false,hashAnterior='';
 function rerender(){manterRolagem=true;return render()}
 async function render(){
   const n=++renderN,manter=manterRolagem,y=window.scrollY;manterRolagem=false;
-  const h=location.hash||'#/inicio';const [,rota,arg]=h.split('/');
+  const h=location.hash||'#/inicio';const [,rota,arg]=h.split('?')[0].split('/');
+  if(rota==='mapa'){const v=vistaDoHash(h);if(v)estado.vista=v}
   if(h!==hashAnterior){estado.contatoDe=hashAnterior;hashAnterior=h}
   if(rota!=='acao'){estado.inscrevendo=null;estado.vouOk=null;estado.vouOnde=null}if(rota!=='fila'){estado.recusando=null;estado.erroRecusa=null;estado.bloqueando=null;estado.erroBloqueio=null}if(rota!=='perfil')estado.perfil=null;if(rota!=='contato')estado.contato=null
   try{
