@@ -12,6 +12,8 @@ skills em `.claude/skills/`; para operar a produção, `docs/operacao.md`. Atual
   convite para entrar.
 - **Mapa** (`#/mapa`): lista que acompanha o enquadramento; clicar no pino abre prévia da ação e marca o card na lista.
   Tiles do OpenStreetMap. Filtros da inicial e do mapa são separados e não passam de uma tela para a outra.
+  O enquadramento vai no endereço (`#/mapa?lat=..&lon=..&z=..`, trocado sem encher o histórico): copiar o link e
+  mandar abre o mapa no mesmo lugar e zoom (`vistaDoHash`/`hashDaVista`; o contador de visitas ignora o `?`).
 - **Página da ação** (`#/acao/<id>`): turnos, local, quem organiza, "Eu vou!", "Adicionar à agenda" (Google Agenda e
   arquivo .ics) para turno futuro. Mostra o endereço (`acao.endereco`, se não repete o nome do ponto) e "Como chegar",
   que abre a rota no Google Maps pelo pino (ponto aproximado: pelo endereço escrito). Ação online (`lugar.online: true`)
